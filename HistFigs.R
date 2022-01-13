@@ -63,10 +63,11 @@ gr4= as.data.frame(cbind(temps, rgr5))
 #---------------------
 #density plot
 p1= ggplot(to, aes(x=Tmodel))+
-  geom_density(lwd=1.2)+
+  geom_density(fill="gray", color="gray")+
   xlim(0,45)+
   xlab("Temperature (°C)")+
-  theme_classic(base_size = 18)+theme(legend.position = c(0.6, 0.7))
+  ylab("Consumption or growth rate (g/h/h)" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.7))
 
 # add selection arrows
 #i + geom_segment(aes(x = 5, y = 30, xend = 3.5, yend = 25),
@@ -127,9 +128,10 @@ wt$year<- as.factor(wt$year)
 wt$Trait<- factor(wt$Trait, levels=c("VHW","BDHW", "FW length"), ordered=TRUE)
 
 plot.wt= ggplot(wt, aes(x=Trait, y=value, col=year, shape=sex))+
-  geom_point(size=2) + theme_classic(base_size = 18) +
+  geom_point(size=3.5) + theme_classic(base_size = 18) +
   theme(legend.position ="none")+
-  ylab("DF loadings")+
+  ylab("DF loadings for short-day vs long-day")+
+  xlab("Wing Trait")+
   scale_color_manual(values=c("#440154FF", "#238A8DFF") )+
   scale_x_discrete(expand=c(0.05,0.2))
   
@@ -145,12 +147,15 @@ beh= beh[beh$behavior %in% c("flight"),] #"basking",
 
 #make year factor
 beh$year<- as.factor(beh$year)
+#recode photoperiod
+beh$Photoperiod= "long-day"
+beh$Photoperiod[beh$photoperiod=="SD"]= "short-day"
 
-plot.beh= ggplot(beh, aes(x=photoperiod, y=fraction, col=year, shape=sex, group=group, lty=timeperiod))+
-  geom_point(size=2) + geom_line()+
+plot.beh= ggplot(beh, aes(x=Photoperiod, y=fraction, col=year, shape=sex, group=group, lty=timeperiod))+
+  geom_point(size=3.5) + geom_line(lwd=1.5)+
   #facet_grid(.~behavior)+
   theme_classic(base_size = 18)+
-  ylab("Flight proportion") +xlab("photoperiod")+
+  ylab("Flight proportion") +xlab("Photoperiod")+
   scale_color_manual(values=c("#440154FF", "#238A8DFF") )+ 
   scale_x_discrete(expand=c(0.05,0.05))+
   scale_linetype_discrete(name="time of day")
@@ -186,18 +191,19 @@ plot.ss= ggplot(s.s, aes(x=treat, y=surv, col=year, shape=sex, group=group, fact
 
 #Combine Figure 7
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
-pdf("Fig7_trait_behav.pdf",height = 6, width = 9)
+pdf("Fig7_trait_behav.pdf",height = 5, width = 9)
 
 plot.wt + plot.beh + 
-  plot_layout(widths = c(1.5, 1.5))
+  plot_layout(widths = c(1.5, 1.5))+
+  plot_annotation(tag_levels = 'a')
 
 dev.off()
 
 #Figure 8
 #combine selection data
 names(s.p)[3]<-"treat"
-s.s$experiment="direct"
-s.p$experiment="photoperiod"
+s.s$experiment="Direct manipulation"
+s.p$experiment="Photoperiod"
 sel= rbind(s.s, s.p)
 #change treatment terms
 sel$pheno= "lighter"
@@ -207,19 +213,20 @@ sel$pheno= factor(sel$pheno, levels=c("lighter","darker"), ordered=TRUE)
 sel$sex[sel$sex=="both"]<-"combined"
 #order year
 sel$year<- factor(sel$year, levels=c("1991", "1992", "1993"), ordered=TRUE)
+#order experiment
+sel$experiment= factor(sel$experiment, levels=c("Photoperiod", "Direct manipulation"), ordered=TRUE)
 
 plot.sel= ggplot(sel, aes(x=pheno, y=surv, col=year, shape=sex, group=group, factor(year)))+
-  geom_point(size=2) +geom_line()+  #geom_smooth(method="lm")+
+  geom_point(size=3.5) +geom_line(lwd=1.5)+  #geom_smooth(method="lm")+
   facet_wrap(~experiment)+
-  theme_classic(base_size = 18)+
-  ylab("Survival proportion") +xlab("phenotype")+
-  scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )
+  theme_classic(base_size = 20)+
+  ylab("Survival proportion") +xlab("Wing phenotype")+
+  scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )+
+  scale_x_discrete(expand=c(0.1,0.1))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
 pdf("Fig8_selection.pdf",height = 6, width = 8)
-
 plot.sel
-
 dev.off()
 #===================
 #Figure 8. Plasticity and seasonality figure

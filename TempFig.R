@@ -37,8 +37,9 @@ for(site in 1:3){
   t.dat$tmax= dat$tmax$tmax/10
   t.dat$month= round(month(as.POSIXlt(t.dat$date)))
   t.dat$year= year(as.POSIXlt(t.dat$date))
-  #restrict to growing season
-  t.dat= t.dat[which(t.dat$month %in% c(4,5,7,8)),] 
+  #restrict to growing season or summer
+  #t.dat= t.dat[which(t.dat$month %in% c(4,5,7,8)),] 
+  t.dat= t.dat[which(t.dat$month %in% c(7,8)),]
   
   #code season
   #month 3,4 vs 7,8
@@ -67,9 +68,9 @@ for(site in 1:3){
   }
 }
 
-dat.sea$site="Seattle"
-dat.cor$site="Corfu"
-dat.co$site="CO"
+dat.sea$site="Seattle, WA"
+dat.cor$site="Corfu, WA"
+dat.co$site="Western CO"
 #dat.ch$site="Chapel Hill"
 #combine
 t.dat= rbind(dat.sea,dat.cor,dat.co)
@@ -111,13 +112,14 @@ temps1<- melt(temps, id.vars=c("period","site","season"))
 
 #density plot
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
-pdf("TempPlot_4578.pdf",height = 6, width = 10)
+pdf("TempPlot_78.pdf",height = 6, width = 6)
 ggplot(temps1, aes(x=value, lty=period,color=site))+
-  facet_wrap(~season)+
-  geom_density(lwd=1.2)+scale_color_manual(values=c("orange","blue","darkgreen"))+
+  #facet_wrap(~season)+
+  geom_density(lwd=1.2)+#scale_color_manual(values=c("orange","blue","darkgreen"))+
   xlim(0,45)+
   xlab("Temperature (°C)")+
-  theme_bw(base_size = 18)+theme(legend.position = c(0.6, 0.7))
+  theme_classic(base_size = 18)+theme(legend.position = c(0.2, 0.7))+
+  scale_color_viridis_d(begin=0, end=0.9)
 dev.off()
 
 #min, max distributions
