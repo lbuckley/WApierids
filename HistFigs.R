@@ -97,6 +97,37 @@ pdf("TPCplot.pdf",height = 6, width = 8)
 plot.tpc
 dev.off()
 
+#====================
+#new figure 6. seasonal variation and selection
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/data/")
+sv= read.csv("DF_Kingsolver1995b_Fig2.csv")
+betas= read.csv("Survival_Kingsolver1995b_Table3-4.csv")
+
+plot.sv= ggplot(sv, aes(x=doy, y=Discriminant.score, shape=Sex))+
+  geom_point(size=3.5) + theme_classic(base_size = 18) +
+  geom_line()+
+  theme(legend.position = c(0.2,0.35))+
+  ylab("Discriminant Function Score")+
+  xlab("Day of Year")
+
+#Add selection arrows
+
+#make offsets for different traits
+offs=c(-3,0,3)
+betas$pos= betas$doy + offs[match(betas$Trait, c("pv","hb","fwl") )] 
+betas$Trait= factor(betas$Trait, levels=c("pv", "hb","fwl") )
+
+plot.sv2= plot.sv + geom_segment(data=betas, aes(x = pos, y = 2, xend = pos, 
+                                                 yend = 2+selection.coefficient, 
+                                                 color=Trait, shape="f"),
+                      arrow = arrow(length = unit(0.3, "cm")))+
+  scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
+pdf("Fig7_seas.pdf",height = 5, width = 4)
+plot.sv2
+dev.off()
+
 #===================
 #Figure 7. Field selection figure
 
