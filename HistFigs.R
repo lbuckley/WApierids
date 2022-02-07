@@ -1,3 +1,4 @@
+library(ggplot2)
 library(patchwork)
 library(viridis)
 
@@ -117,11 +118,18 @@ offs=c(-3,0,3)
 betas$pos= betas$doy + offs[match(betas$Trait, c("pv","hb","fwl") )] 
 betas$Trait= factor(betas$Trait, levels=c("pv", "hb","fwl") )
 
-plot.sv2= plot.sv + geom_segment(data=betas, aes(x = pos, y = 2, xend = pos, 
-                                                 yend = 2+selection.coefficient, 
+#ys
+doys= c(130, 140, 183, 205)
+y.doys= c(0.663, 0.663,-1.6, -1.98)
+betas$ys= y.doys[match(betas$doy, doys )] 
+
+#plot
+plot.sv2= plot.sv + geom_segment(data=betas, aes(x = pos, y = ys, xend = pos, 
+                                                 yend = ys+1.5*selection.coefficient, 
                                                  color=Trait, shape="f"),
                       arrow = arrow(length = unit(0.3, "cm")))+
-  scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )
+  scale_color_manual(values=alpha(c("#66c2a5", "#fc8d62","#8da0cb"),1) )
+  #scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
 pdf("Fig7_seas.pdf",height = 5, width = 4)
