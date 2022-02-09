@@ -110,6 +110,10 @@ temps$season= t.dat$season
 #to long format
 temps1<- melt(temps, id.vars=c("period","site","season"))
 
+#change period names
+temps1$period[temps1$period=="initial"]<-"1990s"
+temps1$period[temps1$period=="recent"]<-"2010s"
+
 #density plot
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
 pdf("TempPlot_78.pdf",height = 6, width = 6)

@@ -66,15 +66,18 @@ gr4= as.data.frame(cbind(temps, rgr5))
 p1= ggplot(to, aes(x=Tmodel))+
   geom_density(fill="gray", color="gray")+
   xlim(0,45)+
-  xlab("Temperature (°C)")+
+  xlab("Operative or Body Temperature (°C)")+
   ylab("Consumption or growth rate (g/h/h)" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.7))
 
 # add selection arrows
+#add y values
+sg$ys= gr$mgr[1:5]
+
 #i + geom_segment(aes(x = 5, y = 30, xend = 3.5, yend = 25),
 #                 arrow = arrow(length = unit(0.5, "cm")))
-p2= p1 + geom_segment(data=sg, aes(x = temps, y = .09, xend = temps, yend = .09+pm.sg/20),
-                      arrow = arrow(length = unit(0.5, "cm")))
+p2= p1 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
+                      arrow = arrow(length = unit(0.5, "cm")), lwd=1.2)
 
 #add growth rate
 p3= p2 + geom_line(data=gr, aes(x=temps, y= mgr), color="#482677FF", lwd=1.2)
@@ -82,9 +85,9 @@ p3= p2 + geom_line(data=gr, aes(x=temps, y= mgr), color="#482677FF", lwd=1.2)
 #add consumption
 plot.tpc= p3 + geom_line(data=cr, aes(x=temps, y= cr), color="#29AF7FFF", lwd=1.2)+
   annotate("text",label="consumption rate ", 
-           x = 34, y = 0.11, size = 6, colour = "#29AF7FFF")+
+           x = 34, y = 0.08, size = 6, colour = "#29AF7FFF")+
   annotate("text",label="growth rate ", 
-           x = 34, y = 0.1, size = 6, colour = "#482677FF")
+           x = 34, y = 0.025, size = 6, colour = "#482677FF")
 
 #check other TPCS
 p5= plot.tpc + geom_line(data=gr2, aes(x=temps, y= rgr, col=instar), lwd=1.2)
@@ -94,7 +97,7 @@ p7= p6 + geom_line(data=gr4, aes(x=temps, y= rgr5), color="purple", lwd=1.2)
 #----------------------
 #plot out
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
-pdf("TPCplot.pdf",height = 6, width = 8)
+pdf("TPCplot.pdf",height = 6, width = 7)
 plot.tpc
 dev.off()
 
@@ -105,11 +108,12 @@ sv= read.csv("DF_Kingsolver1995b_Fig2.csv")
 betas= read.csv("Survival_Kingsolver1995b_Table3-4.csv")
 
 plot.sv= ggplot(sv, aes(x=doy, y=Discriminant.score, shape=Sex))+
-  geom_point(size=3.5) + theme_classic(base_size = 18) +
+  geom_point(size=4) + theme_classic(base_size = 18) +
   geom_line()+
   theme(legend.position = c(0.2,0.35))+
   ylab("Discriminant Function Score")+
-  xlab("Day of Year")
+  xlab("Day of Year")+
+  scale_shape_manual(values=c(1,2))
 
 #Add selection arrows
 
@@ -127,7 +131,7 @@ betas$ys= y.doys[match(betas$doy, doys )]
 plot.sv2= plot.sv + geom_segment(data=betas, aes(x = pos, y = ys, xend = pos, 
                                                  yend = ys+1.5*selection.coefficient, 
                                                  color=Trait, shape="f"),
-                      arrow = arrow(length = unit(0.3, "cm")))+
+                      arrow = arrow(length = unit(0.3, "cm")), lwd=1.2)+
   scale_color_manual(values=alpha(c("#66c2a5", "#fc8d62","#8da0cb"),1) )
   #scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )
 
@@ -137,6 +141,35 @@ plot.sv2
 dev.off()
 
 #===================
+#manipulation studies
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/data/")
+surv= read.csv("Pocc.Manip.survival.1991_1993studies.csv")
+
+surv$group= paste(surv$Sex, surv$Season, surv$Year, sep="")
+surv$Year= as.factor(surv$Year)
+surv$Treatment= factor(surv$Treatment, levels=c("SD (dark)","LD (light)","Blackened","Yellowed"), ordered=TRUE)
+
+#[surv$Study=="Photoperiod",]
+
+plot.surv1= ggplot(surv, aes(x=Treatment, y=Survival, col=Season, 
+                                                         shape=Sex, group=group, lty=Year))+
+  geom_point(size=4) +geom_line(lwd=1.5)+  #geom_smooth(method="lm")+
+  geom_errorbar(aes(ymin=Survival-SE, ymax=Survival+SE), width=.2)+   
+  theme_classic(base_size = 20)+
+  ylab("Survival proportion") +xlab("Wing phenotype")+
+  scale_color_manual(values=c("#440154FF", "#238A8DFF","#B8DE29FF") )+
+  scale_x_discrete(expand=c(0.1,0.1))
+
+  #facet_wrap(~Study)+
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/figures/")
+pdf("Fig7_manip.pdf",height = 6, width = 8)
+plot.surv1
+dev.off()
+
+
+#===================
+## OLD VERSIONS
 #Figure 7. Field selection figure
 
 #Kingsolver. Am Nat 1996. Experimental manipulation. https://doi.org/10.1086/285852
