@@ -30,15 +30,27 @@ cds_api_key <- "062c3e77-bcc8-4c56-8e72-4872e7a92be6"
 
 ecmwfr::wf_set_key(user = uid, key = cds_api_key, service = "cds")
 
-# bounding coordinates (in WGS84 / EPSG:4326)
-xmn <- 130
-xmx <- 132
-ymn <- -26
-ymx <- -24
 
+#locations Corfu, P. occidentalis, Apr to Sept
+#Seattle, P. rapae,
+
+# bounding coordinates (in WGS84 / EPSG:4326)
+if(loc==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
+if(loc==2){xmn <- -122.45; xmx <- -122.2; ymn <- 47.5; ymx <- 47.75}
+
+#years for data
+if(loc==1) years=c(1989:1993, 2017:2021)
+if(loc==2) years=c(2001:2005, 2017:2021)
+
+#set loop
+##for(yr in years){
+
+st_date= paste(yr,":04:01",sep="")  
+en_date= paste(yr,":09:30",sep="") 
+  
 # temporal extent
-st_time <- lubridate::ymd("2010:07:01")
-en_time <- lubridate::ymd("2011:12:31")
+st_time <- lubridate::ymd(st_date)
+en_time <- lubridate::ymd(en_date)
 
 # filename and location for downloaded .nc files
 file_prefix <- "era5"
@@ -55,10 +67,22 @@ request_era5(request = req, uid = uid, out_path = op)
 
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
 
-dstart <- "01/01/2011"
-dfinish <- "31/12/2011"
-loc <- c(131, -25) # somewhere in the middle of Australia
-micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, spatial = 'c:/Spatial_Data/era5')
+dstart <- "01/04/2021"
+dfinish <- "01/09/2021"
+loc <- c(-119.535331192, 46.850663264) # Corfu  
+micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, spatial = '/Users/laurenbuckley/Downloads/era5')
+# runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
+
+#combine and save data 
+#extract air temperature and soil
+#dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
+
+dat <- cbind(metout, soil[,4:13])
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/")
+write.csv(dat, "Corfu2021.csv")
+
+#end loop
 
 metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
 soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
@@ -73,12 +97,14 @@ soil <- cbind(dates,soil)
 soilmoist <- cbind(dates, soilmoist)
 
 # plotting above-ground conditions in minimum shade
+#temp
 with(metout,{plot(TALOC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
                   , type = "l",main=paste("air and sky temperature",sep=""), ylim = c(-20, 60))})
 with(metout,{points(TAREF ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
                     , type = "l",lty=2,col='blue')})
 with(metout,{points(TSKYC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
                     ,  type = "l",col='light blue',main=paste("sky temperature",sep=""))})
+
 with(metout,{plot(RHLOC ~ dates,xlab = "Date and Time", ylab = "Relative Humidity (%)"
                   , type = "l",ylim=c(0,100),main=paste("humidity",sep=""))})
 with(metout,{points(RH ~ dates,xlab = "Date and Time", ylab = "Relative Humidity (%)"
@@ -113,3 +139,7 @@ for(i in 1:10){
     (%)",col=i,type = "l")
   }
 }
+
+
+
+

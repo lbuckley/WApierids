@@ -1,3 +1,7 @@
+library(ggplot2)
+library(reshape2)
+library(reshape)
+
 # Adapt Colias niche model
 
 #global historical climatology network?
@@ -143,9 +147,30 @@ coef(mod)
 #1989-1993
 #2017-2021
 
-#model selection
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/")
+dat= read.csv("Corfu2021.csv")
+#make doy index
+dat$doy= dat$DOY + dat$TIME/60
+#subset columns
+dat= dat[,c("dates","DOY","TIME","doy","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm")]
+#TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
+#TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
+#VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
 
-#P. occidentalis biophysical model
+#melt temp data
+datm= melt(dat[,c("dates","DOY","TIME","doy","TAREF","TALOC","D0cm")], id=c("dates","DOY","TIME","doy") )
+
+#plot
+ggplot(data=datm, aes(x=doy, y = value, color=variable))+ geom_line(alpha=0.2)+
+  theme_bw()+ 
+  #xlab("ordinal date") +ylab("abundance")+ 
+  #labs(color = "seasonal GDDs")+ theme(strip.text = element_text(face = "italic")) 
+  scale_color_viridis()
+
+#butterfly temperature
+
+#partition solar radiation [or extract from micro?]
+
 
 
 
