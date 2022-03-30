@@ -1,16 +1,14 @@
 # Adapt Colias niche model
 
-#global historical climatology network?
-
 #Center for urban horticulture
 #lat 47.657628, Longitude: -122.290255
 
 #Corfu site in central Washington in the Columbia National Wildlife Refuge
 #12 miles west of Othello
 #46.850663264 -119.535331192
-  
+
 #------------------
-setwd("/Users/laurenbuckley/Downloads/")
+#setwd("/Users/laurenbuckley/Downloads/")
 
 library(NicheMapR)
 library(ecmwfr)
@@ -19,42 +17,55 @@ library(lubridate)
 library(dplyr)
 library(tidync)
 
-install.packages("remotes")
-remotes::install_github("everydayduffy/mcera5")
+#install.packages("remotes")
+#remotes::install_github("everydayduffy/mcera5")
 
 # get ERA5 data with package mcera5 (just do once for region and time of interest)
-
 # assign your credentials (register here: https://cds.climate.copernicus.eu/user/register)
 uid <- "78176"
 cds_api_key <- "062c3e77-bcc8-4c56-8e72-4872e7a92be6"
 
 ecmwfr::wf_set_key(user = uid, key = cds_api_key, service = "cds")
 
-
 #locations Corfu, P. occidentalis, Apr to Sept
 #Seattle, P. rapae,
+locations= c("Corfu","Seattle")
+
+for(loc.k in 1:2){
 
 # bounding coordinates (in WGS84 / EPSG:4326)
-if(loc==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
-if(loc==2){xmn <- -122.45; xmx <- -122.2; ymn <- 47.5; ymx <- 47.75}
+if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
+if(loc.k==2){xmn <- -122.45; xmx <- -122.2; ymn <- 47.5; ymx <- 47.75}
 
-#years for data
-if(loc==1) years=c(1989:1993, 2017:2021)
-if(loc==2) years=c(2001:2005, 2017:2021)
-
-#set loop
-##for(yr in years){
-
-st_date= paste(yr,":04:01",sep="")  
-en_date= paste(yr,":09:30",sep="") 
+if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
+if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
   
+#years for data
+if(loc.k==1) years=c(1989:1993, 2017:2021)
+if(loc.k==2) years=c(2001:2005, 2017:2021)
+
+if(loc.k==1) file_prefix <-"era5_Corfu"
+if(loc.k==2) file_prefix <-"era5_Seattle"
+
+#set microclim path
+spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/',file_prefix, sep="")
+#check works
+
+for(yr in years){
+
+#set dates for era5 call and NicheMapr
+st_date<- paste(yr,":04:01",sep="")  
+en_date<- paste(yr,":09:30",sep="") 
+
+dstart <- paste("01/04/", yr,sep="")
+dfinish <- paste("30/09/", yr,sep="")
+
 # temporal extent
 st_time <- lubridate::ymd(st_date)
 en_time <- lubridate::ymd(en_date)
 
 # filename and location for downloaded .nc files
-file_prefix <- "era5"
-op <- "/Users/laurenbuckley/Downloads/"  #"C:/Spatial_Data/"
+op <- "/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/"  
 
 # build a request (covering multiple years)
 req <- build_era5_request(xmin = xmn, xmax = xmx,
@@ -66,23 +77,19 @@ str(req)
 request_era5(request = req, uid = uid, out_path = op)
 
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-
-dstart <- "01/04/2021"
-dfinish <- "01/09/2021"
-loc <- c(-119.535331192, 46.850663264) # Corfu  
-micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, spatial = '/Users/laurenbuckley/Downloads/era5')
+micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, spatial = spatial_path)
 # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
 
 #combine and save data 
 #extract air temperature and soil
 #dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
-
 dat <- cbind(metout, soil[,4:13])
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/")
-write.csv(dat, "Corfu2021.csv")
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
+write.csv(dat, paste(locations[loc.k], years[yr],".csv",sep=""))
 
-#end loop
+} #end loop years
+} #end loop locations
 
 metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
 soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
