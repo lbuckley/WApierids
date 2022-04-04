@@ -124,6 +124,9 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   A_sttl <- pi * D * 2 
   
+  #-----------------------------
+  #UPDATE RADIATION ESTIMATES
+  
   # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
   
   A_sdir <- A_sttl / 2
@@ -131,7 +134,11 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   # RADIATIVE HEAT FLUx, mW
   
+  #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
+  
   Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
+  
+  #-----------------------------
   
   # THERMAL RADIATIVE FLUX in K
   
@@ -226,17 +233,31 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
 #Thermoregulatory significance of wing melanization in Pieris butterflies: Physics, posture, and pattern
 #https://www.jstor.org/stable/pdf/4217669.pdf
 #reflectance model
+#a dimensionless wing length, (L/D), the ratio of thermally-effective wing length to body diameter, and a dimensionless amount of radiation intercepted, (S/D). 
 
-orient.angle=0 #orientation angle
+#Measurements with a spectroreflectometer (Kingsolver 1983 a) for Pieris show that the white dorsal wing surfaces have a solar reflectivity of more than 0.8, while the reflectivity of the black melanic wing regions is less than 0.3. 
 
-wing.angle= 45
+#Thermal ecology of Pieris butterflies (Lepidoptera: Pieridae): a new mechanism of behavioral thermoregulation
+#https://www.jstor.org/stable/pdf/4217668.pdf
+#Colorado temperature dependence of flight
+
+orient.angle=0 #orientation angle, angle from vertical
+
+wing.angle.d= 45 #angle from vertical
+#convert to radians
+wing.angle= pi/10   #wing.angle.d*pi/180
+
 #basking during flight initiation: Pontio (42degrees), Pieris (17 degrees)
 #basking during flight behavior: Pontio (48degrees), Pieris (23 degrees)
 
-R=1 #reflectivity
-L #reflective wing length
-S #radiation intercepted
-r #body radius
+#body radius
+r= 0.36/2 #cm CHECK
+#wingspan 4.5 to 6.5 cm #https://entnemdept.ufl.edu/creatures/veg/leaf/imported_cabbageworm.htm
+
+R=0.8 #reflectivity
+#L #reflective wing length
+#S #area for radiation intercepted
+#r #body radius
 
 #reflective wing length
 L= (r+r/tan(wing.angle))*tan(2*wing.angle)/tan(wing.angle)+r
@@ -245,9 +266,11 @@ L= (r+r/tan(wing.angle))*tan(2*wing.angle)/tan(wing.angle)+r
 #radiation intercepted
 OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
 S= 2*OC*sin(wing.angle)
+S=S*R #check reduction
 #For wings of reflectivity R less than 1.0, the radiation intercepted must be reduced appropriately from the values
 #of S obtained above. For each reflection from the wing, the radiation intercepted is reduced by a factor R
 
+#S is wing area absorbing direct solar radiation
 
 
 

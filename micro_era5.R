@@ -44,11 +44,14 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
 if(loc.k==1) years=c(1989:1993, 2017:2021)
 if(loc.k==2) years=c(2001:2005, 2017:2021)
 
-if(loc.k==1) file_prefix <-"era5_Corfu"
-if(loc.k==2) file_prefix <-"era5_Seattle"
-
 #set microclim path
-spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/',file_prefix, sep="")
+file_prefix="era5"
+if(loc.k==1) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/',file_prefix, sep="")
+if(loc.k==2) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/',file_prefix, sep="")
+# filename and location for downloaded .nc files
+if(loc.k==1) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/'
+if(loc.k==2) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/'
+
 #check works
 
 for(yr in years){
@@ -64,9 +67,6 @@ dfinish <- paste("30/09/", yr,sep="")
 st_time <- lubridate::ymd(st_date)
 en_time <- lubridate::ymd(en_date)
 
-# filename and location for downloaded .nc files
-op <- "/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/"  
-
 # build a request (covering multiple years)
 req <- build_era5_request(xmin = xmn, xmax = xmx,
                           ymin = ymn, ymax = ymx,
@@ -77,20 +77,16 @@ str(req)
 request_era5(request = req, uid = uid, out_path = op)
 
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, spatial = spatial_path)
+micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, runshade = 1, spatial = spatial_path)
 # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
 
+#test with direct download
+#file_prefix="Corfu"
+#spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/',file_prefix, sep="")
+
+#--------------
+
 #combine and save data 
-#extract air temperature and soil
-#dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
-dat <- cbind(metout, soil[,4:13])
-
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
-write.csv(dat, paste(locations[loc.k], years[yr],".csv",sep=""))
-
-} #end loop years
-} #end loop locations
-
 metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
 soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
 soilmoist<-as.data.frame(micro$soilmoist) # soil temperatures, minimum shade
@@ -101,8 +97,19 @@ dates<-seq(as.POSIXct(dstart, format="%d/%m/%Y",tz=tzone)-3600*12, as.POSIXct(df
 
 metout <- cbind(dates,metout)
 soil <- cbind(dates,soil)
-soilmoist <- cbind(dates, soilmoist)
+#soilmoist <- cbind(dates, soilmoist)
 
+#extract air temperature and soil
+#dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
+dat <- cbind(metout, soil[,4:13])
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
+write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
+
+} #end loop years
+} #end loop locations
+
+#-----------------------
 # plotting above-ground conditions in minimum shade
 #temp
 with(metout,{plot(TALOC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
