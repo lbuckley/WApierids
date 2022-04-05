@@ -110,6 +110,12 @@ write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
 } #end loop locations
 
 #-----------------------
+#read back in
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
+metout= read.csv("Seattle2020.csv")
+#fix dates
+metout$dates= as.Date(metout$dates)
+
 # plotting above-ground conditions in minimum shade
 #temp
 with(metout,{plot(TALOC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
