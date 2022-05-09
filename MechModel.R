@@ -1,6 +1,7 @@
 library(ggplot2)
 library(reshape2)
 library(reshape)
+library(viridisLite)
 
 # Adapt Colias niche model
 
@@ -135,12 +136,8 @@ preds <- data.frame(temp = seq(min(d$temp), max(d$temp), length.out = 100))
 preds <- broom::augment(mod, newdata = preds)
 
 #extract coefficients
-tpc.beta= coef(mod)
+#tpc.beta= coef(mod)
 #beta_2012(temp, a, b, c, d, e)
-
-#estimate performance shift
-
-#model selection
 
 #--------
 #plot temperature distributions
@@ -184,19 +181,18 @@ dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 #plot time series
 p1= ggplot(dat.day, aes(x=d.hr, y=TALOC, color=year))+
   geom_line(alpha=0.2)+
-  xlab("Temperature at reference height (°C)")+
-  ylab("Consumption or growth rate (g/h/h)" )+
+  xlab("Day of year")+
+  ylab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
 
 #plot density distributions
 p1= ggplot(dat.day, aes(x=TALOC))+
   geom_density(alpha=0.5, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  xlab("Temperature at reference height (°C)")+
-  ylab("Consumption or growth rate (g/h/h)" )+
+  xlab("Day of year")+
+  ylab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
 #D0cm, TALOC, TAREF
-#Why is TAREF consistently lower than TALOC? Over water?
 
 #===============================
 #P. rapae larvae
@@ -216,7 +212,7 @@ p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm
 #estimate performance
 dat.day$perf= beta_2012(dat.day$TALOC, tpc.beta[1], tpc.beta[2], tpc.beta[3], tpc.beta[4], tpc.beta[5])
 
-#plot density distributions
+#plot density distributions of performance
 p1= ggplot(dat.day, aes(x=perf))+
   geom_density(alpha=0.5, aes(fill=period, color=period))+
   facet_wrap(~seas)+
@@ -224,38 +220,121 @@ p1= ggplot(dat.day, aes(x=perf))+
   ylab("Density" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
 
+#xlab("Temperature at reference height (°C)")
+#ylab("Consumption or growth rate (g/h/h)" )
+
 #Count of NAs above CTmax of TPC
 table( is.nan(dat.day$perf), dat.day$period)
+#performance means
+dat.day1= na.omit(dat.day)
+aggregate(dat.day1$perf, list(dat.day1$period), FUN=mean)
+
+#density distribution by performance
+dat.day1$Tround= round(dat.day1$TALOC)
+dat.day2= aggregate(dat.day1$perf, list(dat.day1$Tround, dat.day1$period, dat.day1$seas), FUN=sum)
+names(dat.day2)= c("temp","period","seas","sumperf")
+
+ggplot(dat.day2, aes(x=temp, y=sumperf, color=period))+geom_line()+
+  facet_wrap(~seas)
+
+#P. rapae
+#Kingsolver JG (2000) Feeding, growth, and the thermal environment of cabbage white caterpillars, Pieris rapae L. Physiological and Biochemical Zoology, 73(5):621–628.
+
+#http://labs.bio.unc.edu/Buckley/WGdocs/Kingsolver2001.pdf
+#selection on pupal mass, development time, survival
+
+#TPCs for growth and development rates will be used to estimate size and development time as well as the # microclimates experienced by pupae and adults as a result of developmental timing 
+
+#estimate growth and development with different TPCs to estimate selection (vary beta parameters?)
+#estimate for each season and year to estimate selection through time
+
+#vary TPC
+#Gaussian, vary Topt
+mod= d_fits$gaussian[[1]]
+tpc.gaus= coef(mod)
+
+#generate parameter combinations
+temps=1:70
+
+params= expand.grid(temp = seq(0,70,2), topt = seq(20, 40, 1) )
+
+gauss.mat= function(pmat,rmax,a) gaussian_1987(pmat[1], rmax, pmat[2], a)
+
+params$perf= apply(params, MARGIN=1, FUN=gauss.mat, rmax=tpc.gaus[1], a=tpc.gaus[3])
+
+ggplot(params, aes(x=temp, y=perf, color=topt, group=topt))+geom_line()
+
+#estimate growth and development
+#get all years?
+params= expand.grid(temp = seq(0,70,2), topt = seq(20, 40, 1) )
+
+#RUN
+topts= seq(20, 40, 1)
+perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= length(topts) )
+for(topt.k in 1:length(topts)){
+  perf.mat[,topt.k]= sapply(dat.day$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=topts[topt.k], a=tpc.gaus[3])
+}
+
+#combine dates
+perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
+#aggregate
+perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
+names(perfs1)=c("year","period","seas", 20:40)
+#make column for slopes
+perfs1$B= NA
+
+for(row.k in 1: nrow(perfs1)){
+  if(row.k==1) plot(20:40,perfs1[row.k,4:24], type="l")
+  if(row.k>1) points(20:40,perfs1[row.k,4:24], type="l")
+  
+  #put into format for regression
+  perfs2= as.data.frame(cbind(20:40, t(perfs1[row.k,4:24]) ))
+  colnames(perfs2)=c("topt","perf")
+  
+  mod1= lm(perf~topt , data=perfs2)
+  perfs1$B[row.k]= coefficients(mod1)[2]
+}
+
+#plot
+ggplot(perfs1, aes(x=year, y=B, color=seas, lty=period))+geom_line()
 
 #============================
 #P. occidentalis adult selection
+library(TrenchR)
 
 #subset columns
-dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm")]
+dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period")]
 #TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
 #TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
 #VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
 
 #melt temp data
-datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm")], id=c("dates","DOY","TIME","d.hr") )
+datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm","year","period")], id=c("dates","DOY","TIME","d.hr","year","period") )
 
 #plot
 ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
-  theme_bw()+ 
-  #xlab("ordinal date") +ylab("abundance")+ 
-  #labs(color = "seasonal GDDs")+ theme(strip.text = element_text(face = "italic")) 
-  scale_color_viridis()
+  theme_bw()+scale_color_viridis_d()
+
+#partition solar radiation [or extract from micro?], returns diffuse fraction
+df=partition_solar_radiation("Erbs", kt=0.7)
 
 #butterfly temperature
+dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
+                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
+                          delta = 1.46, alpha = 0.6, r_g = 0.3)
 
-#partition solar radiation [or extract from micro?]
+#plot Tb distributions
+ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+
+  theme_bw()+scale_color_viridis_d()
+#plot density distributions
+p1= ggplot(dat.sub, aes(x=Tb))+
+  geom_density(alpha=0.5, aes(fill=period, color=period))
 
+#estimate selection on survival and fecundity from mechanistic model
+#Fig 6: pv, hb, fwl
 
-
-
-
-
-
+#Kingsolver JG (1995) Viability selection on seasonally polyphenic traits: wing melanin pattern in western white butterflies. Evolution, 49(5):932–941.
+#direction of selection on one wing trait important for thermoregulation, melanin on the base of the dorsal hindwings (trait hb), fluctuated seasonally; there was evidence of directional selection for increased hb in the spring studies and for decreased hb in the summer studies
 
 
 
