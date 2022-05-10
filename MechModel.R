@@ -293,10 +293,13 @@ for(row.k in 1: nrow(perfs1)){
   
   mod1= lm(perf~topt , data=perfs2)
   perfs1$B[row.k]= coefficients(mod1)[2]
-}
+} 
 
 #plot
 ggplot(perfs1, aes(x=year, y=B, color=seas, lty=period))+geom_line()
+
+#add in non-linear selection regression?
+#account for temperatures exceeding tpcs
 
 #============================
 #P. occidentalis adult selection
@@ -335,6 +338,19 @@ p1= ggplot(dat.sub, aes(x=Tb))+
 
 #Kingsolver JG (1995) Viability selection on seasonally polyphenic traits: wing melanin pattern in western white butterflies. Evolution, 49(5):932–941.
 #direction of selection on one wing trait important for thermoregulation, melanin on the base of the dorsal hindwings (trait hb), fluctuated seasonally; there was evidence of directional selection for increased hb in the spring studies and for decreased hb in the summer studies
+
+#Butterfly model
+#estimate larval TPCs: development, size
+
+#tpupal -> plasticity
+#_> Tadult
+
+#->Adult performance: survival and fecundity from mechansitic model
+#how to relate to field data?
+
+
+
+
 
 
 
