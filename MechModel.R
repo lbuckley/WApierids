@@ -390,7 +390,7 @@ ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
 #partition solar radiation [or extract from micro?], returns diffuse fraction
 df=partition_solar_radiation("Erbs", kt=0.7)
 
-#butterfly temperature
+#butterfly temperature, Colias model
 dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
                           H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
                           delta = 1.46, alpha = 0.6, r_g = 0.3)
@@ -432,8 +432,10 @@ p1= ggplot(dat.sub, aes(x=Tb))+
 #https://www.jstor.org/stable/pdf/3544871.pdf
 
 #P. rapae vancouver
-#** https://doi.org/10.2307/4537
+#** https://doi.org/10.2307/4537, https://www.jstor.org/stable/4913
 #other populations: https://www.journals.uchicago.edu/doi/full/10.1086/317758
+#egg to pupae 10C, 105 dd
+#https://doi.org/10.1111/j.1420-9101.2007.01318.x
 
 #size and egg production
 #https://www.publish.csiro.au/ZO/ZO9820223
