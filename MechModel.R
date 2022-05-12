@@ -4,6 +4,7 @@ library(reshape)
 library(viridisLite)
 
 # Adapt Colias niche model
+# https://github.com/lbuckley/ColiasBiogeog/blob/master/ColiasMain.R
 
 #global historical climatology network?
 
@@ -291,17 +292,85 @@ for(row.k in 1: nrow(perfs1)){
   perfs2= as.data.frame(cbind(20:40, t(perfs1[row.k,4:24]) ))
   colnames(perfs2)=c("topt","perf")
   
-  mod1= lm(perf~topt , data=perfs2)
+  #mod1= lm(perf~topt , data=perfs2)
+  mod1= lm(perf~topt +I(topt^2) , data=perfs2)
   perfs1$B[row.k]= coefficients(mod1)[2]
+  perfs1$curve[row.k]= coefficients(mod1)[3]
 } 
 
 #plot
 ggplot(perfs1, aes(x=year, y=B, color=seas, lty=period))+geom_line()
+ggplot(perfs1, aes(x=year, y=curve, color=seas, lty=period))+geom_line()
 
 #add in non-linear selection regression?
 #account for temperatures exceeding tpcs
 
+##P. rapae 1999 selection data
+# rgr at each temperature
+# survival to pupation, time to pupation, pupal mass
+#survive to eclosion, time to eclosion, adult mass
+#number of eggs laid
+#Relate to selection estimates: determine Topt and plot against fitness components, only pupal mass was significant?
+
+#compare to empirical data
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/')
+pr= read.csv("PrapaeUW.Seln2.1999.Combineddata.OPUS2021.csv")
+
+#plot TPCs
+pr1= pr[,c("Mom","UniID", "Mi", "RGR11", "RGR17", "RGR23", "RGR29", "RGR35")]
+pr1= melt(pr1, id.vars=c("Mom","UniID", "Mi"), variable.name="temp", value.name="rgr")           
+pr1$temperature= gsub('RGR', '', pr1$variable)
+
+ggplot(pr1, aes(x=temperature, y=value, color=UniID, group=UniID))+geom_line()+
+  facet_wrap(~Mom)
+
+#fit TPC
+fitG =
+  function(x,y,mu,sig,scale){
+    
+    f = function(p){
+      d = p[3]*dnorm(x,mean=p[1],sd=p[2])
+      sum((d-y)^2)
+    }
+    
+    optim(c(mu,sig,scale),f)
+  }
+
+ids= unique(pr1$UniID)
+#by mom
+#ids= unique(pr1$Mom)
+
+tpc.p= matrix(NA, nrow=length(ids), ncol=3)
+
+for(id.k in 1:length(ids)){
+
+#gr= pr1[pr1$Mom==ids[id.k],c("temperature","value")]
+gr= pr1[pr1$UniID==ids[id.k],c("temperature","value")]
+colnames(gr)=c("temp","rate")
+gr$temp= as.numeric(gr$temp)
+gr= na.omit(gr)
+
+#gr.fit= try( fitG(x=gr$temp, y=gr$rate, mu=31, sig=8, scale= 0.06) )
+#tpc.p[id.k,]=gr.fit$par
+
+tryCatch({ gr.fit<- fit.tpcs(gr) 
+tpc.p[id.k,]<-coef(gr.fit) },
+error=function(e){})
+
+}
+#fix so Topt can be >35
+
+#plot TPCs
+pr$Topt= tpc.p[match(pr$UniID,ids), 2]
+
+#plot selection functions
+ggplot(pr, aes(x=Topt, y=Time.to.Pupation, color=UniID, group=UniID))+geom_point()
+ggplot(pr, aes(x=Topt, y=Pupa.wt, color=UniID, group=UniID))+geom_point()
+ggplot(pr, aes(x=Topt, y=Butt..Wt, color=UniID, group=UniID))+geom_point()
+ggplot(pr, aes(x=Topt, y=Fecundity, color=UniID, group=UniID))+geom_point()
+
 #============================
+
 #P. occidentalis adult selection
 library(TrenchR)
 
@@ -347,6 +416,40 @@ p1= ggplot(dat.sub, aes(x=Tb))+
 
 #->Adult performance: survival and fecundity from mechansitic model
 #how to relate to field data?
+
+##Kingsolver 1995a
+#natural collection
+#5 wing melanism traits and FWL -> survival
+##Kingsolver 1995b
+#wing melanism traits (?) and FWL -> survival
+
+#-----
+#Development
+#P. occidentalis RMBL, only 1 temp, 2 temps P. napi
+#https://www.jstor.org/stable/pdf/4215136.pdf
+
+#P. napi devlopment temp
+#https://www.jstor.org/stable/pdf/3544871.pdf
+
+#P. rapae vancouver
+#** https://doi.org/10.2307/4537
+#other populations: https://www.journals.uchicago.edu/doi/full/10.1086/317758
+
+#size and egg production
+#https://www.publish.csiro.au/ZO/ZO9820223
+
+#Phylogeny
+#https://academic.oup.com/biolinnean/article/88/3/413/2691608
+
+#Plasticity: photoperiod plasticity
+# Kingsolver and Wiernasz. 1991. Seasonal polyphenism. https://doi.org/10.1086/285195
+
+#Mech model parameters
+#P. napi flights as a function of Tb, Kingsolver 1985. Thermal ecology. https://www.jstor.org/stable/pdf/4217668.pdf
+
+
+
+
 
 
 
