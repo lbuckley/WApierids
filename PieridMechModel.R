@@ -1,11 +1,11 @@
 ## TO DO
-# Add in growth curve to estimate size
-# model plasticity based on daylength
-# Fix biophys model
+# Check biophys model
 # Add size into fitness estimates 
+#convert from wing traits to absorptivity
 
 library(truncnorm)
 library(dplyr)
+library(TrenchR)
 
 #LOAD PARAMETERS
 #Demographic parameters
@@ -32,7 +32,62 @@ SpecDat= as.matrix(SpecDat)
 FT= 1.46 #c(0.01, 0.82, 1.46, 2)
 #FUR THICKNESS: 0, eriphyle olathe, meadii mesa seco, 2
 
-#dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period")]
+#------------
+#Load envi data
+
+locations= c("Corfu","Seattle")
+loc.k=1
+
+#years for data
+if(loc.k==1) years=c(1989:1993, 2017:2021)
+if(loc.k==2) years=c(2001:2005, 2017:2021)
+
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
+#combine data
+for(yr.k in 1:10){
+  dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat$year= years[yr.k]
+  if(yr.k<6)dat$period="initial"
+  if(yr.k>5)dat$period="recent"
+  
+  if(yr.k==1) dat.all=dat
+  if(yr.k>1) dat.all=rbind(dat, dat.all)
+}
+
+#subset to sunlight
+dat.day= subset(dat.all, dat.all$TIME>260)
+dat.day= subset(dat.all, dat.all$TIME<1080)
+
+#combine doy and time
+dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
+
+#subset columns
+dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period")]
+#TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
+#TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
+#VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
+
+#melt temp data
+datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm","year","period")], id=c("dates","DOY","TIME","d.hr","year","period") )
+
+#plot
+ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
+  theme_bw()+scale_color_viridis_d()
+
+#partition solar radiation [or extract from micro?], returns diffuse fraction
+df=partition_solar_radiation("Erbs", kt=0.7)
+
+#butterfly temperature
+dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
+                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
+                          delta = 1.46, alpha = 0.6, r_g = 0.3)
+
+#plot Tb distributions
+ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+
+  theme_bw()+scale_color_viridis_d()
+#plot density distributions
+p1= ggplot(dat.sub, aes(x=Tb))+
+  geom_density(alpha=0.5, aes(fill=period, color=period))
 
 #---------
 ### SET UP DATA STRUCTURES
@@ -144,6 +199,22 @@ for(yr.k in 1:length(years) ){
     
       for(abs.k in 1:length(abs1) ){ #loop absorptivity
         
+        #ADD PLASTICITY
+        #https://doi.org/10.1093/icb/38.3.545
+        #Basal dorsal HW melanism
+        #use females, check units of basal dorsal HW melanism
+        
+        #hours light
+        light.h= c(16,10)
+        abs.m= c(.66,.67); abs.m= c(.717,.735)        
+        mod1= lm(abs.m~light.h)
+        abs.plast= function(light.hrs, abs) abs -0.003*light.hrs
+        
+        light.hrs=daylength(lat=46.8151, doy=pup.temps["Jpup", yr.k, gen.k])
+        
+        #absorptivity
+        abs= abs.plast(light.hrs, abs1[abs.k])
+        
         #get flight dates
         Jfl=pup.temps["Jadult",yr.k, gen.k]   
         
@@ -152,7 +223,7 @@ for(yr.k in 1:length(years) ){
                                   u = dat.sub$VLOC, 
                                   H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), 
                                   z = 30, D = 0.36, 
-                                  delta = 1.46, alpha = abs1[abs.k], r_g = 0.3)
+                                  delta = 1.46, alpha = abs, r_g = 0.3)
         
         #Flight probability
         dat.sub$fl.p= sapply(dat.sub$Tb.a, FUN=fl.ph)
@@ -160,10 +231,15 @@ for(yr.k in 1:length(years) ){
         #Egg viability
         dat.sub$egg.v= sapply(dat.sub$Tb.a, FUN=egg.viab)
       
+        #larval growth
+        #Use P. rapae curve
+        tpc.gaus= c(0.06340297, 30.92347862,  8.40085316)
+        dat.sub$larv.growth= sapply(dat.sub$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=tpc.gaus[2], a=tpc.gaus[3])
+        
        # daily values
         dat.day<- dat.sub %>%
           group_by(DOY) %>%
-          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb) )
+          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb), Gt.l = sum(larv.growth) )
         
         #flight day
         Jfl= pup.temps["Jadult", yr.k, gen.k]
@@ -186,6 +262,12 @@ for(yr.k in 1:length(years) ){
         FAT.ind= sapply(f.ind, function(x)  mean(dat.day$FAT[(x-2):(x+2)], na.rm=TRUE) )
         #AVERAGE TEMP
         T.ind= sapply(f.ind, function(x)  mean(dat.day$Tb.mean[(x-2):(x+2)], na.rm=TRUE) )
+        
+        #LARVAL GROWTH
+        ind.st= match(pup.temps["Jlarv",yr.k, gen.k], dat.day$DOY)
+        ind.fin=match(pup.temps["Jpup",yr.k, gen.k], dat.day$DOY)
+        
+        Gr.larv= sum(dat.day$Gt.l[ind.st:(ind.fin-1)], na.rm=TRUE)
         
         Eggs.ind= 60*PropFlight*OviRate*FAT.ind * ev.ind #account for Egg viability
         Eggs.ind_noViab= 60*PropFlight*OviRate*FAT.ind
@@ -217,6 +299,40 @@ for(yr.k in 1:length(years) ){
 #filename= paste("lambda1_",projs[proj.k],".rds",sep="")
 #saveRDS(Lambda, filename)
 #Lambda1 <- readRDS("mymodel.rds")
+
+#melt lambda array
+Lambda.l= melt(Lambda) 
+colnames(Lambda.l)=c("year","abs","gen","metric","value")
+Lambda.l$abs= abs1[Lambda.l$abs]
+Lambda.l$metric= c("lambda","fat","ev","tind")[Lambda.l$metric]
+
+#plot lambdas
+Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
+ggplot(Lambda.l, aes(x=abs, y=value, color=year, lty=gen, group=gyr))+geom_line()+
+  facet_wrap(~metric, nrow=1, scale="free_y")
+
+#test Tb function
+dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
+Ts= matrix(NA, nrow=nrow(dat.sub1), ncol=length(abs1))
+
+for(abs.k in 1:length(abs1) ){
+  Ts[,abs.k]= Tb_butterfly( T_a = dat.sub1$TALOC, Tg = dat.sub1$D0cm, Tg_sh = dat.sub1$D0cm, 
+                              u = dat.sub1$VLOC, 
+                              H_sdir = dat.sub1$SOLR*(1-df), H_sdif = dat.sub1$SOLR*(df), 
+                              z = 30, D = 0.36, 
+                              delta = 1.46, alpha = abs1[abs.k], r_g = 0.3) 
+}
+
+Ts= as.data.frame(Ts)
+colnames(Ts)= abs1
+
+Ts$hr= dat.sub1$TIME/60+12
+Ts$hr[Ts$hr>24]= Ts$hr[Ts$hr>24]-24
+Ts$TALOC= dat.sub1$TALOC
+
+#plot
+datm= melt(Ts, id=c("hr"), variable="abs" )
+ggplot(datm, aes(x=hr, y=value, color=abs, group=abs))+geom_line()
 
 #========================================
 

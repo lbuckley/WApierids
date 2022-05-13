@@ -120,8 +120,26 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   # Calculations
   
-  # total surface area cm^2 as area of cylinder without ends
+  #-----
+  #alpha=0.6 #Kingsolver 1983a
   
+  #https://www.jstor.org/stable/pdf/4217669.pdf
+  #S #area for radiation intercepted
+  wing.angle= 42/2*pi/180 #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  #radiation intercepted
+  OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
+  S= 2*OC*sin(wing.angle)
+  S= S*alpha #account for reflectance
+  
+  L= 0.915 #caclulate area for solar radiation using FWL, look for body length
+  
+  # convert length to area 
+  # how to calculate absorptivity from wing traits
+  #------
+  
+  A_sdir=S*L
+  
+  # total surface area cm^2 as area of cylinder without ends
   A_sttl <- pi * D * 2 
   
   #-----------------------------
@@ -136,7 +154,8 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
-  Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
+  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
+  #direct radiation already accounts for absorptivity
   
   #-----------------------------
   
@@ -247,8 +266,8 @@ wing.angle.d= 45 #angle from vertical
 #convert to radians
 wing.angle= pi/10   #wing.angle.d*pi/180
 
-#basking during flight initiation: Pontio (42degrees), Pieris (17 degrees)
-#basking during flight behavior: Pontio (48degrees), Pieris (23 degrees)
+#basking during flight initiation: Pontia (42degrees), Pieris (17 degrees)
+#basking during flight behavior: Pontia (48degrees), Pieris (23 degrees)
 
 #body radius
 r= 0.36/2 #cm CHECK
@@ -272,7 +291,36 @@ S=S*R #check reduction
 
 #S is wing area absorbing direct solar radiation
 
+#Recreate figure 3
+#Fig 3: maximum radiation intercepted (S/D), minimum wing length required to intercept maximum radiation (L/D) 
 
+n=c(0, 1, 2, 3, 4, 5)
+wing.a= pi/(2*(1+2*n))
+
+Ss= rep(NA, length(wing.a))
+Ls= rep(NA, length(wing.a))
+
+for(wing.k in 1: length(wing.a)){
+  wing.angle= wing.a[wing.k]
+  
+  #reflective wing length
+  Ls[wing.k]= (r+r/tan(wing.angle))*tan(2*wing.angle)/tan(wing.angle)+r
+  
+  #radiation intercepted
+  OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
+  Ss[wing.k]= 2*OC*sin(wing.angle)
+}
+
+D=0.48 #to produce Fig. 3 #0.36
+plot(wing.a*180/pi, Ss/D, type="l")
+points(wing.a*180/pi, Ls/D, type="l", lty="dashed")
+
+#Fig 5
+ref= c(0,.2,.4,.6,.8)
+plot(wing.a*180/pi, Ss/D, type="l", ylim=c(0,6))
+for (ref.k in 1:length(ref)){
+points(wing.a*180/pi, Ss*ref[ref.k]/D, type="l")
+}
 
 
 

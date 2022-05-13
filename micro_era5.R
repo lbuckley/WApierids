@@ -43,7 +43,7 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
 #years for data
 #if(loc.k==1) years=c(1989:1993, 2017:2021)
 #if(loc.k==2) years=c(2001:2005, 2017:2021)
-if(loc.k==1) years=c(1994:2017)
+if(loc.k==1) years=c(2000:2017)
 if(loc.k==2) years=c(2006:2016)
 
 #set microclim path
