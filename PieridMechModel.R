@@ -80,7 +80,7 @@ df=partition_solar_radiation("Erbs", kt=0.7)
 #butterfly temperature
 dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
                           H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
-                          delta = 1.46, alpha = 0.6, r_g = 0.3)
+                          delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=42)
 
 #plot Tb distributions
 ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+

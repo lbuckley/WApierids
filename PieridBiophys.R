@@ -25,6 +25,8 @@
 #' @param alpha \code{numeric} wing solar absorbtivity as a proportion. Range for Colias is 0.4 to 0.7.
 #'
 #' @param r_g \code{numeric} substrate solar reflectivity (proportion), see \insertCite{Kingsolver1983;textual}{TrenchR}.
+#' 
+#' @param wing_angle \code{numeric} wing angle (degree)
 #'
 #' @param shade \code{logical} indicator whether body temperature should be calculate in sun (\code{FALSE}) or shade (\code{TRUE}).
 #'
@@ -54,7 +56,7 @@
 #'     alpha = 0.6, 
 #'     r_g = 0.3)
 #'
-Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha, r_g = 0.3, shade = FALSE) {
+Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha, r_g = 0.3, wing_angle=42, shade = FALSE) {
   
   stopifnot(u >= 0, H_sdir >= 0, H_sdif >= 0, z >= -90, z <= 90, D > 0, delta >= 0, alpha >= 0, r_g >= 0, r_g <= 1, shade %in% c(FALSE, TRUE) )  
   
@@ -96,7 +98,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   sigma <- 5.67*10^-9 
   
-  # butterfly thermal emissivity
+  # butterfly thermal emmissivity
   
   Ep <- 1 
   
@@ -117,21 +119,16 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   v <- 15.68 * 10^-2  
   
-  
-  # Calculations
-  
   #-----
-  #alpha=0.6 #Kingsolver 1983a
-  
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
-  wing.angle= 42/2*pi/180 #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  wing.angle= wing_angle/2*pi/180 #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
   #radiation intercepted
   OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
   S= 2*OC*sin(wing.angle)
   S= S*alpha #account for reflectance
   
-  L= 0.915 #caclulate area for solar radiation using FWL, look for body length
+  L= 0.915 #calculate area for solar radiation using FWL, look for body length
   
   # convert length to area 
   # how to calculate absorptivity from wing traits
@@ -146,9 +143,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   #UPDATE RADIATION ESTIMATES
   
   # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
-  
-  A_sdir <- A_sttl / 2
-  A_sref <- A_sdir
+  A_sref <- 0 #CHECK A_sdir
   
   # RADIATIVE HEAT FLUx, mW
   
@@ -203,30 +198,31 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   # Shade Adjustments
   
-  if (shade) {
-    
-    # Calculate without basking by dividing areas by two
-    
-    A_sttl <- A_sttl / 2
-    
-    # RADIATIVE HEAT FLUX IN SHADE, mW
-    
-    A_sdir <- A_sttl/2
-    A_sref <- A_sdir
-    
-    # No direct radiation, only diffuse and reflected
-    
-    H_sdir_sh <- 0
-    H_sdif_sh <- H_sdif
-    H_sttl <- H_sdif + H_sdif_sh 
-    
-    Q_s <- alpha * A_sdir * H_sdir_sh / cos(z * pi / 180) + alpha * A_sref * H_sdif_sh + alpha * r_g * A_sref * H_sttl; 
-    
-    # Use shaded surface temperature
-    
-    Tg< - Tg_sh
-    
-  }
+  ## UPDATE SHADE
+  # if (shade) {
+  #   
+  #   # Calculate without basking by dividing areas by two
+  #   
+  #   A_sttl <- A_sttl / 2
+  #   
+  #   # RADIATIVE HEAT FLUX IN SHADE, mW
+  #   
+  #   A_sdir <- A_sttl/2
+  #   A_sref <- A_sdir
+  #   
+  #   # No direct radiation, only diffuse and reflected
+  #   
+  #   H_sdir_sh <- 0
+  #   H_sdif_sh <- H_sdif
+  #   H_sttl <- H_sdif + H_sdif_sh 
+  #   
+  #   Q_s <- alpha * A_sdir * H_sdir_sh / cos(z * pi / 180) + alpha * A_sref * H_sdif_sh + alpha * r_g * A_sref * H_sttl; 
+  #   
+  #   # Use shaded surface temperature
+  #   
+  #   Tg< - Tg_sh
+  #   
+  # }
   
   # Solution 
   
@@ -247,6 +243,9 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
 #Plasticity: https://doi.org/10.1093/icb/38.3.545
 #Kingsolver, J. G. 1987. Evolution and coadaptation of thermoregulatory behavior and wing pigmentation
 #pattern in pierid butterflies. Evolution 41:472—490.
+#P. occidentalis
+#Longday= 16 hr light; shortday= 10 hr light
+
 
 #----
 #Thermoregulatory significance of wing melanization in Pieris butterflies: Physics, posture, and pattern
@@ -315,6 +314,11 @@ D=0.48 #to produce Fig. 3 #0.36
 plot(wing.a*180/pi, Ss/D, type="l")
 points(wing.a*180/pi, Ls/D, type="l", lty="dashed")
 
+#plot lengths
+plot(wing.a*180/pi, Ss, type="l")
+points(wing.a*180/pi, Ls, type="l", lty="dashed")
+
+#-----
 #Fig 5
 ref= c(0,.2,.4,.6,.8)
 plot(wing.a*180/pi, Ss/D, type="l", ylim=c(0,6))
@@ -322,8 +326,16 @@ for (ref.k in 1:length(ref)){
 points(wing.a*180/pi, Ss*ref[ref.k]/D, type="l")
 }
 
+#-----
+#Fig 7
+wing.a= seq(5,80,2)
+Tbs= rep(NA, length(wing.a))
 
-
-
-
-
+for(wing.k in 1: length(wing.a)){
+  Tbs[wing.k]= Tb_butterfly( T_a = 20, Tg = 20, Tg_sh = 20, u = 1, 
+                            H_sdir = 800, H_sdif = 200, z = 30, D = 0.36, 
+                            delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=wing.a[wing.k])
+}
+  
+plot(wing.a,Tbs-20, xlab="Wing angle (degrees)", type="l")
+  
