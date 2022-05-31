@@ -6,6 +6,7 @@
 library(truncnorm)
 library(dplyr)
 library(TrenchR)
+library(ggplot2)
 
 #LOAD PARAMETERS
 #Demographic parameters
@@ -39,7 +40,7 @@ locations= c("Corfu","Seattle")
 loc.k=1
 
 #years for data
-if(loc.k==1) years=c(1989:1993, 2017:2021)
+if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(2001:2005, 2017:2021)
 
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
@@ -47,8 +48,8 @@ setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro
 for(yr.k in 1:10){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
   dat$year= years[yr.k]
-  if(yr.k<6)dat$period="initial"
-  if(yr.k>5)dat$period="recent"
+  if(years[yr.k]<2000)dat$period="initial"
+  if(years[yr.k]>=2000)dat$period="recent"
   
   if(yr.k==1) dat.all=dat
   if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -105,7 +106,7 @@ pup.temps<-array(NA, dim=c(12, length(years),5)) #3 generations
 dimnames(pup.temps)[[1]]= c("stat","yr","gen","Jlarv", "Jpup","Jadult","Tlarv","Tpup","Tad","Tlarv_fixed","Tpup_fixed","Tad_fixed")
 
 #LOOP YEARS
-years=c(1989:1993, 2017:2021)
+years=c(1989:2021)
 
 for(yr.k in 1:length(years) ){
   print(yr.k)

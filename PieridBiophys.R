@@ -122,11 +122,42 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   #-----
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
-  wing.angle= wing_angle/2*pi/180 #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  wing.angle= wing_angle*pi/180   #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  
+  #calculate values for integers above and below then interpolate
+  n=c(5,4,3,2,1,0)
+  wing.as= pi/(2*(1+2*n))
+  #find ns below and above
+
+  diffs= wing.angle - wing.as
+  if(min(diffs)<0 & max(diffs)>0){
+  low.a=  wing.as[ which(diffs== min(diffs[diffs>0]) )]
+  high.a= wing.as[ which(diffs== max(diffs[diffs<0]) )]
+
   #radiation intercepted
-  OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
-  S= 2*OC*sin(wing.angle)
-  S= S*alpha #account for reflectance
+  OC_low= (r+r/tan(low.a))*(1+tan(2*low.a)/tan(low.a))
+  S_low= 2*OC_low*sin(low.a)
+  OC_high= (r+r/tan(high.a))*(1+tan(2*high.a)/tan(high.a))
+  S_high= 2*OC_high*sin(high.a)
+
+  #interpolate
+  S= S_low+((wing.angle-low.a)/(high.a-low.a))*(S_high-S_low)
+  }
+
+  if(max(diffs)<0){
+    OC= (r+r/tan(max(wing.as)))*(1+tan(2*max(wing.as))/tan(max(wing.as)))
+    S= 2*OC*sin(max(wing.as))
+  }
+  if(min(diffs)>0){
+    O= (r+r/tan(min(wing.as)))*(1+tan(2*min(wing.as))/tan(min(wing.as)))
+    S= 2*OC*sin(min(wing.as))
+  }
+  if(min(abs(diffs))==0){
+    OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
+    S= 2*OC*sin(wing.angle)
+  }
+  
+  S= S*alpha #account for reflectence
   
   L= 0.915 #calculate area for solar radiation using FWL, look for body length
   
@@ -308,10 +339,10 @@ for(wing.k in 1: length(wing.a)){
   #radiation intercepted
   OC= (r+r/tan(wing.angle))*(1+tan(2*wing.angle)/tan(wing.angle))
   Ss[wing.k]= 2*OC*sin(wing.angle)
-}
+  }
 
 D=0.48 #to produce Fig. 3 #0.36
-plot(wing.a*180/pi, Ss/D, type="l")
+plot(wing.a*180/pi, Ss/D, type="b")
 points(wing.a*180/pi, Ls/D, type="l", lty="dashed")
 
 #plot lengths
@@ -328,7 +359,11 @@ points(wing.a*180/pi, Ss*ref[ref.k]/D, type="l")
 
 #-----
 #Fig 7
-wing.a= seq(5,80,2)
+wing.a= seq(80,5,-2)
+
+n=c(0, 1, 2, 3, 4, 5)
+wing.a= pi/(2*(1+2*n))*180/pi
+
 Tbs= rep(NA, length(wing.a))
 
 for(wing.k in 1: length(wing.a)){
@@ -337,5 +372,11 @@ for(wing.k in 1: length(wing.a)){
                             delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=wing.a[wing.k])
 }
   
-plot(wing.a,Tbs-20, xlab="Wing angle (degrees)", type="l")
-  
+plot(wing.a,Tbs-20, xlab="Wing angle (degrees)", type="b")
+
+T_a = 20; Tg = 20; Tg_sh = 20; u = 1; 
+H_sdir = 800; H_sdif = 200; z = 30; D = 0.36; 
+delta = 1.46; alpha = 0.6; r_g = 0.3; wing_angle=wing.a[1]
+
+
+
