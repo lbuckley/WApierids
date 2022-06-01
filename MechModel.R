@@ -134,26 +134,27 @@ preds <- data.frame(temp = seq(min(d$temp), max(d$temp), length.out = 100))
 preds <- broom::augment(mod, newdata = preds)
 
 #extract coefficients
-#tpc.beta= coef(mod)
+tpc.beta= coef(mod)
 #beta_2012(temp, a, b, c, d, e)
 
 #--------
 #plot temperature distributions
 
 locations= c("Corfu","Seattle")
-loc.k=1
+loc.k=2
 
 #years for data
-if(loc.k==1) years=c(1989:1993, 2017:2021)
-if(loc.k==2) years=c(2001:2005, 2017:2021)
+if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
+if(loc.k==2) years=c(2001:2007, 2009:2021) #2001:2005, 2017:2021
 
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
 #combine data
-for(yr.k in 1:10){
+for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
 dat$year= years[yr.k]
-if(yr.k<6)dat$period="initial"
-if(yr.k>5)dat$period="recent"
+if(years[yr.k]<2000)dat$period="initial"
+if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
+if(years[yr.k]>=2010)dat$period="recent"
 
 if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -185,7 +186,7 @@ p1= ggplot(dat.day, aes(x=d.hr, y=TALOC, color=year))+
 
 #plot density distributions
 p1= ggplot(dat.day, aes(x=TALOC))+
-  geom_density(alpha=0.5, aes(fill=period, color=period))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   xlab("Day of year")+
   ylab("Temperature at plant height (°C)" )+
@@ -222,7 +223,11 @@ p1= ggplot(dat.day, aes(x=perf))+
 #ylab("Consumption or growth rate (g/h/h)" )
 
 #Count of NAs above CTmax of TPC
-table( is.nan(dat.day$perf), dat.day$period)
+tab= table( is.nan(dat.day$perf), dat.day$period)
+prop.CTmax= c( #tab["TRUE","initial"]/(tab["FALSE","initial"]+tab["TRUE","initial"]),
+               tab["TRUE","middle"]/(tab["FALSE","middle"]+tab["TRUE","middle"]),
+               tab["TRUE","recent"]/(tab["FALSE","recent"]+tab["TRUE","recent"]))
+
 #performance means
 dat.day1= na.omit(dat.day)
 aggregate(dat.day1$perf, list(dat.day1$period), FUN=mean)
@@ -255,7 +260,7 @@ tpc.gaus= coef(mod)
 temps=1:70
 
 params= expand.grid(temp = seq(0,70,2), topt = seq(20, 40, 1) )
-
+  
 gauss.mat= function(pmat,rmax,a) gaussian_1987(pmat[1], rmax, pmat[2], a)
 
 params$perf= apply(params, MARGIN=1, FUN=gauss.mat, rmax=tpc.gaus[1], a=tpc.gaus[3])
@@ -282,9 +287,6 @@ names(perfs1)=c("year","period","seas", 20:40)
 perfs1$B= NA
 
 for(row.k in 1: nrow(perfs1)){
-  if(row.k==1) plot(20:40,perfs1[row.k,4:24], type="l")
-  if(row.k>1) points(20:40,perfs1[row.k,4:24], type="l")
-  
   #put into format for regression
   perfs2= as.data.frame(cbind(20:40, t(perfs1[row.k,4:24]) ))
   colnames(perfs2)=c("topt","perf")
@@ -295,11 +297,18 @@ for(row.k in 1: nrow(perfs1)){
   perfs1$curve[row.k]= coefficients(mod1)[3]
 } 
 
-#plot
+#plot fitness curves through time
+perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
+names(perfs.l)[4:5]=c("temperature","performance")
+perfs.l$temperature= as.numeric(perfs.l$temperature)
+
+ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
+  facet_wrap(~seas) +scale_color_viridis_c()
+
+#plot selection gradients through time
 ggplot(perfs1, aes(x=year, y=B, color=seas, lty=period))+geom_line()
 ggplot(perfs1, aes(x=year, y=curve, color=seas, lty=period))+geom_line()
 
-#add in non-linear selection regression?
 #account for temperatures exceeding tpcs
 
 ##P. rapae 1999 selection data
@@ -322,6 +331,8 @@ ggplot(pr1, aes(x=temperature, y=value, color=UniID, group=UniID))+geom_line()+
   facet_wrap(~Mom)
 
 #fit TPC
+#load FitGaussian
+
 fitG =
   function(x,y,mu,sig,scale){
     
@@ -398,6 +409,8 @@ ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=Tb))+
   geom_density(alpha=0.5, aes(fill=period, color=period))
+
+#SEE PieridMechModel.R
 
 #estimate selection on survival and fecundity from mechanistic model
 #Fig 6: pv, hb, fwl

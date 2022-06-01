@@ -1,5 +1,4 @@
 ## TO DO
-# Check biophys model
 # Add size into fitness estimates 
 #convert from wing traits to absorptivity
 
@@ -45,11 +44,12 @@ if(loc.k==2) years=c(2001:2005, 2017:2021)
 
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
 #combine data
-for(yr.k in 1:10){
+for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
   dat$year= years[yr.k]
   if(years[yr.k]<2000)dat$period="initial"
-  if(years[yr.k]>=2000)dat$period="recent"
+  if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
+  if(years[yr.k]>=2010)dat$period="recent"
   
   if(yr.k==1) dat.all=dat
   if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -59,11 +59,21 @@ for(yr.k in 1:10){
 dat.day= subset(dat.all, dat.all$TIME>260)
 dat.day= subset(dat.all, dat.all$TIME<1080)
 
+#divide by periods, 91 to 274
+#April to May
+dat.day$seas="AprMay"
+#June to July
+dat.day$seas[dat.day$DOY>151]="JunJul"
+#August to September
+dat.day$seas[dat.day$DOY>212]="AugSep"
+#order
+dat.day$seas= factor(dat.day$seas, levels=c("AprMay","JunJul","AugSep") )
+
 #combine doy and time
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
 #subset columns
-dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period")]
+dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period","seas")]
 #TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
 #TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
 #VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
@@ -84,10 +94,11 @@ dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.su
                           delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=42)
 
 #plot Tb distributions
-ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+
+ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
   theme_bw()+scale_color_viridis_d()
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=Tb))+
+  facet_wrap(~seas)+
   geom_density(alpha=0.5, aes(fill=period, color=period))
 
 #---------
@@ -101,7 +112,7 @@ dimnames(Lambda)[[1]]<-years
 dimnames(Lambda)[[3]]<-c("gen1","gen2","gen3","gen4","gen5")
 
 #Matrix for pupual temps
-pup.temps<-array(NA, dim=c(12, length(years),5)) #3 generations 
+pup.temps<-array(NA, dim=c(12, length(years),5)) #5 generations 
 #Add names
 dimnames(pup.temps)[[1]]= c("stat","yr","gen","Jlarv", "Jpup","Jadult","Tlarv","Tpup","Tad","Tlarv_fixed","Tpup_fixed","Tad_fixed")
 
@@ -310,7 +321,7 @@ Lambda.l$metric= c("lambda","fat","ev","tind")[Lambda.l$metric]
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 ggplot(Lambda.l, aes(x=abs, y=value, color=year, lty=gen, group=gyr))+geom_line()+
-  facet_wrap(~metric, nrow=1, scale="free_y")
+  facet_wrap(~metric, nrow=1, scale="free_y") +scale_color_viridis_c()
 
 #test Tb function
 dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
@@ -344,21 +355,24 @@ a= seq(0.4,0.7,0.05)
 a.fit= as.data.frame(seq(0.4,0.7,0.01))
 names(a.fit)="a"
 
-#Read lambdas and pupal temps
-#Lambda[years, sites, abs, gen, metrics: Lambda, FAT,Egg Viability]
-Lambda <- readRDS( paste("lambda1_",projs[proj.k],".rds", sep="") )
-pup.temps <- readRDS( paste("PupTemps_",projs[proj.k],".rds", sep="") )
+##Read lambdas and pupal temps
+##Lambda[years, sites, abs, gen, metrics: Lambda, FAT,Egg Viability]
+#Lambda <- readRDS( paste("lambda1_",projs[proj.k],".rds", sep="") )
+#pup.temps <- readRDS( paste("PupTemps_",projs[proj.k],".rds", sep="") )
 
 #Find years with calculations
-counts= rowSums(is.na(pup.temps[6,,,1]))
+counts= rowSums(is.na(pup.temps[,,1]))
 
 inds=1:150
-years= years[inds]
+ngens=5
 
 #==============================================
 #Calculate optimal absorptivity
 
 abs.opt= array(NA, dim=c(length(years), 5))  
+
+lambda.fit=function(x, a=a) if(sum(is.na(x))==0) lm(x~a+I(a^2))$coefficients
+lambda.max=function(x, a=a) if(!is.null(x))a.fit$a[which.max(predict.lm(x, a.fit))] 
 
 for(yr.k in 1:length(years)) {
   
@@ -368,59 +382,50 @@ for(yr.k in 1:length(years)) {
     Lambda.yr.gen= Lambda[yr.k, , gen.k, ]
     
     #Extract temperatures
-    Tp= pup.temps["Tpup",yr.k, , gen.k]
+    Tp= pup.temps["Tpup",yr.k, gen.k]
     
     #--------------------------
     #Fitness models
     
-    if(!all(is.na(Lambda.yr.gen[,,1]))){ #check has data
+    if(!all(is.na(Lambda.yr.gen[,1]))){ #check has data
       
+      fit= lm(Lambda.yr.gen[,1]~a+I(a^2))
       #Estimate fitness functions across cells
-      fit= array(unlist(apply(Lambda.yr.gen[,,1], 1, function(x) if(sum(is.na(x))==0) lm(x~a+I(a^2))$coefficients)), dim=c(3, nrow(pts.sel)) )
-      #Save model
-      fit.mod= apply(Lambda.yr.gen[,,1], 1, function(x) if(sum(is.na(x))==0) lm(x~a+I(a^2)) )
+      fit.mod= fit$coefficients
       
       #find maxima lambda
-      abs.opt[yr.k,,gen.k]= as.vector(array(unlist(sapply(fit.mod, function(x) if(!is.null(x))a.fit$a[which.max(predict.lm(x, a.fit))] )), dim=c(1, nrow(pts.sel)) ) )
+      abs.opt[yr.k,gen.k]= a.fit$a[which.max(predict.lm(fit, a.fit))]
       
     } #end check data
   } #end gen loop
 } #end year loop
 
 #save optimal Alphas
-setwd("/Volumes/GoogleDrive/My\ Drive/Buckley/Work/ColiasBiogeog/OUT/")
-
 #saveRDS(abs.opt, paste("abs.opt_",projs[proj.k],".rds", sep=""))
-abs.opt <- readRDS( paste("abs.opt_",projs[proj.k],".rds", sep="") )
+#abs.opt <- readRDS( paste("abs.opt_",projs[proj.k],".rds", sep="") )
 
 #***************************************
 #compute initial AbsMean 
+#UPDATE
 int_elev = 0.4226; slope_elev = 0.06517
 Tmid = 20; slope_plast = -0.0083  #if Tmid=22.5, -0.006667;
 
-elev_km= pts.sel$elev/1000
-abs.init <- int_elev+ slope_elev*elev_km
-
 ## NEED TO CALC ABS.OPT
-#initialize with optimum value yrs 1950-1960, across generations
-abs.init2 <- rowMeans(colMeans(abs.opt[1:10,, ], na.rm=TRUE))
-
-plot(elev_km, abs.init, ylim=range(0.5, 0.7), type="l")
-points(elev_km, abs.init2)
-
+#initialize with optimum value across fir ten years, across generations
+abs.init2 <- mean(abs.opt[1:10, ], na.rm=TRUE)
 #Use optimal
 abs.init<- abs.init2
 
 #-----------------------
 #Save values
-abs.mean= array(NA, dim=c(length(years),nrow(pts.sel), 3, 5,5))  #dims: yr.k, cell.k, gen.k, scen.k:no plast, plast, only plast, metrics: abssample, absmid, rn, Babsmid, Brn)
-abs.mean[1,,1,,2]= abs.init
-abs.mean[1,,1,,3]= slope_plast
-dimnames(abs.mean)[[5]]= c("abssample", "absmid", "rn", "Babsmid", "Brn") 
+abs.mean= array(NA, dim=c(length(years), 5, 5,5))  #dims: yr.k, gen.k, scen.k:no plast, plast, only plast, metrics: abssample, absmid, rn, Babsmid, Brn)
+abs.mean[1,,1,2]= abs.init
+abs.mean[1,,1,3]= slope_plast
+dimnames(abs.mean)[[4]]= c("abssample", "absmid", "rn", "Babsmid", "Brn") 
 
-lambda.mean= array(NA, dim=c(length(years),nrow(pts.sel), 3, 5)) #dims: yr.k, cell.k, gen.k, scen.k:no plast, plast, only plast)
+lambda.mean= array(NA, dim=c(length(years),5, 5)) #dims: yr.k, gen.k, scen.k:no plast, plast, only plast)
 
-BetaRN= rep(NA, nrow(pts.sel))
+#BetaRN= rep(NA, nrow(pts.sel))
 #-------------------------------
 scen.mat= rbind(c(0,0,0),c(1,0,0),c(0,1,0),c(1,1,0),c(1,1,1) )
 colnames(scen.mat)= c("plast","evol","evolRN"  )
@@ -432,23 +437,20 @@ for(yr.k in 1:length(years)) {
     
     BetaAbsmid=NA
     
-    Lambda.yr.gen= Lambda[yr.k, , , gen.k, ]
+    Lambda.yr.gen= Lambda[yr.k, , gen.k, ]
     
     #determine those completing generations
-    comp.gen= which(pup.temps["Jadult",yr.k,,gen.k]<243)
-    nocomp.gen= which(pup.temps["Jadult",yr.k,,gen.k]==243)
+    comp.gen= which(pup.temps["Jadult",yr.k,gen.k]<243)
+    nocomp.gen= which(pup.temps["Jadult",yr.k,gen.k]==243)
     #set those not completing generations to NA
-    if(length(nocomp.gen)>0) Lambda.yr.gen[nocomp.gen,,]=NA
+    if(length(nocomp.gen)>0) Lambda.yr.gen[nocomp.gen,]=NA
     
-    #account for NA lambdas
-    l.no.na= which(!is.na(Lambda.yr.gen[,1,1]))
-    
-    if(length(l.no.na)>0){ #CHECK LAMBDA DATA EXISTS
-      
       #Extract temperatures
-      Tp= pup.temps["Tpup",yr.k,l.no.na, gen.k]
+      Tp= pup.temps["Tpup",yr.k, gen.k]
       
       #--------------------------
+      ##UPDATE TO HERE
+      
       #Fitness models
       #Estimate fitness functions across cells
       fit= array(unlist(apply(Lambda.yr.gen[l.no.na,,1], 1, function(x) if(sum(is.na(x))==0) lm(x~a+I(a^2))$coefficients)), dim=c(3, nrow(pts.sel)) )
