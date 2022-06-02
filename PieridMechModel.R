@@ -623,4 +623,19 @@ setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/out/")
 
 #Not much evolution
 
+#lambda.mean[yr.k,gen.k,scen.k]
+#abs.mean[yr.k,gen.k,scen.k,"abssample"]
+
+abs.l=melt(abs.mean[,,3,"abssample"])
+names(abs.l)[1:2]=c("year","gen")
+
+ggplot(abs.l, aes(x=year, y=value, color=gen, group=gen))+geom_line()+
+  scale_color_viridis_c()
+
+lambda.l=melt(lambda.mean[,,3])
+names(lambda.l)[1:2]=c("year","gen")
+
+ggplot(lambda.l, aes(x=year, y=value, color=gen, group=gen))+geom_line()+
+  scale_color_viridis_c()
+
 
