@@ -6,6 +6,7 @@ library(truncnorm)
 library(dplyr)
 library(TrenchR)
 library(ggplot2)
+library(MCMCglmm)
 
 #LOAD PARAMETERS
 #Demographic parameters
@@ -410,6 +411,11 @@ for(yr.k in 1:length(years)) {
 int_elev = 0.4226; slope_elev = 0.06517
 Tmid = 20; slope_plast = -0.0083  #if Tmid=22.5, -0.006667;
 
+h2= 0.4
+#abs.mean=0.55
+abs.sd= 0.062
+rn.sd= 0.0083
+
 ## NEED TO CALC ABS.OPT
 #initialize with optimum value across fir ten years, across generations
 abs.init2 <- mean(abs.opt[1:10, ], na.rm=TRUE)
@@ -419,8 +425,8 @@ abs.init<- abs.init2
 #-----------------------
 #Save values
 abs.mean= array(NA, dim=c(length(years), 5, 5,5))  #dims: yr.k, gen.k, scen.k:no plast, plast, only plast, metrics: abssample, absmid, rn, Babsmid, Brn)
-abs.mean[1,,1,2]= abs.init
-abs.mean[1,,1,3]= slope_plast
+abs.mean[1,,,2]= abs.init
+abs.mean[1,,,3]= slope_plast
 dimnames(abs.mean)[[4]]= c("abssample", "absmid", "rn", "Babsmid", "Brn") 
 
 lambda.mean= array(NA, dim=c(length(years),5, 5)) #dims: yr.k, gen.k, scen.k:no plast, plast, only plast)
@@ -448,36 +454,29 @@ for(yr.k in 1:length(years)) {
       #Extract temperatures
       Tp= pup.temps["Tpup",yr.k, gen.k]
       
-      #--------------------------
-      ##UPDATE TO HERE
-      
       #Fitness models
+      fit= lm(Lambda.yr.gen[,1]~a+I(a^2))
       #Estimate fitness functions across cells
-      fit= array(unlist(apply(Lambda.yr.gen[l.no.na,,1], 1, function(x) if(sum(is.na(x))==0) lm(x~a+I(a^2))$coefficients)), dim=c(3, nrow(pts.sel)) )
-      #Save model
-      fit.mod= apply(Lambda.yr.gen[l.no.na,,1], 1, function(x) if(sum(is.na(x))==0) lm(x~a+I(a^2)) )
+      fit.mod= fit$coefficients
       
       #find maxima lambda
-      abs.max= as.vector(array(unlist(sapply(fit.mod, function(x) if(!is.null(x))a.fit$a[which.max(predict.lm(x, a.fit))] )), dim=c(1, length(l.no.na)) ) )
+      abs.max= a.fit$a[which.max(predict.lm(fit, a.fit))]
       
       #-------------------------
       # LOOP PLASTICITY SCENARIOS
       for(scen.k in 1:5){ #plast0evol0, plast1evol0, plast0evol1, plast1evol1, plast1evol1rnevol1
         
-        if(scen.mat[scen.k,1]==1) rn.mean1= rep(slope_plast, length(l.no.na) )
-        if(scen.mat[scen.k,1]==0) rn.mean1= rep(0, length(l.no.na) )
-        if(scen.k==5 & gen.k==1) rn.mean1= abs.mean[yr.k,l.no.na,gen.k,scen.k,"rn"]
-        if(scen.k==5 & gen.k>1) rn.mean1= abs.mean[yr.k,l.no.na,gen.k-1,scen.k,"rn"]
+        if(scen.mat[scen.k,1]==1) rn.mean1= slope_plast
+        if(scen.mat[scen.k,1]==0) rn.mean1= 0
+        if(scen.k==5 & gen.k==1) rn.mean1= abs.mean[yr.k,gen.k,scen.k,"rn"]
+        if(scen.k==5 & gen.k>1) rn.mean1= abs.mean[yr.k,gen.k-1,scen.k,"rn"]
         
-        if(gen.k==1) abs.mean1= abs.mean[yr.k,l.no.na,gen.k,scen.k,"absmid"]
-        if(gen.k>1) abs.mean1= abs.mean[yr.k,l.no.na,gen.k-1,scen.k,"absmid"]
+        if(gen.k==1) abs.mean1= abs.mean[yr.k,gen.k,scen.k,"absmid"]
+        if(gen.k>1) abs.mean1= abs.mean[yr.k,gen.k-1,scen.k,"absmid"]
         
         #change NA values to negative values 
         abs.na.inds= abs.mean1[which( is.na(abs.mean1))]
         rn.na.inds= rn.mean1[which( is.na(rn.mean1))]
-        
-        #   #check abs mean
-        #    if(!all(is.na(abs.mean1))){
         
         abs.mean1[which( is.na(abs.mean1))]= -10 
         rn.mean1[which( is.na(rn.mean1))]= -1000
@@ -491,109 +490,101 @@ for(yr.k in 1:length(years)) {
         abs.plast <- abs.sample + rn.sample*(Tp-Tmid)
         #abs.mean[yr.k,,gen.k] <- abs.mean[yr.k,,gen.k]+abs.plast
         
-        ##calculate fitness
+        ##calculate fitness 
         #use fitness function to predict Lambda for each individual
         #extract coefficients and calculate across abs samples
-        fit.sample= foreach(cell.k=1:length(l.no.na), .combine="cbind") %do% {
-          sapply(abs.plast[,cell.k], function(x) if( sum(is.na(fit[,cell.k]))==0) fit[1,cell.k]+x*fit[2,cell.k]+x^2*fit[3,cell.k] )
-        } 
+        fit.sample=  sapply(abs.plast[,1], function(x) fit.mod[1]+x*fit.mod[2]+x^2*fit.mod[3] )
+       
         #Fit.pred <- eval.fd(Abs.sample,Fitmod.year.gen) ### for spline
         
         #standardize to relative fitness and centered on trait mean
-        fit.mean= colMeans(fit.sample)
-        lambda.mean[yr.k,l.no.na,gen.k,scen.k]=fit.mean
+        fit.mean= mean(fit.sample)
+        lambda.mean[yr.k,gen.k,scen.k]=fit.mean
         rel.fit= fit.sample/fit.mean
         
         absmid.dif= t( apply(abs.sample,1,'-',abs.mean1) )
         rn.dif= t( apply(rn.sample,1,'-',rn.mean1) )
         
-        R2selnAbsmid<- rep(0, length(l.no.na) ) #No response to selection if no evolution
-        R2selnRN<- rep(0, length(l.no.na) ) 
+        R2selnAbsmid<- 0 #No response to selection if no evolution
+        R2selnRN<- 0 
         #------------
-        if(scen.k<5 & scen.mat[scen.k,2]==1){    
+        if(scen.k<5 & scen.mat[scen.k,2]==1){
           ##selection analysis
-          sel.fit= sapply(1:length(l.no.na), function(x) if(sum(is.na(x))==0) lm(rel.fit[,x]~absmid.dif[,x] +I(absmid.dif[,x]^2))$coefficients)
-          
-          #Save model
-          sel.mod= sapply(1:length(l.no.na), function(x) if(sum(is.na(x))==0) lm(rel.fit[,x]~absmid.dif[,x] +I(absmid.dif[,x]^2) ) )
-          ## EXTRACT SUMMARY?:   fitr2 <- summary(lm.fitmod.yr)$r.squared
+          rel.fit= as.vector(rel.fit)
+          absmid.dif= as.vector(absmid.dif)
+          sel.fit= lm(rel.fit~absmid.dif +I(absmid.dif^2))$coefficients
+          sel.mod= lm(rel.fit~absmid.dif +I(absmid.dif^2))
           
           #Response to selection
-          BetaAbsmid <-sel.fit[2,]
+          BetaAbsmid <-sel.fit[2]
           R2selnAbsmid <- h2*(abs.sd^2)*BetaAbsmid
         } #end scen.k<5
         #------------
         if(scen.k==5){    
           ##selection analysis
-          sel.fit= sapply(1:length(l.no.na), function(x) if(sum(is.na(x))==0) lm(rel.fit[,x]~absmid.dif[,x] + rn.dif[,x] +I(absmid.dif[,x]^2) +I(rn.dif[,x]^2)+ rn.dif[,x]*absmid.dif[,x])$coefficients)
-          
-          #Save model
-          sel.mod= sapply(1:length(l.no.na), function(x) if(sum(is.na(x))==0) lm(rel.fit[,x]~absmid.dif[,x] + rn.dif[,x] +I(absmid.dif[,x]^2) +I(rn.dif[,x]^2)+ rn.dif[,x]*absmid.dif[,x]) )
-          ## EXTRACT SUMMARY?:   fitr2 <- summary(lm.fitmod.yr)$r.squared
+          rel.fit= as.vector(rel.fit)
+          absmid.dif= as.vector(absmid.dif)
+          sel.fit= lm(rel.fit~absmid.dif +I(absmid.dif^2))$coefficients
+          sel.mod= lm(rel.fit~absmid.dif +I(absmid.dif^2))
           
           #Response to selection
-          BetaAbsmid <-sel.fit[2,]
+          BetaAbsmid <-sel.fit[2]
           R2selnAbsmid <- h2*(abs.sd^2)*BetaAbsmid
           
-          BetaRN <- sel.fit[3,] 
+          BetaRN <- sel.fit[3] 
           R2selnRN <- h2*(rn.sd^2)*BetaRN
         } #end scen.k==5
         #-------------
         
         #Response to selection
-        if(gen.k<3) {
-          abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"absmid"]= abs.mean[yr.k,l.no.na,gen.k,scen.k,"absmid"] + R2selnAbsmid
-          #Constain abs
-          abs.mean[yr.k,which(abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"absmid"]>0.7),gen.k+1,scen.k,"absmid"]=0.7
-          abs.mean[yr.k,which(abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"absmid"]<0.4),gen.k+1,scen.k,"absmid"]=0.4   
+        if(gen.k<5) {
+          abs.mean[yr.k,gen.k+1,scen.k,"absmid"]= abs.mean[yr.k,gen.k,scen.k,"absmid"] + R2selnAbsmid
+          #Constrain abs
+          if(abs.mean[yr.k,gen.k+1,scen.k,"absmid"]>0.7) abs.mean[yr.k,gen.k+1,scen.k,"absmid"]=0.7
+          if(abs.mean[yr.k,gen.k+1,scen.k,"absmid"]<0.4) abs.mean[yr.k,gen.k+1,scen.k,"absmid"]=0.4
           
           #rn evolution
           if(scen.k==5){
-            abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"rn"]= abs.mean[yr.k,l.no.na,gen.k,scen.k,"rn"] + R2selnRN
-            #Constain abs
-            abs.mean[yr.k,which(abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"rn"]>1),gen.k+1,scen.k,"rn"]= 1
-            abs.mean[yr.k,which(abs.mean[yr.k,l.no.na,gen.k+1,scen.k,"rn"]< -1),gen.k+1,scen.k,"rn"]= -1
+            abs.mean[yr.k,gen.k+1,scen.k,"rn"]= abs.mean[yr.k,gen.k,scen.k,"rn"] + R2selnRN
+            #Constrain abs
+            if(abs.mean[yr.k,gen.k+1,scen.k,"rn"]>1) abs.mean[yr.k,gen.k+1,scen.k,"rn"]=1
+            if(abs.mean[yr.k,gen.k+1,scen.k,"rn"]< -1) abs.mean[yr.k,gen.k+1,scen.k,"rn"]=-1
           }
         } #end evolutionary scenarios
         
-        #Account for missing lambdas
-        if(length(abs.na.inds)>0)  R2selnAbsmid[abs.na.inds]=NA    
-        if(length(rn.na.inds)>0)   R2selnRN[rn.na.inds]=NA  
-        
         #also put in next year's slot
-        abs.mean[yr.k+1,l.no.na,1,scen.k,"absmid"]= abs.mean[yr.k,l.no.na,gen.k,scen.k,"absmid"] + R2selnAbsmid
-        #Constain abs
-        abs.mean[yr.k+1,which(abs.mean[yr.k+1,l.no.na,1,scen.k,"absmid"]>0.7),1,scen.k,"absmid"]=0.7
-        abs.mean[yr.k+1,which(abs.mean[yr.k+1,l.no.na,1,scen.k,"absmid"]<0.4),1,scen.k,"absmid"]=0.4 
+        if(yr.k<length(years)-1){
+        abs.mean[yr.k+1,1,scen.k,"absmid"]= abs.mean[yr.k,gen.k,scen.k,"absmid"] + R2selnAbsmid
+        #Constrain abs
+        if(abs.mean[yr.k+1,1,scen.k,"absmid"]>0.7) abs.mean[yr.k+1,1,scen.k,"absmid"]=0.7
+        if(abs.mean[yr.k+1,1,scen.k,"absmid"]<0.4) abs.mean[yr.k+1,1,scen.k,"absmid"]=0.4
         
-        if(scen.k==5) abs.mean[yr.k+1,l.no.na,1,scen.k,"rn"]= abs.mean[yr.k,l.no.na,gen.k,scen.k,"rn"] + R2selnRN
-        #Constain abs
-        abs.mean[yr.k+1,which(abs.mean[yr.k+1,l.no.na,gen.k,scen.k,"rn"]>1),1,scen.k,"rn"]= 1
-        abs.mean[yr.k+1,which(abs.mean[yr.k+1,l.no.na,gen.k,scen.k,"rn"]< -1),1,scen.k,"rn"]= -1
+        if(scen.k==5) {abs.mean[yr.k+1,1,scen.k,"rn"]= abs.mean[yr.k,gen.k,scen.k,"rn"] + R2selnRN
+        #Constrain abs
+        if(abs.mean[yr.k+1,1,scen.k,"rn"]>1) abs.mean[yr.k+1,1,scen.k,"rn"]=1
+        if(abs.mean[yr.k+1,1,scen.k,"rn"]< -1) abs.mean[yr.k+1,1,scen.k,"rn"]=-1}
+        }
         
         #Store other metrics
-        abs.mean[yr.k,l.no.na,gen.k,scen.k,"abssample"]= colMeans(abs.plast)
-        abs.mean[yr.k,l.no.na,gen.k,scen.k,"Babsmid"]= BetaAbsmid
-        if(scen.k==5) abs.mean[yr.k,l.no.na,gen.k,scen.k,"Brn"]= BetaRN
+        abs.mean[yr.k,gen.k,scen.k,"abssample"]= colMeans(abs.plast)
+        abs.mean[yr.k,gen.k,scen.k,"Babsmid"]= BetaAbsmid
+        if(scen.k==5) abs.mean[yr.k,gen.k,scen.k,"Brn"]= BetaRN
         
       } #end scen loop
       
-    } #Check lambda values exist
-    
   } #end generation
   print(yr.k)
 } #end year 
 
 #=====================================
 #Save output
-
-setwd("/Volumes/GoogleDrive/My\ Drive/Buckley/Work/ColiasBiogeog/OUT/") #mac version
-
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/out/")
 #saveRDS(abs.mean, "absmean.abs")
 #saveRDS(lambda.mean, "lambdamean.abs")
 
-abs.mean <- readRDS("absmean.abs")
-lambda.mean <- readRDS("lambdamean.abs")
+#abs.mean <- readRDS("absmean.abs")
+#lambda.mean <- readRDS("lambdamean.abs")
 
-#================================
+#Not much evolution
+
 
