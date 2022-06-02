@@ -87,7 +87,7 @@ ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
   theme_bw()+scale_color_viridis_d()
 
 #partition solar radiation [or extract from micro?], returns diffuse fraction
-df=partition_solar_radiation("Erbs", kt=0.7)
+df=partition_solar_radiation("Erbs", kt=0.8)
 
 #butterfly temperature
 dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
@@ -99,8 +99,16 @@ ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
   theme_bw()+scale_color_viridis_d()
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=Tb))+
+  geom_density(alpha=0.5, aes(fill=period, color=period))+  
   facet_wrap(~seas)+
-  geom_density(alpha=0.5, aes(fill=period, color=period))
+  xlab("Body Temperature (°C)")+
+  ylab("Density" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PoccTb.pdf", height = 7, width = 10)
+p1
+dev.off()
 
 #---------
 ### SET UP DATA STRUCTURES
@@ -138,6 +146,7 @@ for(yr.k in 1:length(years) ){
   
   dat.yr$dd= dat.yr$TALOC -DevZeros
   dat.yr$dd[dat.yr$dd<0]= 0 #set negative to zero
+  dat.yr$dd= dat.yr$dd/24 #divide by 24 to swirch from degree days to hours
   dat.yr$dd.cs= cumsum(dat.yr$dd)
   
   #estiamte pupal timing
@@ -160,8 +169,9 @@ for(yr.k in 1:length(years) ){
       if(Jlarv>max(dat.yr$DOY)) Jlarv=max(dat.yr$DOY)
       
       ##TO PUPATION
-      Jpup= dat.yr$DOY[which.max(cumsum(dat.yr$dd[which(dat.yr$DOY==Jlarv)[1]:max(dat.yr$DOY)])> GddReqs)] 
-      if(Jpup>max(dat.yr$DOY) | length(Jpup)==0) Jpup=max(dat.yr$DOY) 
+      inds= which(dat.yr$DOY==Jlarv)[1]:nrow(dat.yr)
+      Jpup= dat.yr$DOY[inds[which.max(cumsum(dat.yr$dd[inds])> GddReqs)]] 
+       if(Jpup>max(dat.yr$DOY) | length(Jpup)==0) Jpup=max(dat.yr$DOY) 
       
       #PUPATION 
       # ~7 day pupation basedd on CUH field data
@@ -180,6 +190,25 @@ for(yr.k in 1:length(years) ){
     } #end loop generation
 } #end loop years
  
+  #plot
+pup.temps.l= rbind(t(pup.temps[,,1]),t(pup.temps[,,2]),t(pup.temps[,,3]),t(pup.temps[,,4]),t(pup.temps[,,5]) )
+pup.temps.l= as.data.frame(pup.temps.l)
+pup.temps.l$yr= rep(years,5)
+pup.temps.l$gen= c(rep(1,33),rep(2,33),rep(3,33),rep(4,33),rep(5,33) )
+  
+pup.temps.l= melt(pup.temps.l[,2:9], id=c("yr", "gen")) 
+
+#plot
+plot.pocc.times= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Jlarv","Jpup","Jadult") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
+  facet_wrap(~variable)
+plot.pocc.temps= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Tlarv","Tpup","Tad") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
+  facet_wrap(~variable)
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PoccPupTemps.pdf", height = 7, width = 10)
+plot.pocc.times / plot.pocc.temps
+dev.off()
+
   #=======================================
   #DEMOGRAPHY
   
@@ -200,13 +229,13 @@ geo_mean <- function(data) {
 
   #-------------------------------------------
   #DEMOGRAPHY
-  
-pup.temps[3:9,yr.k, gen.k]
 
 #absorptivity
 abs1=seq(0.4,0.7,0.05)
 
 for(yr.k in 1:length(years) ){
+  
+    dat.yr= subset(dat.sub, dat.sub$year==years[yr.k])
   
   for(gen.k in 1:5 ){ #loop generation
     
@@ -232,25 +261,25 @@ for(yr.k in 1:length(years) ){
         Jfl=pup.temps["Jadult",yr.k, gen.k]   
         
         #calculate Tb based on absorptivity
-        dat.sub$Tb.a= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, 
-                                  u = dat.sub$VLOC, 
-                                  H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), 
+        dat.yr$Tb.a= Tb_butterfly( T_a = dat.yr$TALOC, Tg = dat.yr$D0cm, Tg_sh = dat.yr$D0cm, 
+                                  u = dat.yr$VLOC, 
+                                  H_sdir = dat.yr$SOLR*(1-df), H_sdif = dat.yr$SOLR*(df), 
                                   z = 30, D = 0.36, 
                                   delta = 1.46, alpha = abs, r_g = 0.3)
         
         #Flight probability
-        dat.sub$fl.p= sapply(dat.sub$Tb.a, FUN=fl.ph)
+        dat.yr$fl.p= sapply(dat.yr$Tb.a, FUN=fl.ph)
         
         #Egg viability
-        dat.sub$egg.v= sapply(dat.sub$Tb.a, FUN=egg.viab)
+        dat.yr$egg.v= sapply(dat.yr$Tb.a, FUN=egg.viab)
       
         #larval growth
         #Use P. rapae curve
         tpc.gaus= c(0.06340297, 30.92347862,  8.40085316)
-        dat.sub$larv.growth= sapply(dat.sub$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=tpc.gaus[2], a=tpc.gaus[3])
+        dat.yr$larv.growth= sapply(dat.yr$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=tpc.gaus[2], a=tpc.gaus[3])
         
        # daily values
-        dat.day<- dat.sub %>%
+        dat.day<- dat.yr %>%
           group_by(DOY) %>%
           summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb), Gt.l = sum(larv.growth) )
         
@@ -302,7 +331,7 @@ for(yr.k in 1:length(years) ){
           
         } #Check Eggs
         
-      } #end loop absorbtivity
+      } #end loop absorptivity
      
   } #end loop generation
   
@@ -321,9 +350,16 @@ Lambda.l$metric= c("lambda","fat","ev","tind")[Lambda.l$metric]
 
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
-ggplot(Lambda.l, aes(x=abs, y=value, color=year, lty=gen, group=gyr))+geom_line()+
-  facet_wrap(~metric, nrow=1, scale="free_y") +scale_color_viridis_c()
 
+fig.OccFit= ggplot(Lambda.l, aes(x=abs, y=value, color=year, lty=gen, group=gyr))+geom_line()+
+  facet_wrap(~metric, scale="free_y") +scale_color_viridis_c()
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PoccFitCurv.pdf", height = 7, width = 10)
+fig.OccFit
+dev.off()
+
+#-------------
 #test Tb function
 dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
 Ts= matrix(NA, nrow=nrow(dat.sub1), ncol=length(abs1))

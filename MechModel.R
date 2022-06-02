@@ -2,6 +2,7 @@ library(ggplot2)
 library(reshape2)
 library(reshape)
 library(viridisLite)
+library(patchwork)
 
 # Adapt Colias niche model
 # https://github.com/lbuckley/ColiasBiogeog/blob/master/ColiasMain.R
@@ -112,7 +113,7 @@ d_preds <- d_stack %>%
   select(-fit) %>%
   unnest(preds)
 
-# plot
+# plot fits
 ggplot(d_preds, aes(temp, rate)) +
   geom_point(aes(temp, rate), d) +
   geom_line(aes(temp, .fitted), col = 'blue') +
@@ -152,9 +153,18 @@ setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
 dat$year= years[yr.k]
-if(years[yr.k]<2000)dat$period="initial"
-if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
-if(years[yr.k]>=2010)dat$period="recent"
+
+#vary periods
+if(loc.k==1){
+  if(years[yr.k]<2000)dat$period="initial"
+  if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
+  if(years[yr.k]>=2010)dat$period="recent"
+}
+if(loc.k==2){
+  if(years[yr.k]<2007)dat$period="initial"
+  if(years[yr.k]>=2007 & years[yr.k]<2014)dat$period="middle"
+  if(years[yr.k]>=2014)dat$period="recent"
+}
 
 if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -190,7 +200,7 @@ p1= ggplot(dat.day, aes(x=TALOC))+
   facet_wrap(~seas)+
   xlab("Day of year")+
   ylab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
 #D0cm, TALOC, TAREF
 
 #===============================
@@ -208,6 +218,8 @@ p2= p1 + geom_line(data=p.dat, aes(x = Tb, y = performance) )
 p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
                       arrow = arrow(length = unit(0.3, "cm")), lwd=1)
 
+#-----------
+
 #estimate performance
 dat.day$perf= beta_2012(dat.day$TALOC, tpc.beta[1], tpc.beta[2], tpc.beta[3], tpc.beta[4], tpc.beta[5])
 
@@ -218,9 +230,6 @@ p1= ggplot(dat.day, aes(x=perf))+
   xlab("Performance")+
   ylab("Density" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
-
-#xlab("Temperature at reference height (°C)")
-#ylab("Consumption or growth rate (g/h/h)" )
 
 #Count of NAs above CTmax of TPC
 tab= table( is.nan(dat.day$perf), dat.day$period)
@@ -236,9 +245,27 @@ aggregate(dat.day1$perf, list(dat.day1$period), FUN=mean)
 dat.day1$Tround= round(dat.day1$TALOC)
 dat.day2= aggregate(dat.day1$perf, list(dat.day1$Tround, dat.day1$period, dat.day1$seas), FUN=sum)
 names(dat.day2)= c("temp","period","seas","sumperf")
+dat.day2$per_seas= paste(dat.day2$period, dat.day2$seas, sep="_")
 
-ggplot(dat.day2, aes(x=temp, y=sumperf, color=period))+geom_line()+
-  facet_wrap(~seas)
+#normalize to count of data
+counts= aggregate(dat.day1$perf, list(dat.day1$period, dat.day1$seas), FUN=function(x)length(x))
+names(counts)= c("period","seas","count")
+counts$per_seas= paste(counts$period, counts$seas, sep="_")
+#add counts to performance data
+dat.day2$counts= counts$count[match(dat.day2$per_seas, counts$per_seas)]
+#normalize
+dat.day2$sumperf.norm= dat.day2$sumperf/dat.day2$counts
+
+p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+geom_line()+   #geom_smooth()+
+  facet_wrap(~seas)+
+  xlab("Temperature at reference height (°C)")+
+  ylab("Sum of consumption or growth rate (g/h/h)" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_Prapae.pdf", height = 10, width = 12)
+p3 / p4
+dev.off()
 
 #P. rapae
 #Kingsolver JG (2000) Feeding, growth, and the thermal environment of cabbage white caterpillars, Pieris rapae L. Physiological and Biochemical Zoology, 73(5):621–628.
@@ -302,12 +329,20 @@ perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
 names(perfs.l)[4:5]=c("temperature","performance")
 perfs.l$temperature= as.numeric(perfs.l$temperature)
 
-ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
-  facet_wrap(~seas) +scale_color_viridis_c()
+fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
+  facet_wrap(~seas) +scale_color_viridis_c()+
+  theme_classic(base_size = 20)
 
 #plot selection gradients through time
-ggplot(perfs1, aes(x=year, y=B, color=seas, lty=period))+geom_line()
-ggplot(perfs1, aes(x=year, y=curve, color=seas, lty=period))+geom_line()
+fig.selb=ggplot(perfs1, aes(x=year, y=B, color=seas))+geom_line()+
+  theme_classic(base_size = 20)
+fig.selcurve= ggplot(perfs1, aes(x=year, y=curve, color=seas))+geom_line()+
+  theme_classic(base_size = 20)
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PrapaeSelection.pdf", height = 12, width = 10)
+fig.fitnesscurves / fig.selb / fig.selcurve
+dev.off()
 
 #account for temperatures exceeding tpcs
 
@@ -380,35 +415,6 @@ ggplot(pr, aes(x=Topt, y=Fecundity, color=UniID, group=UniID))+geom_point()
 #============================
 
 #P. occidentalis adult selection
-library(TrenchR)
-
-#subset columns
-dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period")]
-#TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
-#TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
-#VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
-
-#melt temp data
-datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm","year","period")], id=c("dates","DOY","TIME","d.hr","year","period") )
-
-#plot
-ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
-  theme_bw()+scale_color_viridis_d()
-
-#partition solar radiation [or extract from micro?], returns diffuse fraction
-df=partition_solar_radiation("Erbs", kt=0.7)
-
-#butterfly temperature, Colias model
-dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
-                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
-                          delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=42)
-
-#plot Tb distributions
-ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.2)+
-  theme_bw()+scale_color_viridis_d()
-#plot density distributions
-p1= ggplot(dat.sub, aes(x=Tb))+
-  geom_density(alpha=0.5, aes(fill=period, color=period))
 
 #SEE PieridMechModel.R
 
