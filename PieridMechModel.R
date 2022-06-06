@@ -91,8 +91,10 @@ df=partition_solar_radiation("Erbs", kt=0.8)
 
 #butterfly temperature
 dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
-                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = 30, D = 0.36, 
+                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = dat.sub$ZEN, D = 0.36, 
                           delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=42)
+#fix high
+dat.sub$Tb[which(dat.sub$Tb>80)]<-NA
 
 #plot Tb distributions
 ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
@@ -116,7 +118,7 @@ dev.off()
 #Lambda= survival*fecundity
 #Matrix of lambdas
 #dims: stats, year, Lambda 
-Lambda<-array(NA, dim=c(length(years),length(seq(0.4,0.7,0.05)),5,4)) #Last dimension is Lambda, FAT,Egg Viability
+Lambda<-array(NA, dim=c(length(years),length(seq(0.4,0.7,0.05)),5,5)) #Last dimension is Lambda, FAT,Egg Viability, growth
 dimnames(Lambda)[[1]]<-years
 dimnames(Lambda)[[3]]<-c("gen1","gen2","gen3","gen4","gen5")
 
@@ -264,8 +266,10 @@ for(yr.k in 1:length(years) ){
         dat.yr$Tb.a= Tb_butterfly( T_a = dat.yr$TALOC, Tg = dat.yr$D0cm, Tg_sh = dat.yr$D0cm, 
                                   u = dat.yr$VLOC, 
                                   H_sdir = dat.yr$SOLR*(1-df), H_sdif = dat.yr$SOLR*(df), 
-                                  z = 30, D = 0.36, 
+                                  z = dat.yr$ZEN, D = 0.36, 
                                   delta = 1.46, alpha = abs, r_g = 0.3)
+        #fix high
+        dat.yr$Tb.a[which(dat.yr$Tb.a>80)]<-NA
         
         #Flight probability
         dat.yr$fl.p= sapply(dat.yr$Tb.a, FUN=fl.ph)
@@ -281,7 +285,7 @@ for(yr.k in 1:length(years) ){
        # daily values
         dat.day<- dat.yr %>%
           group_by(DOY) %>%
-          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb), Gt.l = sum(larv.growth) )
+          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = sum(larv.growth) )
         
         #flight day
         Jfl= pup.temps["Jadult", yr.k, gen.k]
@@ -327,7 +331,7 @@ for(yr.k in 1:length(years) ){
             Lambda1= Lambda1+ SurvMat * SurvDaily^day *Eggs1;                        
           }#end loop days
           
-          Lambda[yr.k, abs.k, gen.k, ]= c(Lambda1, mean(FAT.ind), mean(ev.ind), mean(T.ind, na.rm=T) )
+          Lambda[yr.k, abs.k, gen.k, ]= c(Lambda1, mean(FAT.ind), mean(ev.ind), mean(T.ind, na.rm=T), Gr.larv )
           
         } #Check Eggs
         
@@ -346,13 +350,13 @@ for(yr.k in 1:length(years) ){
 Lambda.l= melt(Lambda) 
 colnames(Lambda.l)=c("year","abs","gen","metric","value")
 Lambda.l$abs= abs1[Lambda.l$abs]
-Lambda.l$metric= c("lambda","fat","ev","tind")[Lambda.l$metric]
+Lambda.l$metric= c("lambda","fat","ev","tind","gr.l")[Lambda.l$metric]
 
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 
-fig.OccFit= ggplot(Lambda.l, aes(x=abs, y=value, color=year, lty=gen, group=gyr))+geom_line()+
-  facet_wrap(~metric, scale="free_y") +scale_color_viridis_c()
+fig.OccFit= ggplot(Lambda.l, aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
+  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PoccFitCurv.pdf", height = 7, width = 10)
@@ -368,8 +372,8 @@ for(abs.k in 1:length(abs1) ){
   Ts[,abs.k]= Tb_butterfly( T_a = dat.sub1$TALOC, Tg = dat.sub1$D0cm, Tg_sh = dat.sub1$D0cm, 
                               u = dat.sub1$VLOC, 
                               H_sdir = dat.sub1$SOLR*(1-df), H_sdif = dat.sub1$SOLR*(df), 
-                              z = 30, D = 0.36, 
-                              delta = 1.46, alpha = abs1[abs.k], r_g = 0.3) 
+                              z = dat.sub1$ZEN, D = 0.36, 
+                              delta = 1.46, alpha = abs1[abs.k], r_g = 0.3, wing_angle=42, shade = FALSE) 
 }
 
 Ts= as.data.frame(Ts)
@@ -441,6 +445,14 @@ for(yr.k in 1:length(years)) {
 #saveRDS(abs.opt, paste("abs.opt_",projs[proj.k],".rds", sep=""))
 #abs.opt <- readRDS( paste("abs.opt_",projs[proj.k],".rds", sep="") )
 
+#plot optima alphas
+abs.opt.l=as.data.frame(abs.opt)
+abs.opt.l$year=years
+abs.opt.l=melt(abs.opt.l,id.vars = c("year"))
+
+ggplot(abs.opt.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
+  scale_color_viridis_d()
+
 #***************************************
 #compute initial AbsMean 
 #UPDATE
@@ -453,7 +465,7 @@ abs.sd= 0.062
 rn.sd= 0.0083
 
 ## NEED TO CALC ABS.OPT
-#initialize with optimum value across fir ten years, across generations
+#initialize with optimum value across for ten years, across generations
 abs.init2 <- mean(abs.opt[1:10, ], na.rm=TRUE)
 #Use optimal
 abs.init<- abs.init2
@@ -626,16 +638,30 @@ setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/out/")
 #lambda.mean[yr.k,gen.k,scen.k]
 #abs.mean[yr.k,gen.k,scen.k,"abssample"]
 
-abs.l=melt(abs.mean[,,3,"abssample"])
-names(abs.l)[1:2]=c("year","gen")
+#all scenarios
+abs.scen= rbind(abs.mean[,,1,"abssample"],abs.mean[,,2,"abssample"],abs.mean[,,3,"abssample"],abs.mean[,,4,"abssample"],abs.mean[,,5,"abssample"] )
+abs.scen= as.data.frame(abs.scen)
+abs.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
+abs.scen$year= c(rep(years,5) )
+colnames(abs.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
 
-ggplot(abs.l, aes(x=year, y=value, color=gen, group=gen))+geom_line()+
-  scale_color_viridis_c()
+abs.l=melt(abs.scen, id.vars = c("year","scenario"))
 
-lambda.l=melt(lambda.mean[,,3])
-names(lambda.l)[1:2]=c("year","gen")
+ggplot(abs.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
+  scale_color_viridis_d()+
+  facet_wrap(~scenario)
 
-ggplot(lambda.l, aes(x=year, y=value, color=gen, group=gen))+geom_line()+
-  scale_color_viridis_c()
+#-----------
 
+lambda.scen= rbind(lambda.mean[,,1],lambda.mean[,,2],lambda.mean[,,3],lambda.mean[,,4],lambda.mean[,,5] )
+lambda.scen= as.data.frame(lambda.scen)
+lambda.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
+lambda.scen$year= c(rep(years,5) )
+colnames(lambda.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
+
+lambda.l=melt(lambda.scen, id.vars = c("year","scenario"))
+
+ggplot(lambda.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
+  scale_color_viridis_d()+
+  facet_wrap(~scenario)
 

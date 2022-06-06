@@ -159,7 +159,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   S= S*alpha #account for reflectence
   
-  L= 0.915 #calculate area for solar radiation using FWL, look for body length
+  L=0.915  #0.915 #calculate area for solar radiation using FWL, look for body length
   
   # convert length to area 
   # how to calculate absorptivity from wing traits
@@ -229,31 +229,31 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
   
   # Shade Adjustments
   
-  ## UPDATE SHADE
-  # if (shade) {
-  #   
-  #   # Calculate without basking by dividing areas by two
-  #   
-  #   A_sttl <- A_sttl / 2
-  #   
-  #   # RADIATIVE HEAT FLUX IN SHADE, mW
-  #   
-  #   A_sdir <- A_sttl/2
-  #   A_sref <- A_sdir
-  #   
-  #   # No direct radiation, only diffuse and reflected
-  #   
-  #   H_sdir_sh <- 0
-  #   H_sdif_sh <- H_sdif
-  #   H_sttl <- H_sdif + H_sdif_sh 
-  #   
-  #   Q_s <- alpha * A_sdir * H_sdir_sh / cos(z * pi / 180) + alpha * A_sref * H_sdif_sh + alpha * r_g * A_sref * H_sttl; 
-  #   
-  #   # Use shaded surface temperature
-  #   
-  #   Tg< - Tg_sh
-  #   
-  # }
+  # UPDATE SHADE
+  if (shade) {
+
+    # Calculate without basking by dividing areas by two
+
+    A_sttl <- A_sttl / 2
+
+    # RADIATIVE HEAT FLUX IN SHADE, mW
+
+    A_sdir <- A_sttl/2
+    A_sref <- A_sdir
+
+    # No direct radiation, only diffuse and reflected
+
+    H_sdir_sh <- 0
+    H_sdif_sh <- H_sdif
+    H_sttl <- H_sdif + H_sdif_sh
+
+    Q_s <- A_sdir * H_sdir_sh / cos(z * pi / 180) + alpha * A_sref * H_sdif_sh + alpha * r_g * A_sref * H_sttl;
+    
+    # Use shaded surface temperature
+
+    Tg< - Tg_sh
+
+  }
   
   # Solution 
   
@@ -276,7 +276,6 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, alpha,
 #pattern in pierid butterflies. Evolution 41:472—490.
 #P. occidentalis
 #Longday= 16 hr light; shortday= 10 hr light
-
 
 #----
 #Thermoregulatory significance of wing melanization in Pieris butterflies: Physics, posture, and pattern
