@@ -171,8 +171,7 @@ if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
 #subset to sunlight
-dat.day= subset(dat.all, dat.all$TIME>260)
-dat.day= subset(dat.all, dat.all$TIME<1080)
+dat.day= subset(dat.all, dat.all$SOLR>0)
 
 #divide by periods, 91 to 274
 #April to May

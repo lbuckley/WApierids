@@ -48,27 +48,26 @@ setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro
 for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
   dat$year= years[yr.k]
-  if(years[yr.k]<2000)dat$period="initial"
-  if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
-  if(years[yr.k]>=2010)dat$period="recent"
+  if(years[yr.k]<2000)dat$period="1989-1999"
+  if(years[yr.k]>=2000 & years[yr.k]<2011)dat$period="2000-2010"
+  if(years[yr.k]>=2011)dat$period="2011-2021"
   
   if(yr.k==1) dat.all=dat
   if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
 #subset to sunlight
-dat.day= subset(dat.all, dat.all$TIME>260)
-dat.day= subset(dat.all, dat.all$TIME<1080)
+dat.day= subset(dat.all, dat.all$SOLR>0)
 
 #divide by periods, 91 to 274
 #April to May
-dat.day$seas="AprMay"
+dat.day$seas="Apr & May"
 #June to July
-dat.day$seas[dat.day$DOY>151]="JunJul"
+dat.day$seas[dat.day$DOY>151]="Jun & Jul"
 #August to September
-dat.day$seas[dat.day$DOY>212]="AugSep"
+dat.day$seas[dat.day$DOY>212]="Aug & Sep"
 #order
-dat.day$seas= factor(dat.day$seas, levels=c("AprMay","JunJul","AugSep") )
+dat.day$seas= factor(dat.day$seas, levels=c("Apr & May","Jun & Jul","Aug & Sep") )
 
 #combine doy and time
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
@@ -90,9 +89,13 @@ ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
 df=partition_solar_radiation("Erbs", kt=0.8)
 
 #butterfly temperature
-dat.sub$Tb= Tb_butterfly( T_a = dat.sub$TALOC, Tg = dat.sub$D0cm, Tg_sh = dat.sub$D0cm, u = dat.sub$VLOC, 
-                          H_sdir = dat.sub$SOLR*(1-df), H_sdif = dat.sub$SOLR*(df), z = dat.sub$ZEN, D = 0.36, 
-                          delta = 1.46, alpha = 0.6, r_g = 0.3, wing_angle=42)
+Temat= cbind(dat.sub$TALOC, dat.sub$D0cm, dat.sub$D0cm, 
+             dat.sub$VLOC, dat.sub$SOLR*(1-df), dat.sub$SOLR*(df), dat.sub$ZEN)
+
+dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
+                    D = 0.36, delta = 1.46, HB = abs1[abs.k], PV = abs1[abs.k], 
+                    r_g = 0.3, wing_angle=42, shade = TRUE) 
+
 #fix high
 dat.sub$Tb[which(dat.sub$Tb>80)]<-NA
 
@@ -101,16 +104,26 @@ ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
   theme_bw()+scale_color_viridis_d()
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=Tb))+
-  geom_density(alpha=0.5, aes(fill=period, color=period))+  
+  geom_density(alpha=0.4, aes(fill=period, color=period))+  
   facet_wrap(~seas)+
   xlab("Body Temperature (°C)")+
   ylab("Density" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))+
+  xlim(0,90)
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PoccTb.pdf", height = 7, width = 10)
 p1
 dev.off()
+
+#air temp
+ggplot(dat.sub, aes(x=TAREF))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+  
+  facet_wrap(~seas)+
+  xlab("Body Temperature (°C)")+
+  ylab("Density" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))+
+  xlim(0,90)
 
 #---------
 ### SET UP DATA STRUCTURES
@@ -202,9 +215,11 @@ pup.temps.l= melt(pup.temps.l[,2:9], id=c("yr", "gen"))
 
 #plot
 plot.pocc.times= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Jlarv","Jpup","Jadult") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
-  facet_wrap(~variable)
+  facet_wrap(~variable)+
+  theme_classic(base_size = 20)
 plot.pocc.temps= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Tlarv","Tpup","Tad") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
-  facet_wrap(~variable)
+  facet_wrap(~variable)+
+  theme_classic(base_size = 20)
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PoccPupTemps.pdf", height = 7, width = 10)
@@ -239,6 +254,9 @@ for(yr.k in 1:length(years) ){
   
     dat.yr= subset(dat.sub, dat.sub$year==years[yr.k])
   
+    Temat= cbind(dat.yr$TALOC, dat.yr$D0cm, dat.yr$D0cm, 
+                 dat.yr$VLOC, dat.yr$SOLR*(1-df), dat.yr$SOLR*(df), dat.yr$ZEN)
+    
   for(gen.k in 1:5 ){ #loop generation
     
       for(abs.k in 1:length(abs1) ){ #loop absorptivity
@@ -247,6 +265,7 @@ for(yr.k in 1:length(years) ){
         #https://doi.org/10.1093/icb/38.3.545
         #Basal dorsal HW melanism
         #use females, check units of basal dorsal HW melanism
+        #Adapt to HB, PV
         
         #hours light
         light.h= c(16,10)
@@ -259,17 +278,10 @@ for(yr.k in 1:length(years) ){
         #absorptivity
         abs= abs.plast(light.hrs, abs1[abs.k])
         
-        #get flight dates
-        Jfl=pup.temps["Jadult",yr.k, gen.k]   
-        
         #calculate Tb based on absorptivity
-        dat.yr$Tb.a= Tb_butterfly( T_a = dat.yr$TALOC, Tg = dat.yr$D0cm, Tg_sh = dat.yr$D0cm, 
-                                  u = dat.yr$VLOC, 
-                                  H_sdir = dat.yr$SOLR*(1-df), H_sdif = dat.yr$SOLR*(df), 
-                                  z = dat.yr$ZEN, D = 0.36, 
-                                  delta = 1.46, alpha = abs, r_g = 0.3)
-        #fix high
-        dat.yr$Tb.a[which(dat.yr$Tb.a>80)]<-NA
+        dat.yr$Tb.a= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
+                          D = 0.36, delta = 1.46, HB = abs, PV = abs, 
+                          r_g = 0.3, wing_angle=42, shade = TRUE) 
         
         #Flight probability
         dat.yr$fl.p= sapply(dat.yr$Tb.a, FUN=fl.ph)
@@ -350,17 +362,28 @@ for(yr.k in 1:length(years) ){
 Lambda.l= melt(Lambda) 
 colnames(Lambda.l)=c("year","abs","gen","metric","value")
 Lambda.l$abs= abs1[Lambda.l$abs]
-Lambda.l$metric= c("lambda","fat","ev","tind","gr.l")[Lambda.l$metric]
+Lambda.l$metric= c("lambda","FAT (h)","egg viab (%)","Tadult (C)","larval growth")[Lambda.l$metric]
+Lambda.l$metric= factor(Lambda.l$metric, levels=c("lambda","FAT (h)","egg viab (%)","Tadult (C)","larval growth"))
 
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 
 fig.OccFit= ggplot(Lambda.l, aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
-  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()
+  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
+  theme_classic()+xlab("absorptivity (%)")+ylab("")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PoccFitCurv.pdf", height = 7, width = 10)
+pdf("Fig_PoccFitCurv.pdf", height = 7, width = 7)
 fig.OccFit
+dev.off()
+
+#just plot lambdas
+fig.lambdas= ggplot(Lambda.l[Lambda.l$metric=="lambda",], aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
+  facet_grid(~gen, scale="free_y") +scale_color_viridis_c()+
+  theme_classic()+xlab("absorptivity (%)")+ylab("lambda")
+
+pdf("Fig_PoccLambdas.pdf", height = 4, width = 7)
+fig.lambdas
 dev.off()
 
 #-------------
@@ -368,13 +391,16 @@ dev.off()
 dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
 Ts= matrix(NA, nrow=nrow(dat.sub1), ncol=length(abs1))
 
+Temat= cbind(dat.sub1$TALOC, dat.sub1$D0cm, dat.sub1$D0cm, 
+             dat.sub1$VLOC, dat.sub1$SOLR*(1-df), dat.sub1$SOLR*(df),dat.sub1$ZEN)
+
 for(abs.k in 1:length(abs1) ){
-  Ts[,abs.k]= Tb_butterfly( T_a = dat.sub1$TALOC, Tg = dat.sub1$D0cm, Tg_sh = dat.sub1$D0cm, 
-                              u = dat.sub1$VLOC, 
-                              H_sdir = dat.sub1$SOLR*(1-df), H_sdif = dat.sub1$SOLR*(df), 
-                              z = dat.sub1$ZEN, D = 0.36, 
-                              delta = 1.46, alpha = abs1[abs.k], r_g = 0.3, wing_angle=42, shade = FALSE) 
-}
+  
+  Ts[,abs.k]= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
+                    D = 0.36, delta = 1.46, HB = abs1[abs.k], PV = abs1[abs.k], 
+                    r_g = 0.3, wing_angle=42, shade = TRUE) 
+  
+  }
 
 Ts= as.data.frame(Ts)
 colnames(Ts)= abs1
@@ -645,11 +671,24 @@ abs.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol
 abs.scen$year= c(rep(years,5) )
 colnames(abs.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
 
-abs.l=melt(abs.scen, id.vars = c("year","scenario"))
+#subset scenarios
+abs.scen=abs.scen[which(abs.scen$scenario %in% c("plast0evol1","plast1evol0","plast1evol1") ),]
+abs.scen$scen.name<- "evolution only"
+abs.scen$scen.name[which(abs.scen$scenario=="plast1evol0" )]= "plasticity only"
+abs.scen$scen.name[which(abs.scen$scenario=="plast1evol1" )]= "plasticity + evolution"
+abs.scen$scen.name= factor(abs.scen$scen.name, levels=c("plasticity only","evolution only","plasticity + evolution") )
 
-ggplot(abs.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
+abs.l=melt(abs.scen, id.vars = c("year","scenario","scen.name"))
+
+fig.absevol= ggplot(abs.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
   scale_color_viridis_d()+
-  facet_wrap(~scenario)
+  facet_wrap(~scen.name)+
+  theme_classic()+ylab("absorptivity (%)")
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_AbsEvol.pdf", height = 4, width = 7)
+fig.absevol
+dev.off()
 
 #-----------
 
