@@ -80,6 +80,10 @@ request_era5(request = req, uid = uid, out_path = op)
 
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
 micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, runshade = 1, spatial = spatial_path)
+#https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
+#minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
+#maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
+#Usrhyt, Local height (m) at which air temperature, wind speed and humidity are to be computed for organism of interest
 # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
 
 #test with direct download
@@ -162,6 +166,69 @@ for(i in 1:10){
   }
 }
 
+#-----------------------
+#Check microclimate analysis
 
+#locations Corfu, P. occidentalis, Apr to Sept
+#Seattle, P. rapae,
+locations= c("Corfu","Seattle")
+
+loc.k<- 1
+
+if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
+if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
+
+  if(loc.k==1) years=c(2002:2017)
+  if(loc.k==2) years=c(2009:2016) ##Error with 2008
+  
+  #set microclim path
+  file_prefix="era5"
+  if(loc.k==1) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/',file_prefix, sep="")
+  if(loc.k==2) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/',file_prefix, sep="")
+  # filename and location for downloaded .nc files
+  if(loc.k==1) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/'
+  if(loc.k==2) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/'
+  
+  for(yr in years){
+    
+    #set dates for era5 call and NicheMapr
+    dstart <- paste("01/04/", yr,sep="")
+    dfinish <- paste("30/09/", yr,sep="")
+    
+    # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
+    micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
+    #micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
+    
+    #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
+    #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
+    #maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
+    #Usrhyt, Local height (m) at which air temperature, wind speed and humidity are to be computed for organism of interest
+    # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
+    
+    #--------------
+    
+    #combine and save data 
+    metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
+    soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
+    soilmoist<-as.data.frame(micro$soilmoist) # soil temperatures, minimum shade
+    
+    # append dates
+    tzone<-paste("Etc/GMT+",0,sep="")
+    dates<-seq(as.POSIXct(dstart, format="%d/%m/%Y",tz=tzone)-3600*12, as.POSIXct(dfinish, format="%d/%m/%Y",tz=tzone)+3600*11, by="hours")
+    
+    metout <- cbind(dates,metout)
+    soil <- cbind(dates,soil)
+    #soilmoist <- cbind(dates, soilmoist)
+    
+    #extract air temperature and soil
+    #dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
+    dat <- cbind(metout, soil[,4:13])
+    
+    setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")
+    #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
+    
+    write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
+    
+  } #end loop years
 
 
