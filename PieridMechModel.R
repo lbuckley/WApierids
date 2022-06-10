@@ -7,6 +7,9 @@ library(dplyr)
 library(TrenchR)
 library(ggplot2)
 library(MCMCglmm)
+library(reshape2)
+library(patchwork)
+library(rTPC)
 
 #LOAD PARAMETERS
 #Demographic parameters
@@ -43,7 +46,7 @@ loc.k=1
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(2001:2005, 2017:2021)
 
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #combine data
 for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -93,7 +96,7 @@ Temat= cbind(dat.sub$TALOC, dat.sub$D0cm, dat.sub$D0cm,
              dat.sub$VLOC, dat.sub$SOLR*(1-df), dat.sub$SOLR*(df), dat.sub$ZEN)
 
 dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                    D = 0.36, delta = 1.46, HB = abs1[abs.k], PV = abs1[abs.k], 
+                    D = 0.36, delta = 1.46, HB = 0.65, PV = 0.65, 
                     r_g = 0.3, wing_angle=42, shade = TRUE) 
 
 #fix high
@@ -124,6 +127,55 @@ ggplot(dat.sub, aes(x=TAREF))+
   ylab("Density" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))+
   xlim(0,90)
+
+#---------
+#Load shade data
+
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+#combine data
+for(yr.k in 1:length(years)){
+  dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat$year= years[yr.k]
+  if(years[yr.k]<2000)dat$period="1989-1999"
+  if(years[yr.k]>=2000 & years[yr.k]<2011)dat$period="2000-2010"
+  if(years[yr.k]>=2011)dat$period="2011-2021"
+  
+  if(yr.k==1) dat.all.sh=dat
+  if(yr.k>1) dat.all.sh=rbind(dat, dat.all)
+}
+
+#subset to sunlight
+dat.day.sh= subset(dat.all.sh, dat.all.sh$SOLR>0)
+
+#divide by periods, 91 to 274
+#April to May
+dat.day.sh$seas="Apr & May"
+#June to July
+dat.day.sh$seas[dat.day.sh$DOY>151]="Jun & Jul"
+#August to September
+dat.day.sh$seas[dat.day.sh$DOY>212]="Aug & Sep"
+#order
+dat.day.sh$seas= factor(dat.day.sh$seas, levels=c("Apr & May","Jun & Jul","Aug & Sep") )
+
+#combine doy and time
+dat.day.sh$d.hr= dat.day.sh$DOY + dat.day.sh$TIME/60
+
+#subset columns
+dat.sub.sh= dat.day.sh[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period","seas")]
+#TALOC - air temperature (°C) at local height (specified by 'Usrhyt' variable)
+#TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
+#VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
+
+#match
+match1= match(dat.sub$dates, dat.sub.sh$dates)
+
+#compare data
+plot(dat.sub.sh$TALOC[match1],dat.sub$TALOC)
+plot(dat.sub.sh$D0cm[match1],dat.sub$D0cm)
+
+#add shade data to sun data
+dat.sub$TALOC_sh= dat.sub.sh$TALOC[match1]
+dat.sub$D0cm_sh= dat.sub.sh$D0cm[match1]
 
 #---------
 ### SET UP DATA STRUCTURES
@@ -164,7 +216,7 @@ for(yr.k in 1:length(years) ){
   dat.yr$dd= dat.yr$dd/24 #divide by 24 to swirch from degree days to hours
   dat.yr$dd.cs= cumsum(dat.yr$dd)
   
-  #estiamte pupal timing
+  #estimate pupal timing
   #compare to empirical data
   setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/')
   pr= read.csv("PrapaeUW.Seln2.1999.Combineddata.OPUS2021.csv")
@@ -254,7 +306,7 @@ for(yr.k in 1:length(years) ){
   
     dat.yr= subset(dat.sub, dat.sub$year==years[yr.k])
   
-    Temat= cbind(dat.yr$TALOC, dat.yr$D0cm, dat.yr$D0cm, 
+    Temat= cbind(dat.yr$TALOC, dat.yr$TALOC_sh,dat.yr$D0cm, dat.yr$D0cm_sh, 
                  dat.yr$VLOC, dat.yr$SOLR*(1-df), dat.yr$SOLR*(df), dat.yr$ZEN)
     
   for(gen.k in 1:5 ){ #loop generation
@@ -391,7 +443,7 @@ dev.off()
 dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
 Ts= matrix(NA, nrow=nrow(dat.sub1), ncol=length(abs1))
 
-Temat= cbind(dat.sub1$TALOC, dat.sub1$D0cm, dat.sub1$D0cm, 
+Temat= cbind(dat.sub1$TALOC, dat.sub1$TALOC_sh, dat.sub1$D0cm, dat.sub1$D0cm_sh, 
              dat.sub1$VLOC, dat.sub1$SOLR*(1-df), dat.sub1$SOLR*(df),dat.sub1$ZEN)
 
 for(abs.k in 1:length(abs1) ){

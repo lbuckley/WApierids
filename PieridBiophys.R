@@ -415,18 +415,19 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #extract from matrix
   Temat= as.numeric(Temat)
   T_a= Temat[1]
-  Tg= Temat[2]
-  Tg_sh= Temat[3]
-  u= Temat[4]
-  H_sdir= Temat[5]
-  H_sdif= Temat[6]
-  z= Temat[7]
+  T_a_sh= Temat[2]
+  Tg= Temat[3]
+  Tg_sh= Temat[4]
+  u= Temat[5]
+  H_sdir= Temat[6]
+  H_sdif= Temat[7]
+  z= Temat[8]
   
   # conversions
   # temperatures C to K
   
   TaK <- T_a + 273.15
-  TaK_sh <- TaK
+  TaK_sh <- T_a_sh + 273.15
   Tg <- Tg + 273.15 
   Tg_sh <- Tg_sh + 273 
   
@@ -634,11 +635,9 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #direct radiation already accounts for absorptivity
   
   # Solution 
-  Tg_sh=Tg #find Tg shade
-  
   a <- A_sttl * Ep * sigma
   b <- h_T * A_sttl
-  d <- h_T * A_sttl * TaK +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
+  d <- h_T * A_sttl * TaK_sh +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
   
   # in K
   

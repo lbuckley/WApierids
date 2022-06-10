@@ -178,7 +178,7 @@ loc.k<- 1
 if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
 
-  if(loc.k==1) years=c(2002:2017)
+  if(loc.k==1) years=c(1989:2002,2018:2021) #1989:2021
   if(loc.k==2) years=c(2009:2016) ##Error with 2008
   
   #set microclim path
