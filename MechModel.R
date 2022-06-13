@@ -139,16 +139,17 @@ tpc.beta= coef(mod)
 #beta_2012(temp, a, b, c, d, e)
 
 #--------
-#plot temperature distributions
+#plot P. rapae temperature distributions
 
 locations= c("Corfu","Seattle")
 loc.k=2
 
 #years for data
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
-if(loc.k==2) years=c(2001:2007, 2009:2021) #2001:2005, 2017:2021
+if(loc.k==2) years=c(2001:2021) #2001:2005, 2017:2021
 
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/')
+#SUN
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -185,22 +186,63 @@ dat.day$seas= factor(dat.day$seas, levels=c("AprMay","JunJul","AugSep") )
 
 #combine doy and time
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
-  
-#plot time series
-p1= ggplot(dat.day, aes(x=d.hr, y=TALOC, color=year))+
-  geom_line(alpha=0.2)+
-  xlab("Day of year")+
-  ylab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
 
+dat.day.sun= dat.day
+
+#----------------
+#SHADE
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+#combine data
+for(yr.k in 1:length(years)){
+  dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat$year= years[yr.k]
+  
+  #vary periods
+  if(loc.k==1){
+    if(years[yr.k]<2000)dat$period="initial"
+    if(years[yr.k]>=2000 & years[yr.k]<2010)dat$period="middle"
+    if(years[yr.k]>=2010)dat$period="recent"
+  }
+  if(loc.k==2){
+    if(years[yr.k]<2007)dat$period="initial"
+    if(years[yr.k]>=2007 & years[yr.k]<2014)dat$period="middle"
+    if(years[yr.k]>=2014)dat$period="recent"
+  }
+  
+  if(yr.k==1) dat.all=dat
+  if(yr.k>1) dat.all=rbind(dat, dat.all)
+}
+
+#subset to sunlight
+dat.day= subset(dat.all, dat.all$SOLR>0)
+
+#divide by periods, 91 to 274
+#April to May
+dat.day$seas="AprMay"
+#June to July
+dat.day$seas[dat.day$DOY>151]="JunJul"
+#August to September
+dat.day$seas[dat.day$DOY>212]="AugSep"
+#order
+dat.day$seas= factor(dat.day$seas, levels=c("AprMay","JunJul","AugSep") )
+
+#combine doy and time
+dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
+
+dat.day.sh= dat.day
+
+#--------------------------  
 #plot density distributions
-p1= ggplot(dat.day, aes(x=TALOC))+
+p1= ggplot(dat.day.sun, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   xlab("Day of year")+
   ylab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.65, 0.8))
 #D0cm, TALOC, TAREF
+
+#use sun
+dat.day= dat.day.sun
 
 #===============================
 #P. rapae larvae
@@ -258,8 +300,8 @@ dat.day2$sumperf.norm= dat.day2$sumperf/dat.day2$counts
 p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+geom_line()+   #geom_smooth()+
   facet_wrap(~seas)+
   xlab("Temperature at reference height (°C)")+
-  ylab("Sum of consumption or growth rate (g/h/h)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))
+  ylab("Sum of growth rate (g/g/h)" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.65, 0.8))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Prapae.pdf", height = 10, width = 12)
@@ -285,7 +327,7 @@ tpc.gaus= coef(mod)
 #generate parameter combinations
 temps=1:70
 
-params= expand.grid(temp = seq(0,70,2), topt = seq(20, 40, 1) )
+params= expand.grid(temp = seq(0,70,2), topt = seq(10, 30, 1) )
   
 gauss.mat= function(pmat,rmax,a) gaussian_1987(pmat[1], rmax, pmat[2], a)
 
@@ -294,11 +336,8 @@ params$perf= apply(params, MARGIN=1, FUN=gauss.mat, rmax=tpc.gaus[1], a=tpc.gaus
 ggplot(params, aes(x=temp, y=perf, color=topt, group=topt))+geom_line()
 
 #estimate growth and development
-#get all years?
-params= expand.grid(temp = seq(0,70,2), topt = seq(20, 40, 1) )
-
 #RUN
-topts= seq(20, 40, 1)
+topts= seq(10, 30, 1)
 perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= length(topts) )
 for(topt.k in 1:length(topts)){
   perf.mat[,topt.k]= sapply(dat.day$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=topts[topt.k], a=tpc.gaus[3])
@@ -308,15 +347,16 @@ for(topt.k in 1:length(topts)){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 #aggregate
 perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-names(perfs1)=c("year","period","seas", 20:40)
+names(perfs1)=c("year","period","seas", 10:30)
 #make column for slopes
 perfs1$B= NA
 
 for(row.k in 1: nrow(perfs1)){
   #put into format for regression
-  perfs2= as.data.frame(cbind(20:40, t(perfs1[row.k,4:24]) ))
+  perfs2= as.data.frame(cbind(10:30, t(perfs1[row.k,4:24]) ))
   colnames(perfs2)=c("topt","perf")
   
+  plot(perfs2$topt, perfs2$perf)
   #mod1= lm(perf~topt , data=perfs2)
   mod1= lm(perf~topt +I(topt^2) , data=perfs2)
   perfs1$B[row.k]= coefficients(mod1)[2]
@@ -326,17 +366,18 @@ for(row.k in 1: nrow(perfs1)){
 #plot fitness curves through time
 perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
 names(perfs.l)[4:5]=c("temperature","performance")
-perfs.l$temperature= as.numeric(perfs.l$temperature)
+perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
 fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
   facet_wrap(~seas) +scale_color_viridis_c()+
-  theme_classic(base_size = 20)
+  theme_classic(base_size = 20)+
+  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")
 
 #plot selection gradients through time
 fig.selb=ggplot(perfs1, aes(x=year, y=B, color=seas))+geom_line()+
-  theme_classic(base_size = 20)
+  theme_classic(base_size = 20)+geom_smooth(se=FALSE)
 fig.selcurve= ggplot(perfs1, aes(x=year, y=curve, color=seas))+geom_line()+
-  theme_classic(base_size = 20)
+  theme_classic(base_size = 20)+geom_smooth(se=FALSE)
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PrapaeSelection.pdf", height = 12, width = 10)
@@ -345,6 +386,7 @@ dev.off()
 
 #account for temperatures exceeding tpcs
 
+#----------------------------
 ##P. rapae 1999 selection data
 # rgr at each temperature
 # survival to pupation, time to pupation, pupal mass

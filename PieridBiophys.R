@@ -179,16 +179,17 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
   
-  # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
-  A_sref <- A_sttl/2
+  # reflected surface areas 
+  A_sref <- A_sttl
   
   # RADIATIVE HEAT FLUx, mW
   
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
-  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + PV * A_sref * H_sdif + 0.5*(PV+HB) * r_g * A_sref * H_sttl  
+  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + 0.5*(PV+HB) * A_sref * H_sdif + HB * r_g * A_sref * H_sttl  
   #direct radiation already accounts for absorptivity
-  #average PV and HB absorptivity for reflected radiation
+  #average PV and HB absorptivity for diffuse radiation
+  #HB for reflected radiation assuming reflected off surface
   
   #-----------------------------
   
@@ -252,9 +253,6 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   # At 40-42C, assume closed wing heat avoidance posture, wing angle=0
   #orient parallel to solar radiation
   
-  # if shade assume 10% direct radiation 
-  if (shade) {H_sdir=H_sdir/10}
-    
     A_sdir=0 #close wings, no reflectance basking
     
     # total surface area cm^2 as area of cylinder without ends
@@ -263,21 +261,20 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     #-----------------------------
     #UPDATE RADIATION ESTIMATES
     
-    # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
-    A_sref <- A_sttl/2
+    # reflected surface areas
+    A_sref <- A_sttl
     
     # No direct radiation, only diffuse and reflected
     H_sdir_sh <- 0
     H_sdif_sh <- H_sdif
-    H_sttl <- H_sdir + H_sdif
+    H_sttl_sh <- H_sdir_sh + H_sdif
     
     # RADIATIVE HEAT FLUx, mW
-    Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + PV * A_sref * H_sdif + 0.5*(PV+HB) * r_g * A_sref * H_sttl  
+    Q_s <- HB * A_sref * H_sdif_sh + HB * r_g * A_sref * H_sttl_sh  
+    
     #direct radiation already accounts for absorptivity
     
     # Solution 
-    Tg_sh=Tg #find Tg shade
-    
     a <- A_sttl * Ep * sigma
     b <- h_T * A_sttl
     d <- h_T * A_sttl * TaK +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
@@ -423,11 +420,10 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   H_sdif= Temat[7]
   z= Temat[8]
   
-  # conversions
   # temperatures C to K
   
   TaK <- T_a + 273.15
-  TaK_sh <- T_a_sh + 273.15
+  TaK_sh <- TaK
   Tg <- Tg + 273.15 
   Tg_sh <- Tg_sh + 273 
   
@@ -538,16 +534,17 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
   
-  # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
-  A_sref <- A_sttl/2
+  # reflected surface areas 
+  A_sref <- A_sttl
   
   # RADIATIVE HEAT FLUx, mW
   
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
-  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + PV * A_sref * H_sdif + 0.5*(PV+HB) * r_g * A_sref * H_sttl  
+  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + 0.5*(PV+HB) * A_sref * H_sdif + HB * r_g * A_sref * H_sttl  
   #direct radiation already accounts for absorptivity
-  #average PV and HB absorptivity for reflected radiation
+  #average PV and HB absorptivity for diffuse radiation
+  #HB for reflected radiation assuming reflected off surface
   
   #-----------------------------
   
@@ -611,9 +608,6 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   # At 40-42C, assume closed wing heat avoidance posture, wing angle=0
   #orient parallel to solar radiation
   
-  # if shade assume 10% direct radiation 
-  if (shade) {H_sdir=H_sdir/10}
-  
   A_sdir=0 #close wings, no reflectance basking
   
   # total surface area cm^2 as area of cylinder without ends
@@ -622,22 +616,23 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
   
-  # direct and reflected surface areas For butterflies basking with wings perpendicular to radiation 
-  A_sref <- A_sttl/2
+  # reflected surface areas
+  A_sref <- A_sttl
   
   # No direct radiation, only diffuse and reflected
   H_sdir_sh <- 0
   H_sdif_sh <- H_sdif
-  H_sttl <- H_sdir + H_sdif
+  H_sttl_sh <- H_sdir_sh + H_sdif
   
   # RADIATIVE HEAT FLUx, mW
-  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + PV * A_sref * H_sdif + 0.5*(PV+HB) * r_g * A_sref * H_sttl  
+  Q_s <- HB * A_sref * H_sdif_sh + HB * r_g * A_sref * H_sttl_sh  
+  
   #direct radiation already accounts for absorptivity
   
   # Solution 
   a <- A_sttl * Ep * sigma
   b <- h_T * A_sttl
-  d <- h_T * A_sttl * TaK_sh +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
+  d <- h_T * A_sttl * TaK +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
   
   # in K
   

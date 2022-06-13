@@ -81,52 +81,8 @@ dat.sub= dat.day[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VL
 #TAREF - air temperature (°C) at reference height (specified by 'Refhyt', 2m default)
 #VLOC - wind speed (m/s) at local height (specified by 'Usrhyt' variable)
 
-#melt temp data
-datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm","year","period")], id=c("dates","DOY","TIME","d.hr","year","period") )
-
-#plot
-ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
-  theme_bw()+scale_color_viridis_d()
-
 #partition solar radiation [or extract from micro?], returns diffuse fraction
 df=partition_solar_radiation("Erbs", kt=0.8)
-
-#butterfly temperature
-Temat= cbind(dat.sub$TALOC, dat.sub$D0cm, dat.sub$D0cm, 
-             dat.sub$VLOC, dat.sub$SOLR*(1-df), dat.sub$SOLR*(df), dat.sub$ZEN)
-
-dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                    D = 0.36, delta = 1.46, HB = 0.65, PV = 0.65, 
-                    r_g = 0.3, wing_angle=42, shade = TRUE) 
-
-#fix high
-dat.sub$Tb[which(dat.sub$Tb>80)]<-NA
-
-#plot Tb distributions
-ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
-  theme_bw()+scale_color_viridis_d()
-#plot density distributions
-p1= ggplot(dat.sub, aes(x=Tb))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+  
-  facet_wrap(~seas)+
-  xlab("Body Temperature (°C)")+
-  ylab("Density" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))+
-  xlim(0,90)
-
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PoccTb.pdf", height = 7, width = 10)
-p1
-dev.off()
-
-#air temp
-ggplot(dat.sub, aes(x=TAREF))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+  
-  facet_wrap(~seas)+
-  xlab("Body Temperature (°C)")+
-  ylab("Density" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.8))+
-  xlim(0,90)
 
 #---------
 #Load shade data
@@ -158,7 +114,7 @@ dat.day.sh$seas[dat.day.sh$DOY>212]="Aug & Sep"
 dat.day.sh$seas= factor(dat.day.sh$seas, levels=c("Apr & May","Jun & Jul","Aug & Sep") )
 
 #combine doy and time
-dat.day.sh$d.hr= dat.day.sh$DOY + dat.day.sh$TIME/60
+dat.day.sh$d.hr= dat.day.sh$DOY + (dat.day.sh$TIME/60-7)/24
 
 #subset columns
 dat.sub.sh= dat.day.sh[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","ZEN","SOLR","VLOC","D0cm","year","period","seas")]
@@ -176,6 +132,66 @@ plot(dat.sub.sh$D0cm[match1],dat.sub$D0cm)
 #add shade data to sun data
 dat.sub$TALOC_sh= dat.sub.sh$TALOC[match1]
 dat.sub$D0cm_sh= dat.sub.sh$D0cm[match1]
+
+#plot time series
+#melt temp data
+datm= melt(dat.sub[,c("dates","DOY","TIME","d.hr","TAREF","TALOC","D0cm","year","period")], id=c("dates","DOY","TIME","d.hr","year","period") )
+
+#plot
+ggplot(data=datm, aes(x=d.hr, y = value, color=variable))+ geom_line(alpha=0.2)+
+  theme_bw()+scale_color_viridis_d()
+
+#----------
+#butterfly temperature
+Temat= cbind(dat.sub$TALOC, dat.sub$TALOC_sh,dat.sub$D0cm, dat.sub$D0cm_sh, 
+             dat.sub$VLOC, dat.sub$SOLR*(1-df), dat.sub$SOLR*(df), dat.sub$ZEN)
+
+dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
+                  D = 0.36, delta = 1.46, HB = 0.65, PV = 0.65, 
+                  r_g = 0.3, wing_angle=42, shade = TRUE) 
+
+#fix high
+dat.sub$Tb[which(dat.sub$Tb>80)]<-NA
+
+#plot Tb distributions
+ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
+  theme_bw()+scale_color_viridis_d()
+#plot density distributions
+p1= ggplot(dat.sub, aes(x=Tb))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+  
+  facet_wrap(~seas)+
+  xlab("Body Temperature (°C)")+
+  ylab("Density" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.65, 0.85))+
+  xlim(0,90)
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PoccTb.pdf", height = 7, width = 10)
+p1
+dev.off()
+
+#air temp
+p2= ggplot(dat.sub, aes(x=TALOC))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+  
+  facet_wrap(~seas)+
+  xlab("Environmental Temperature (°C)")+
+  ylab("Density" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.85))
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PoccTaloc.pdf", height = 7, width = 10)
+p2
+dev.off()
+
+#plot diurnal variation
+#seems to work but still not sure about time
+dat.sub$hr= dat.sub$TIME/60+12+7
+dat.sub$hr[dat.sub$hr<0]= 24+dat.sub$hr[dat.sub$hr<0]
+dat.sub$hr[dat.sub$hr>24]= dat.sub$hr[dat.sub$hr>24]-24
+
+ggplot(dat.sub, aes(x=hr, y=Tb))+
+  geom_point()+  
+  facet_wrap(~seas)
 
 #---------
 ### SET UP DATA STRUCTURES
@@ -268,10 +284,14 @@ pup.temps.l= melt(pup.temps.l[,2:9], id=c("yr", "gen"))
 #plot
 plot.pocc.times= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Jlarv","Jpup","Jadult") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
   facet_wrap(~variable)+
-  theme_classic(base_size = 20)
+  theme_classic(base_size = 20)+
+  ylab("day of year")+
+  scale_color_viridis_c("generation")
 plot.pocc.temps= ggplot(pup.temps.l[which(pup.temps.l$variable %in% c("Tlarv","Tpup","Tad") ),], aes(x=yr, y=value, col=gen, group=gen))+geom_line()+
   facet_wrap(~variable)+
-  theme_classic(base_size = 20)
+  theme_classic(base_size = 20)+
+  ylab("temperature (C)")+
+  scale_color_viridis_c("generation")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PoccPupTemps.pdf", height = 7, width = 10)
@@ -406,21 +426,25 @@ for(yr.k in 1:length(years) ){
 } #end loop years
 
 #SAVE OBJECT
-#filename= paste("lambda1_",projs[proj.k],".rds",sep="")
-#saveRDS(Lambda, filename)
+filename= paste("lambda1_",projs[proj.k],".rds",sep="")
+saveRDS(Lambda, filename)
 #Lambda1 <- readRDS("mymodel.rds")
 
 #melt lambda array
 Lambda.l= melt(Lambda) 
 colnames(Lambda.l)=c("year","abs","gen","metric","value")
 Lambda.l$abs= abs1[Lambda.l$abs]
-Lambda.l$metric= c("lambda","FAT (h)","egg viab (%)","Tadult (C)","larval growth")[Lambda.l$metric]
-Lambda.l$metric= factor(Lambda.l$metric, levels=c("lambda","FAT (h)","egg viab (%)","Tadult (C)","larval growth"))
+Lambda.l$metric= c("fitness","FAT (h)","egg viab (%)","Tadult (C)","larval growth")[Lambda.l$metric]
+Lambda.l$metric= factor(Lambda.l$metric, levels=c("fitness","FAT (h)","egg viab (%)","Tadult (C)","larval growth"))
+
+#replace gen name
+Lambda.l$gen= gsub("gen","generation ",Lambda.l$gen)
 
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 
-fig.OccFit= ggplot(Lambda.l, aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
+fig.OccFit= ggplot(Lambda.l[Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)"),], 
+                   aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
   theme_classic()+xlab("absorptivity (%)")+ylab("")
 
@@ -430,9 +454,9 @@ fig.OccFit
 dev.off()
 
 #just plot lambdas
-fig.lambdas= ggplot(Lambda.l[Lambda.l$metric=="lambda",], aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
+fig.lambdas= ggplot(Lambda.l[Lambda.l$metric=="fitness",], aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(~gen, scale="free_y") +scale_color_viridis_c()+
-  theme_classic()+xlab("absorptivity (%)")+ylab("lambda")
+  theme_classic()+xlab("absorptivity (%)")+ylab("fitness")
 
 pdf("Fig_PoccLambdas.pdf", height = 4, width = 7)
 fig.lambdas
@@ -457,8 +481,8 @@ for(abs.k in 1:length(abs1) ){
 Ts= as.data.frame(Ts)
 colnames(Ts)= abs1
 
-Ts$hr= dat.sub1$TIME/60+12
-Ts$hr[Ts$hr>24]= Ts$hr[Ts$hr>24]-24
+Ts$hr= dat.sub1$TIME/60-7 #convert from UTC
+#Ts$hr[Ts$hr<0]= Ts$hr[Ts$hr<0]+24
 Ts$TALOC= dat.sub1$TALOC
 
 #plot

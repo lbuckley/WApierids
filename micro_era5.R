@@ -173,13 +173,14 @@ for(i in 1:10){
 #Seattle, P. rapae,
 locations= c("Corfu","Seattle")
 
-loc.k<- 1
+loc.k<- 2
+shade<- F
 
 if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
 
-  if(loc.k==1) years=c(1989:2002,2018:2021) #1989:2021
-  if(loc.k==2) years=c(2009:2016) ##Error with 2008
+  if(loc.k==1) years=c(1989:2021) 
+  if(loc.k==2) years=c(2001:2021) ##2001:2021
   
   #set microclim path
   file_prefix="era5"
@@ -196,8 +197,8 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
     dfinish <- paste("30/09/", yr,sep="")
     
     # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-    micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
-    #micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
+    if(shade==F) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
+    if(shade==T) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.5, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
     
     #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
     #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
@@ -224,8 +225,8 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
     #dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
     dat <- cbind(metout, soil[,4:13])
     
-    setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")
-    #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
+    if(shade==F) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")
+    if(shade==T) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
     
     write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
     
