@@ -123,9 +123,11 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   v <- 15.68 * 10^-2  
   
   #-----
+  #Reflectance basking
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
   wing.angle= wing_angle*pi/180   #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  r=D/2
   
   #calculate values for integers above and below then interpolate
   n=c(5,4,3,2,1,0)
@@ -160,7 +162,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     S= 2*OC*sin(wing.angle)
   }
   
-  S= S*HB #account for reflectance
+  S= S*(1-HB) #account for reflectance
   #UPDATE for HV and PV melanism
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
@@ -171,22 +173,25 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   # how to calculate absorptivity from wing traits
   #------
   
-  A_sdir=S*L
+  A_sdir_r=S*L
   
   # total surface area cm^2 as area of cylinder without ends
   A_sttl <- pi * D * 2 
-  
+  A_sdir= A_sttl/2
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
   
   # reflected surface areas 
-  A_sref <- A_sttl
+  A_sref <- A_sttl/2
   
   # RADIATIVE HEAT FLUx, mW
   
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
-  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + 0.5*(PV+HB) * A_sref * H_sdif + HB * r_g * A_sref * H_sttl  
+  #reflectance basking
+  Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
+  
+  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV * r_g * A_sref * H_sttl  
   #direct radiation already accounts for absorptivity
   #average PV and HB absorptivity for diffuse radiation
   #HB for reflected radiation assuming reflected off surface
@@ -253,7 +258,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   # At 40-42C, assume closed wing heat avoidance posture, wing angle=0
   #orient parallel to solar radiation
   
-    A_sdir=0 #close wings, no reflectance basking
+    A_sdir=0 #close wings
     
     # total surface area cm^2 as area of cylinder without ends
     A_sttl <- pi * D * 2 
@@ -262,7 +267,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     #UPDATE RADIATION ESTIMATES
     
     # reflected surface areas
-    A_sref <- A_sttl
+    A_sref <- A_sttl/2
     
     # No direct radiation, only diffuse and reflected
     H_sdir_sh <- 0
@@ -270,9 +275,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     H_sttl_sh <- H_sdir_sh + H_sdif
     
     # RADIATIVE HEAT FLUx, mW
-    Q_s <- HB * A_sref * H_sdif_sh + HB * r_g * A_sref * H_sttl_sh  
-    
-    #direct radiation already accounts for absorptivity
+    Q_s <- PV * r_g * A_sref * H_sttl_sh  
     
     # Solution 
     a <- A_sttl * Ep * sigma
@@ -478,9 +481,11 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   v <- 15.68 * 10^-2  
   
   #-----
+  #Reflectance basking
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
   wing.angle= wing_angle*pi/180   #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
+  r=D/2
   
   #calculate values for integers above and below then interpolate
   n=c(5,4,3,2,1,0)
@@ -515,7 +520,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
     S= 2*OC*sin(wing.angle)
   }
   
-  S= S*HB #account for reflectance
+  S= S*(1-HB) #account for reflectance
   #UPDATE for HV and PV melanism
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
@@ -526,22 +531,25 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   # how to calculate absorptivity from wing traits
   #------
   
-  A_sdir=S*L
+  A_sdir_r=S*L
   
   # total surface area cm^2 as area of cylinder without ends
   A_sttl <- pi * D * 2 
-  
+  A_sdir= A_sttl/2
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
   
   # reflected surface areas 
-  A_sref <- A_sttl
+  A_sref <- A_sttl/2
   
   # RADIATIVE HEAT FLUx, mW
   
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
-  Q_s <- A_sdir * H_sdir / cos(z * pi / 180) + 0.5*(PV+HB) * A_sref * H_sdif + HB * r_g * A_sref * H_sttl  
+  #reflectance basking
+  Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
+  
+  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV * r_g * A_sref * H_sttl  
   #direct radiation already accounts for absorptivity
   #average PV and HB absorptivity for diffuse radiation
   #HB for reflected radiation assuming reflected off surface
@@ -608,7 +616,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   # At 40-42C, assume closed wing heat avoidance posture, wing angle=0
   #orient parallel to solar radiation
   
-  A_sdir=0 #close wings, no reflectance basking
+  A_sdir=0 #close wings
   
   # total surface area cm^2 as area of cylinder without ends
   A_sttl <- pi * D * 2 
@@ -617,7 +625,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #UPDATE RADIATION ESTIMATES
   
   # reflected surface areas
-  A_sref <- A_sttl
+  A_sref <- A_sttl/2
   
   # No direct radiation, only diffuse and reflected
   H_sdir_sh <- 0
@@ -625,9 +633,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   H_sttl_sh <- H_sdir_sh + H_sdif
   
   # RADIATIVE HEAT FLUx, mW
-  Q_s <- HB * A_sref * H_sdif_sh + HB * r_g * A_sref * H_sttl_sh  
-  
-  #direct radiation already accounts for absorptivity
+  Q_s <- PV * r_g * A_sref * H_sttl_sh  
   
   # Solution 
   a <- A_sttl * Ep * sigma

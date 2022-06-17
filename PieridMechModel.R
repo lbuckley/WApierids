@@ -561,8 +561,12 @@ ggplot(abs.opt.l, aes(x=year, y=value, color=variable, group=variable))+geom_lin
 int_elev = 0.4226; slope_elev = 0.06517
 Tmid = 20; slope_plast = -0.0083  #if Tmid=22.5, -0.006667;
 
-h2= 0.4
-#abs.mean=0.55
+h2_HB= (0.54+0.61)/2 #2 experiments
+h2_PV= (0.22+0.23)/2 #2 experiments
+cor=0.49
+
+h2= h2_HB 
+  
 abs.sd= 0.062
 rn.sd= 0.0083
 
