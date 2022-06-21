@@ -199,9 +199,11 @@ ggplot(dat.sub, aes(x=hr, y=Tb))+
 #Lambda= survival*fecundity
 #Matrix of lambdas
 #dims: stats, year, Lambda 
-Lambda<-array(NA, dim=c(length(years),length(seq(0.4,0.7,0.05)),5,5)) #Last dimension is Lambda, FAT,Egg Viability, growth
+Lambda<-array(NA, dim=c(length(years),length(seq(0.4,0.7,0.05)),length(seq(0.4,0.7,0.05)),5,5)) 
+#2nd and 3rd dimensions are PV and HB
+#Last dimension is Lambda, FAT,Egg Viability, growth
 dimnames(Lambda)[[1]]<-years
-dimnames(Lambda)[[3]]<-c("gen1","gen2","gen3","gen4","gen5")
+dimnames(Lambda)[[4]]<-c("gen1","gen2","gen3","gen4","gen5")
 
 #Matrix for pupual temps
 pup.temps<-array(NA, dim=c(12, length(years),5)) #5 generations 
@@ -331,8 +333,9 @@ for(yr.k in 1:length(years) ){
     
   for(gen.k in 1:5 ){ #loop generation
     
-      for(abs.k in 1:length(abs1) ){ #loop absorptivity
-        
+      for(abs.k.pv in 1:length(abs1) ){ #loop PV absorptivity
+        for(abs.k.hb in 1:length(abs1) ){ #loop HB absorptivity
+          
         #ADD PLASTICITY
         #https://doi.org/10.1093/icb/38.3.545
         #Basal dorsal HW melanism
@@ -347,12 +350,13 @@ for(yr.k in 1:length(years) ){
         
         light.hrs=daylength(lat=46.8151, doy=pup.temps["Jpup", yr.k, gen.k])
         
-        #absorptivity
-        abs= abs.plast(light.hrs, abs1[abs.k])
+        #absorptivity #UPDATE for pv, hb
+        abs.pv= abs.plast(light.hrs, abs1[abs.k.pv])
+        abs.hb= abs.plast(light.hrs, abs1[abs.k.hb])
         
         #calculate Tb based on absorptivity
         dat.yr$Tb.a= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                          D = 0.36, delta = 1.46, HB = abs, PV = abs, 
+                          D = 0.36, delta = 1.46, HB = abs.hb, PV = abs.pv, 
                           r_g = 0.3, wing_angle=42, shade = TRUE) 
         
         #Flight probability
@@ -369,7 +373,8 @@ for(yr.k in 1:length(years) ){
        # daily values
         dat.day<- dat.yr %>%
           group_by(DOY) %>%
-          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = sum(larv.growth) )
+          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = sum(larv.growth),
+                    .groups="keep")
         
         #flight day
         Jfl= pup.temps["Jadult", yr.k, gen.k]
@@ -415,11 +420,13 @@ for(yr.k in 1:length(years) ){
             Lambda1= Lambda1+ SurvMat * SurvDaily^day *Eggs1;                        
           }#end loop days
           
-          Lambda[yr.k, abs.k, gen.k, ]= c(Lambda1, mean(FAT.ind), mean(ev.ind), mean(T.ind, na.rm=T), Gr.larv )
+          Lambda[yr.k, abs.k.pv, abs.k.hb, gen.k, ]= c(Lambda1, mean(FAT.ind), mean(ev.ind), mean(T.ind, na.rm=T), Gr.larv )
           
         } #Check Eggs
         
-      } #end loop absorptivity
+      } #end loop pv absorptivity
+        
+      } #end loop hb absorptivity
      
   } #end loop generation
   
@@ -432,8 +439,9 @@ saveRDS(Lambda, filename)
 
 #melt lambda array
 Lambda.l= melt(Lambda) 
-colnames(Lambda.l)=c("year","abs","gen","metric","value")
-Lambda.l$abs= abs1[Lambda.l$abs]
+colnames(Lambda.l)=c("year","abs.pv","abs.hb","gen","metric","value")
+Lambda.l$abs.pv= abs1[Lambda.l$abs.pv]
+Lambda.l$abs.hb= abs1[Lambda.l$abs.hb]
 Lambda.l$metric= c("fitness","FAT (h)","egg viab (%)","Tadult (C)","larval growth")[Lambda.l$metric]
 Lambda.l$metric= factor(Lambda.l$metric, levels=c("fitness","FAT (h)","egg viab (%)","Tadult (C)","larval growth"))
 
@@ -443,8 +451,13 @@ Lambda.l$gen= gsub("gen","generation ",Lambda.l$gen)
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 
-fig.OccFit= ggplot(Lambda.l[Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)"),], 
-                   aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
+fig.OccFit.pv= ggplot(Lambda.l[which(Lambda.l$abs.hb==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
+                   aes(x=abs.pv, y=value, color=year, group=gyr))+geom_line()+
+  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
+  theme_classic()+xlab("absorptivity (%)")+ylab("")
+
+fig.OccFit.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
+                      aes(x=abs.hb, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
   theme_classic()+xlab("absorptivity (%)")+ylab("")
 
@@ -512,7 +525,7 @@ ngens=5
 #==============================================
 #Calculate optimal absorptivity
 
-abs.opt= array(NA, dim=c(length(years), 5))  
+abs.opt= array(NA, dim=c(length(years), 5,2)) #last dimension is pv, hb  
 
 lambda.fit=function(x, a=a) if(sum(is.na(x))==0) lm(x~a+I(a^2))$coefficients
 lambda.max=function(x, a=a) if(!is.null(x))a.fit$a[which.max(predict.lm(x, a.fit))] 
@@ -522,22 +535,23 @@ for(yr.k in 1:length(years)) {
   ##loop through generations in each year
   for(gen.k in 1:ngens) {
     
-    Lambda.yr.gen= Lambda[yr.k, , gen.k, ]
+    Lambda.yr.gen= Lambda[yr.k, , , gen.k, ]
     
     #Extract temperatures
     Tp= pup.temps["Tpup",yr.k, gen.k]
     
     #--------------------------
-    #Fitness models
-    
-    if(!all(is.na(Lambda.yr.gen[,1]))){ #check has data
+    if(!all(is.na(Lambda.yr.gen[,,1]))){ #check has data
       
-      fit= lm(Lambda.yr.gen[,1]~a+I(a^2))
-      #Estimate fitness functions across cells
-      fit.mod= fit$coefficients
+      inds= which(Lambda.yr.gen[,,1] == max(Lambda.yr.gen[,,1]), arr.ind = TRUE)
+      abs.opt[yr.k,gen.k,1]= abs1[inds[1]] #CHECK order
+      abs.opt[yr.k,gen.k,2]= abs1[inds[2]]
       
-      #find maxima lambda
-      abs.opt[yr.k,gen.k]= a.fit$a[which.max(predict.lm(fit, a.fit))]
+      #fit= lm(Lambda.yr.gen[,,1]~a+I(a^2))
+      ##Estimate fitness functions across cells
+      #fit.mod= fit$coefficients
+      ##find maxima lambda
+      #abs.opt[yr.k,gen.k,1]= a.fit$a[which.max(predict.lm(fit, a.fit))]
       
     } #end check data
   } #end gen loop
@@ -561,7 +575,7 @@ ggplot(abs.opt.l, aes(x=year, y=value, color=variable, group=variable))+geom_lin
 int_elev = 0.4226; slope_elev = 0.06517
 Tmid = 20; slope_plast = -0.0083  #if Tmid=22.5, -0.006667;
 
-h2_HB= (0.54+0.61)/2 #2 experiments
+h2_HB= (0.54+0.61)/2 #2 experiments #Kingsolver and Wiernasz 1991 Evolution
 h2_PV= (0.22+0.23)/2 #2 experiments
 cor=0.49
 
@@ -578,12 +592,12 @@ abs.init<- abs.init2
 
 #-----------------------
 #Save values
-abs.mean= array(NA, dim=c(length(years), 5, 5,5))  #dims: yr.k, gen.k, scen.k:no plast, plast, only plast, metrics: abssample, absmid, rn, Babsmid, Brn)
-abs.mean[1,,,2]= abs.init
-abs.mean[1,,,3]= slope_plast
+abs.mean= array(NA, dim=c(length(years), 5, 5,5,2))  #dims: yr.k, gen.k, scen.k:no plast, plast, only plast, metrics: abssample, absmid, rn, Babsmid, Brn; pv, hb
+abs.mean[1,,,2,]= abs.init
+abs.mean[1,,,3,]= slope_plast
 dimnames(abs.mean)[[4]]= c("abssample", "absmid", "rn", "Babsmid", "Brn") 
 
-lambda.mean= array(NA, dim=c(length(years),5, 5)) #dims: yr.k, gen.k, scen.k:no plast, plast, only plast)
+lambda.mean= array(NA, dim=c(length(years),5, 5,2)) #dims: yr.k, gen.k, scen.k:no plast, plast, only plast; pv, hb
 
 #BetaRN= rep(NA, nrow(pts.sel))
 #-------------------------------
@@ -597,7 +611,7 @@ for(yr.k in 1:length(years)) {
     
     BetaAbsmid=NA
     
-    Lambda.yr.gen= Lambda[yr.k, , gen.k, ]
+    Lambda.yr.gen= Lambda[yr.k, , gen.k, ,]
     
     #determine those completing generations
     comp.gen= which(pup.temps["Jadult",yr.k,gen.k]<243)
