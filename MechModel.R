@@ -301,7 +301,7 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+geom_line()+   #
   facet_wrap(~seas)+
   xlab("Temperature at reference height (°C)")+
   ylab("Sum of growth rate (g/g/h)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.65, 0.8))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.8))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Prapae.pdf", height = 10, width = 12)
@@ -347,7 +347,7 @@ for(topt.k in 1:length(topts)){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 #aggregate
 perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-names(perfs1)=c("year","period","seas", 10:30)
+names(perfs1)=c("year","period","seas", seq(10, 30, 1))
 #make column for slopes
 perfs1$B= NA
 
@@ -385,6 +385,12 @@ fig.fitnesscurves / fig.selb / fig.selcurve
 dev.off()
 
 #account for temperatures exceeding tpcs
+
+#find thermal optima through years 
+perfs1$Topt= apply(perfs1[,4:26], MARGIN=1, FUN=which.max )
+
+ggplot(perfs1, aes(x=year, y=Topt, color=seas))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)
 
 #----------------------------
 ##P. rapae 1999 selection data

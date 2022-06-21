@@ -25,7 +25,7 @@ SurvMat=0.014; #1.4# survival to maturity
 #read/make species data
 solar.abs= 0.65 # Solar absorptivity, proportion
 SpecDat= as.data.frame(solar.abs)
-SpecDat$d=0.36 # d- Thoractic diameter, cm
+SpecDat$d=0.26 # d- Thoractic diameter, cm
 SpecDat$fur.thickness=1.46 # Fur thickness, mm
 SpecDat= as.matrix(SpecDat)
 
@@ -147,7 +147,7 @@ Temat= cbind(dat.sub$TALOC, dat.sub$TALOC_sh,dat.sub$D0cm, dat.sub$D0cm_sh,
              dat.sub$VLOC, dat.sub$SOLR*(1-df), dat.sub$SOLR*(df), dat.sub$ZEN)
 
 dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                  D = 0.36, delta = 1.46, HB = 0.65, PV = 0.65, 
+                  D = 0.26, delta = 1.46, HB = 0.55, PV = 0.55, 
                   r_g = 0.3, wing_angle=42, shade = TRUE) 
 
 #fix high
@@ -356,7 +356,7 @@ for(yr.k in 1:length(years) ){
         
         #calculate Tb based on absorptivity
         dat.yr$Tb.a= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                          D = 0.36, delta = 1.46, HB = abs.hb, PV = abs.pv, 
+                          D = 0.26, delta = 1.46, HB = abs.hb, PV = abs.pv, 
                           r_g = 0.3, wing_angle=42, shade = TRUE) 
         
         #Flight probability
@@ -482,8 +482,8 @@ fig.lambdas.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %i
   theme_classic()+xlab("HB absorptivity (%)")+ylab("fitness")
 
 
-pdf("Fig_PoccLambdas.pdf", height = 4, width = 7)
-fig.lambdas.pv + fig.lambdas.hb + plot_layout(ncol = 1)
+pdf("Fig_PoccLambdas.pdf", height = 7, width = 7)
+fig.lambdas.hb + fig.lambdas.pv + plot_layout(ncol = 1)
 dev.off()
 
 #-------------
@@ -497,7 +497,7 @@ Temat= cbind(dat.sub1$TALOC, dat.sub1$TALOC_sh, dat.sub1$D0cm, dat.sub1$D0cm_sh,
 for(abs.k in 1:length(abs1) ){
   
   Ts[,abs.k]= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
-                    D = 0.36, delta = 1.46, HB = abs1[abs.k], PV = abs1[abs.k], 
+                    D = 0.26, delta = 1.46, HB = abs1[abs.k], PV = abs1[abs.k], 
                     r_g = 0.3, wing_angle=42, shade = TRUE) 
   
   }
@@ -510,6 +510,7 @@ Ts$hr= dat.sub1$TIME/60 -12 #convert from UTC
 Ts$hr[Ts$hr<0]= Ts$hr[Ts$hr<0]+24
 Ts$TALOC= dat.sub1$TALOC
 Ts= subset(Ts, Ts$DOY==101)
+Ts= Ts[,c(1:7,9:10)]
 
 #plot
 datm= melt(Ts, id=c("hr"), variable="abs" )
@@ -591,7 +592,6 @@ ggplot(abs.opt.l, aes(x=year, y=value, color=variable, lty=trait))+geom_line()+
 
 #***************************************
 #compute initial AbsMean 
-#UPDATE
 int_elev = 0.4226; slope_elev = 0.06517
 Tmid = 20; slope_plast = -0.0083  #if Tmid=22.5, -0.006667;
 
@@ -602,7 +602,6 @@ cor=0.49
 abs.sd= 0.062
 rn.sd= 0.0083
 
-## NEED TO CALC ABS.OPT
 #initialize with optimum value across for ten years, across generations
 abs.init.pv <- mean(abs.opt[1:10,,1], na.rm=TRUE)
 abs.init.hb <- mean(abs.opt[1:10,,2], na.rm=TRUE)
@@ -628,7 +627,8 @@ for(yr.k in 1:length(years)) {
   ##loop through generations in each year
   for(gen.k in 1:ngens) {
     
-    BetaAbsmid=NA
+    BetaAbsmid.pv=NA
+    BetaAbsmid.hb=NA
     
     Lambda.yr.gen= Lambda[yr.k, , , gen.k,]
     
@@ -653,8 +653,8 @@ for(yr.k in 1:length(years)) {
       # LOOP PLASTICITY SCENARIOS
       for(scen.k in 1:5){ #plast0evol0, plast1evol0, plast0evol1, plast1evol1, plast1evol1rnevol1
         
-        if(scen.mat[scen.k,1]==1) rn.mean1= slope_plast
-        if(scen.mat[scen.k,1]==0) rn.mean1= 0
+        if(scen.mat[scen.k,1]==1) rn.mean1= c(slope_plast,slope_plast)
+        if(scen.mat[scen.k,1]==0) rn.mean1= c(0,0)
         if(scen.k==5 & gen.k==1) rn.mean1= abs.mean[yr.k,gen.k,scen.k,"rn",]
         if(scen.k==5 & gen.k>1) rn.mean1= abs.mean[yr.k,gen.k-1,scen.k,"rn",]
         
@@ -722,8 +722,10 @@ for(yr.k in 1:length(years)) {
         
         #---------
         
-        R2selnAbsmid<- 0 #No response to selection if no evolution
-        R2selnRN<- 0 
+        R2selnAbsmid.pv<- 0 #No response to selection if no evolution
+        R2selnRN.pv<- 0 
+        R2selnAbsmid.hb<- 0 #No response to selection if no evolution
+        R2selnRN.hb<- 0 
         #------------
         if(scen.k<5 & scen.mat[scen.k,2]==1){
           ##selection analysis
@@ -867,11 +869,22 @@ setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/out/")
 #abs.mean[yr.k,gen.k,scen.k,"abssample"]
 
 #all scenarios
-abs.scen= rbind(abs.mean[,,1,"abssample"],abs.mean[,,2,"abssample"],abs.mean[,,3,"abssample"],abs.mean[,,4,"abssample"],abs.mean[,,5,"abssample"] )
+#pv
+abs.scen= rbind(abs.mean[,,1,"abssample",1],abs.mean[,,2,"abssample",1],abs.mean[,,3,"abssample",1],abs.mean[,,4,"abssample",1],abs.mean[,,5,"abssample",1] )
 abs.scen= as.data.frame(abs.scen)
 abs.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
 abs.scen$year= c(rep(years,5) )
 colnames(abs.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
+abs.scen$trait="pv"
+abs.scen.pv= abs.scen
+#hb
+abs.scen= rbind(abs.mean[,,1,"abssample",2],abs.mean[,,2,"abssample",2],abs.mean[,,3,"abssample",2],abs.mean[,,4,"abssample",2],abs.mean[,,5,"abssample",2] )
+abs.scen= as.data.frame(abs.scen)
+abs.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
+abs.scen$year= c(rep(years,5) )
+colnames(abs.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
+abs.scen$trait="hb"
+abs.scen= rbind(abs.scen.pv,abs.scen)
 
 #subset scenarios
 abs.scen=abs.scen[which(abs.scen$scenario %in% c("plast0evol1","plast1evol0","plast1evol1") ),]
@@ -880,11 +893,11 @@ abs.scen$scen.name[which(abs.scen$scenario=="plast1evol0" )]= "plasticity only"
 abs.scen$scen.name[which(abs.scen$scenario=="plast1evol1" )]= "plasticity + evolution"
 abs.scen$scen.name= factor(abs.scen$scen.name, levels=c("plasticity only","evolution only","plasticity + evolution") )
 
-abs.l=melt(abs.scen, id.vars = c("year","scenario","scen.name"))
+abs.l=melt(abs.scen, id.vars = c("year","scenario","scen.name","trait"))
 
 fig.absevol= ggplot(abs.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
   scale_color_viridis_d()+
-  facet_wrap(~scen.name)+
+  facet_grid(trait~scen.name)+
   theme_classic()+ylab("absorptivity (%)")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
@@ -892,17 +905,38 @@ pdf("Fig_AbsEvol.pdf", height = 4, width = 7)
 fig.absevol
 dev.off()
 
-#-----------
+#just hb
+fig.absevol= ggplot(abs.l[abs.l$trait=="hb",], aes(x=year, y=value, color=variable, group=variable))+geom_line()+
+  scale_color_viridis_d()+
+  facet_wrap(~scen.name)+
+  theme_classic()+ylab("HB absorptivity (%)")
 
-lambda.scen= rbind(lambda.mean[,,1],lambda.mean[,,2],lambda.mean[,,3],lambda.mean[,,4],lambda.mean[,,5] )
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_AbsEvol_hb.pdf", height = 3, width = 7)
+fig.absevol
+dev.off()
+
+#-----------
+#pv
+lambda.scen= rbind(lambda.mean[,,1,1],lambda.mean[,,2,1],lambda.mean[,,3,1],lambda.mean[,,4,1],lambda.mean[,,5,1] )
 lambda.scen= as.data.frame(lambda.scen)
 lambda.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
 lambda.scen$year= c(rep(years,5) )
 colnames(lambda.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
+lambda.scen$trait="pv"
+lambda.scen.pv= lambda.scen
+#hb
+lambda.scen= rbind(lambda.mean[,,1,2],lambda.mean[,,2,2],lambda.mean[,,3,2],lambda.mean[,,4,2],lambda.mean[,,5,2] )
+lambda.scen= as.data.frame(lambda.scen)
+lambda.scen$scenario= c(rep("plast0evol0",33),rep("plast1evol0",33),rep("plast0evol1",33),rep("plast1evol1",33),rep("plast1evol1rnevol1",33) )
+lambda.scen$year= c(rep(years,5) )
+colnames(lambda.scen)[1:5]=c("gen1","gen2","gen3","gen4","gen5")
+lambda.scen$trait="hb"
+lambda.scen= rbind(lambda.scen.pv, lambda.scen)
 
-lambda.l=melt(lambda.scen, id.vars = c("year","scenario"))
+lambda.l=melt(lambda.scen, id.vars = c("year","scenario","trait"))
 
 ggplot(lambda.l, aes(x=year, y=value, color=variable, group=variable))+geom_line()+
   scale_color_viridis_d()+
-  facet_wrap(~scenario)
+  facet_grid(trait~scenario)
 

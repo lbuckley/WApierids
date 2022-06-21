@@ -173,8 +173,10 @@ for(i in 1:10){
 #Seattle, P. rapae,
 locations= c("Corfu","Seattle")
 
-loc.k<- 1
-shade<- T
+loc.k<- 2
+shade<- F
+
+height= c(0.3,0.2)[loc.k]
 
 if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
@@ -197,8 +199,8 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
     dfinish <- paste("30/09/", yr,sep="")
     
     # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-    if(shade==F) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.3, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
-    if(shade==T) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.3, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
+    if(shade==F) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
+    if(shade==T) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
     
     #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
     #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)

@@ -63,8 +63,6 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   
   stopifnot(u >= 0, H_sdir >= 0, H_sdif >= 0, z >= -90, z <= 90, D > 0, delta >= 0, HB >= 0, PV >= 0, r_g >= 0, r_g <= 1, shade %in% c(FALSE, TRUE) )  
   
-  # conversions
-  
   # temperatures C to K
   
   TaK <- T_a + 273.15
@@ -110,8 +108,12 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   k_e <- 1.3; 
   
   # r_i- body radius from Kingsolver 1983
-  
-  r_i <- 0.15 
+  #body size: https://doi.org/10.1111/j.1095-8312.1998.tb01532.x
+  #body length of males:16.5 to 18.5 mm
+  #Thoracic diameter: 2.4 to 2.9mm
+  r <- D/2 
+  #estiamte length in cm
+  L=(D*10-0.18)/0.14/10  #0.915 #calculate area for solar radiation using FWL, look for body length
   
   # approximate thermal conductivity of air, mWcm^-1*K^-1
   
@@ -127,28 +129,27 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
   wing.angle= wing_angle*pi/180   #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
-  r=D/2
   
   #calculate values for integers above and below then interpolate
   n=c(5,4,3,2,1,0)
   wing.as= pi/(2*(1+2*n))
   #find ns below and above
-
+  
   diffs= wing.angle - wing.as
   if(min(diffs)<0 & max(diffs)>0){
-  low.a=  wing.as[ which(diffs== min(diffs[diffs>0]) )]
-  high.a= wing.as[ which(diffs== max(diffs[diffs<0]) )]
-
-  #radiation intercepted
-  OC_low= (r+r/tan(low.a))*(1+tan(2*low.a)/tan(low.a))
-  S_low= 2*OC_low*sin(low.a)
-  OC_high= (r+r/tan(high.a))*(1+tan(2*high.a)/tan(high.a))
-  S_high= 2*OC_high*sin(high.a)
-
-  #interpolate
-  S= S_low+((wing.angle-low.a)/(high.a-low.a))*(S_high-S_low)
+    low.a=  wing.as[ which(diffs== min(diffs[diffs>0]) )]
+    high.a= wing.as[ which(diffs== max(diffs[diffs<0]) )]
+    
+    #radiation intercepted
+    OC_low= (r+r/tan(low.a))*(1+tan(2*low.a)/tan(low.a))
+    S_low= 2*OC_low*sin(low.a)
+    OC_high= (r+r/tan(high.a))*(1+tan(2*high.a)/tan(high.a))
+    S_high= 2*OC_high*sin(high.a)
+    
+    #interpolate
+    S= S_low+((wing.angle-low.a)/(high.a-low.a))*(S_high-S_low)
   }
-
+  
   if(max(diffs)<0){
     OC= (r+r/tan(max(wing.as)))*(1+tan(2*max(wing.as))/tan(max(wing.as)))
     S= 2*OC*sin(max(wing.as))
@@ -167,7 +168,6 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
   
-  L=0.915  #0.915 #calculate area for solar radiation using FWL, look for body length
   
   # convert length to area 
   # how to calculate absorptivity from wing traits
@@ -176,7 +176,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   A_sdir_r=S*L
   
   # total surface area cm^2 as area of cylinder without ends
-  A_sttl <- pi * D * 2 
+  A_sttl <- 2*pi*r*L    #pi * D * 2 
   A_sdir= A_sttl/2
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
@@ -189,7 +189,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
   #reflectance basking
-  Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
+  Q_r<- 0 ##FIX  A_sdir_r * H_sdir / cos(z * pi / 180)
   
   Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV*r_g*A_sref*H_sttl  
   #direct radiation already accounts for absorptivity
@@ -231,7 +231,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   
   # total convective heat transfer coefficient
   
-  h_T <- (1 / h_c + (r_i + delta) * log((r_i + delta) / r_i) / k_e)^-1;  
+  h_T <- (1 / h_c + (r + delta) * log((r + delta) / r) / k_e)^-1;  
   
   # convective heat transfer surface area
   
@@ -258,39 +258,39 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   # At 40-42C, assume closed wing heat avoidance posture, wing angle=0
   #orient parallel to solar radiation
   
-    A_sdir=0 #close wings
-    
-    # total surface area cm^2 as area of cylinder without ends
-    A_sttl <- pi * D * 2 
-    
-    #-----------------------------
-    #UPDATE RADIATION ESTIMATES
-    
-    # reflected surface areas
-    A_sref <- A_sttl/2
-    
-    # No direct radiation, only diffuse and reflected
-    H_sdir_sh <- 0
-    H_sdif_sh <- H_sdif
-    H_sttl_sh <- H_sdir_sh + H_sdif
-    
-    # RADIATIVE HEAT FLUx, mW
-    Q_s <- PV*A_sref*H_sdif + PV * r_g * A_sref * H_sttl_sh  
-    #diffuse radiation intercepting back of wings
-    
-    # Solution 
-    a <- A_sttl * Ep * sigma
-    b <- h_T * A_sttl
-    d <- h_T * A_sttl * TaK +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
-    
-    # in K
-    
-    Te_sh <- 1 / 2 * sqrt((2 * b) / (a * sqrt((sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) - (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3))) - (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) + (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3)) - 1 / 2 * sqrt((sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) - (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3)) 
-    
-    # in C
-    
-    Te_sh= Te_sh - 273.15
-    
+  A_sdir=0 #close wings
+  
+  # total surface area cm^2 as area of cylinder without ends
+  A_sttl <- pi * D * 2 
+  
+  #-----------------------------
+  #UPDATE RADIATION ESTIMATES
+  
+  # reflected surface areas
+  A_sref <- A_sttl/2
+  
+  # No direct radiation, only diffuse and reflected
+  H_sdir_sh <- 0
+  H_sdif_sh <- H_sdif
+  H_sttl_sh <- H_sdir_sh + H_sdif
+  
+  # RADIATIVE HEAT FLUx, mW
+  Q_s <- PV*A_sref*H_sdif + PV * r_g * A_sref * H_sttl_sh  
+  #diffuse radiation intercepting back of wings
+  
+  # Solution 
+  a <- A_sttl * Ep * sigma
+  b <- h_T * A_sttl
+  d <- h_T * A_sttl * TaK +0.5 * A_sttl * Ep * sigma * Tsky^4 + 0.5 * A_sttl * Ep * sigma * (Tg_sh)^4 + Q_s
+  
+  # in K
+  
+  Te_sh <- 1 / 2 * sqrt((2 * b) / (a * sqrt((sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) - (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3))) - (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) + (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3)) - 1 / 2 * sqrt((sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3) / (2^(1 / 3) * 3^(2 / 3) * a) - (4 * (2 / 3)^(1 / 3) * d) / (sqrt(3) * sqrt(256 * a^3 * d^3 + 27 * a^2 * b^4) + 9 * a * b^2)^(1 / 3)) 
+  
+  # in C
+  
+  Te_sh= Te_sh - 273.15
+  
     #MODEL THERMOREGULATION
     #Choose available temperature closest to 35C
     if(!is.na(Te) & !is.na(Te_sh)){
@@ -411,8 +411,8 @@ Tbs= rep(NA, length(abs1))
 
 for(abs.k in 1: length(abs1)){
   Tbs[abs.k]= Tb_butterfly( T_a = 20, Tg = 20, Tg_sh = 20, u = 1, 
-                             H_sdir = 300, H_sdif = 200, z = 30, D = 0.36, 
-                             delta = 1.46, HB = abs1[abs.k],  PV = 0.55, r_g = 0.3, wing_angle=42)
+                             H_sdir = 300, H_sdif = 200, z = 30, D = 0.26, 
+                             delta = 1.46, HB = 0.55,  PV = abs1[abs.k], r_g = 0.3, wing_angle=42)
 }
 
 plot(abs1,Tbs-20, xlab="Wing angle (degrees)", type="b")
@@ -477,8 +477,12 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   k_e <- 1.3; 
   
   # r_i- body radius from Kingsolver 1983
-  
-  r_i <- 0.15 
+  #body size: https://doi.org/10.1111/j.1095-8312.1998.tb01532.x
+  #body length of males:16.5 to 18.5 mm
+  #Thoracic diameter: 2.4 to 2.9mm
+  r <- D/2 
+  #estiamte length in cm
+  L=(D*10-0.18)/0.14/10  #0.915 #calculate area for solar radiation using FWL, look for body length
   
   # approximate thermal conductivity of air, mWcm^-1*K^-1
   
@@ -494,7 +498,6 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #https://www.jstor.org/stable/pdf/4217669.pdf
   #S #area for radiation intercepted
   wing.angle= wing_angle*pi/180   #angle from vertical in radians, angle for pontia during flight, wing spread angle of 42degrees
-  r=D/2
   
   #calculate values for integers above and below then interpolate
   n=c(5,4,3,2,1,0)
@@ -534,7 +537,6 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
   
-  L=0.915  #0.915 #calculate area for solar radiation using FWL, look for body length
   
   # convert length to area 
   # how to calculate absorptivity from wing traits
@@ -543,7 +545,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   A_sdir_r=S*L
   
   # total surface area cm^2 as area of cylinder without ends
-  A_sttl <- pi * D * 2 
+  A_sttl <- 2*pi*r*L    #pi * D * 2 
   A_sdir= A_sttl/2
   #-----------------------------
   #UPDATE RADIATION ESTIMATES
@@ -556,7 +558,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #For Colias: Q_s <- alpha * A_sdir * H_sdir / cos(z * pi / 180) + alpha * A_sref * H_sdif + alpha * r_g * A_sref * H_sttl  
   
   #reflectance basking
-  Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
+  Q_r<- 0 ##FIX  A_sdir_r * H_sdir / cos(z * pi / 180)
   
   Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV*r_g*A_sref*H_sttl  
   #direct radiation already accounts for absorptivity
@@ -598,7 +600,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   
   # total convective heat transfer coefficient
   
-  h_T <- (1 / h_c + (r_i + delta) * log((r_i + delta) / r_i) / k_e)^-1;  
+  h_T <- (1 / h_c + (r + delta) * log((r + delta) / r) / k_e)^-1;  
   
   # convective heat transfer surface area
   
