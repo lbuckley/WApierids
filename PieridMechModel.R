@@ -44,7 +44,7 @@ loc.k=1
 
 #years for data
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
-if(loc.k==2) years=c(2001:2005, 2017:2021)
+if(loc.k==2) years=c(2001:2021)
 
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #combine data
@@ -454,30 +454,41 @@ Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 fig.OccFit.pv= ggplot(Lambda.l[which(Lambda.l$abs.hb==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
                    aes(x=abs.pv, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
-  theme_classic()+xlab("absorptivity (%)")+ylab("")
+  theme_classic()+xlab("PV absorptivity (%)")+ylab("")
 
 fig.OccFit.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
                       aes(x=abs.hb, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
-  theme_classic()+xlab("absorptivity (%)")+ylab("")
+  theme_classic()+xlab("HB absorptivity (%)")+ylab("")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PoccFitCurv.pdf", height = 7, width = 7)
-fig.OccFit
+pdf("Fig_PoccFitCurv.pv.pdf", height = 7, width = 7)
+fig.OccFit.pv
+dev.off()
+
+pdf("Fig_PoccFitCurv.hb.pdf", height = 7, width = 7)
+fig.OccFit.hb
 dev.off()
 
 #just plot lambdas
-fig.lambdas= ggplot(Lambda.l[Lambda.l$metric=="fitness",], aes(x=abs, y=value, color=year, group=gyr))+geom_line()+
-  facet_grid(~gen, scale="free_y") +scale_color_viridis_c()+
-  theme_classic()+xlab("absorptivity (%)")+ylab("fitness")
+fig.lambdas.pv= ggplot(Lambda.l[which(Lambda.l$abs.hb==0.55 & Lambda.l$metric %in% c("fitness")),], 
+                      aes(x=abs.pv, y=value, color=year, group=gyr))+geom_line()+
+  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
+  theme_classic()+xlab("PV absorptivity (%)")+ylab("fitness")
+
+fig.lambdas.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %in% c("fitness")),], 
+                      aes(x=abs.hb, y=value, color=year, group=gyr))+geom_line()+
+  facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
+  theme_classic()+xlab("HB absorptivity (%)")+ylab("fitness")
+
 
 pdf("Fig_PoccLambdas.pdf", height = 4, width = 7)
-fig.lambdas
+fig.lambdas.pv + fig.lambdas.hb
 dev.off()
 
 #-------------
 #test Tb function
-dat.sub1= dat.sub[dat.sub$DOY==100 & dat.sub$year==2021,]
+dat.sub1= dat.sub[dat.sub$DOY %in% c(100:102) & dat.sub$year==2021,]
 Ts= matrix(NA, nrow=nrow(dat.sub1), ncol=length(abs1))
 
 Temat= cbind(dat.sub1$TALOC, dat.sub1$TALOC_sh, dat.sub1$D0cm, dat.sub1$D0cm_sh, 
@@ -494,9 +505,11 @@ for(abs.k in 1:length(abs1) ){
 Ts= as.data.frame(Ts)
 colnames(Ts)= abs1
 
-Ts$hr= dat.sub1$TIME/60-7 #convert from UTC
-#Ts$hr[Ts$hr<0]= Ts$hr[Ts$hr<0]+24
+Ts$DOY= dat.sub1$DOY
+Ts$hr= dat.sub1$TIME/60 -12 #convert from UTC
+Ts$hr[Ts$hr<0]= Ts$hr[Ts$hr<0]+24
 Ts$TALOC= dat.sub1$TALOC
+Ts= subset(Ts, Ts$DOY==101)
 
 #plot
 datm= melt(Ts, id=c("hr"), variable="abs" )
@@ -579,8 +592,6 @@ h2_HB= (0.54+0.61)/2 #2 experiments #Kingsolver and Wiernasz 1991 Evolution
 h2_PV= (0.22+0.23)/2 #2 experiments
 cor=0.49
 
-h2= h2_HB 
-  
 abs.sd= 0.062
 rn.sd= 0.0083
 

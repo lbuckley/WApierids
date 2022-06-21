@@ -162,7 +162,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     S= 2*OC*sin(wing.angle)
   }
   
-  S= S*(1-HB) #account for reflectance
+  S= S*(0.8) #account for reflectance, assume white has 0.8 reflectance
   #UPDATE for HV and PV melanism
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
@@ -191,7 +191,7 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
   #reflectance basking
   Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
   
-  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV * r_g * A_sref * H_sttl  
+  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV*r_g*A_sref*H_sttl  
   #direct radiation already accounts for absorptivity
   #average PV and HB absorptivity for diffuse radiation
   #HB for reflected radiation assuming reflected off surface
@@ -275,7 +275,8 @@ Tb_butterfly <- function (T_a, Tg, Tg_sh, u, H_sdir, H_sdif, z, D, delta, HB, PV
     H_sttl_sh <- H_sdir_sh + H_sdif
     
     # RADIATIVE HEAT FLUx, mW
-    Q_s <- PV * r_g * A_sref * H_sttl_sh  
+    Q_s <- PV*A_sref*H_sdif + PV * r_g * A_sref * H_sttl_sh  
+    #diffuse radiation intercepting back of wings
     
     # Solution 
     a <- A_sttl * Ep * sigma
@@ -401,12 +402,20 @@ for(wing.k in 1: length(wing.a)){
                             H_sdir = 800, H_sdif = 200, z = 30, D = 0.36, 
                             delta = 1.46, HB = 0.6,  PV = 0.6, r_g = 0.3, wing_angle=wing.a[wing.k])
 }
- 
+
 plot(wing.a,Tbs-20, xlab="Wing angle (degrees)", type="b")
 
-T_a = 20; Tg = 20; Tg_sh = 20; u = 1; 
-H_sdir = 800; H_sdif = 200; z = 30; D = 0.36; 
-delta = 1.46; alpha = 0.6; r_g = 0.3; wing_angle=wing.a[1]
+#---
+#CHECK ABS
+Tbs= rep(NA, length(abs1))
+
+for(abs.k in 1: length(abs1)){
+  Tbs[abs.k]= Tb_butterfly( T_a = 20, Tg = 20, Tg_sh = 20, u = 1, 
+                             H_sdir = 300, H_sdif = 200, z = 30, D = 0.36, 
+                             delta = 1.46, HB = abs1[abs.k],  PV = 0.55, r_g = 0.3, wing_angle=42)
+}
+
+plot(abs1,Tbs-20, xlab="Wing angle (degrees)", type="b")
 
 #=====================================
 
@@ -520,7 +529,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
     S= 2*OC*sin(wing.angle)
   }
   
-  S= S*(1-HB) #account for reflectance
+  S= S*(0.8) #account for reflectance, assume white has 0.8 reflectance
   #UPDATE for HV and PV melanism
   #HV: increase absorbance during basking
   #PV: increase absorbance during heat avoidance
@@ -549,7 +558,7 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   #reflectance basking
   Q_r<- A_sdir_r * H_sdir / cos(z * pi / 180)
   
-  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV * r_g * A_sref * H_sttl  
+  Q_s <- Q_r +HB*A_sdir*H_sdir/cos(z*pi/180) + HB*A_sref*H_sdif + PV*r_g*A_sref*H_sttl  
   #direct radiation already accounts for absorptivity
   #average PV and HB absorptivity for diffuse radiation
   #HB for reflected radiation assuming reflected off surface
@@ -633,7 +642,8 @@ Tb_butterfly.mat <- function (Temat, D, delta, HB, PV, r_g = 0.3, wing_angle=42,
   H_sttl_sh <- H_sdir_sh + H_sdif
   
   # RADIATIVE HEAT FLUx, mW
-  Q_s <- PV * r_g * A_sref * H_sttl_sh  
+  Q_s <- PV*A_sref*H_sdif + PV * r_g * A_sref * H_sttl_sh  
+  #diffuse radiation intercepting back of wings
   
   # Solution 
   a <- A_sttl * Ep * sigma
