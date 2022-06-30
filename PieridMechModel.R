@@ -1,6 +1,22 @@
 ## TO DO
-# Add size into fitness estimates 
+# Add size into fitness estimates, P. rapae 
+#Fig 5 in Jones et al. life time fecundity, y= 7.14w -0.0157w^2 -280.4, w=weight(mg)
+
+#CT ovipositing https://doi.org/10.1890/05-0647
+#Pieris virginiensis
+#Table 1, 0.36 host plants investigated per minute
+#egg survival= 0.57
+#larval survival= exp(0.586-0.153day)/(1+exp(0.586-0.153*day))
+
+#Egg laying in Pieris rapae, https://www.jstor.org/stable/pdf/2401827.pdf
+#temperature dependent survival rate
+
+#https://www.jstor.org/stable/3956
+#P. rapae vancouver
+#eggs per visit
+
 #convert from wing traits to absorptivity
+
 
 library(truncnorm)
 library(dplyr)
