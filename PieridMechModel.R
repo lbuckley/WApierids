@@ -1,22 +1,47 @@
 ## TO DO
 # Add size into fitness estimates, P. rapae 
-#Fig 5 in Jones et al. life time fecundity, y= 7.14w -0.0157w^2 -280.4, w=weight(mg)
+#Fig 5 in Jones et al. life time fecundity, y= 4.84w -273, w=weight(mg)
 
 #CT ovipositing https://doi.org/10.1890/05-0647
 #Pieris virginiensis
 #Table 1, 0.36 host plants investigated per minute
 #egg survival= 0.57
-#larval survival= exp(0.586-0.153day)/(1+exp(0.586-0.153*day))
+#larval survival= exp(0.586-0.153*day)/(1+exp(0.586-0.153*day))
+larv.surv= function(day) exp(0.586-0.153*day)/(1+exp(0.586-0.153*day))
 
 #Egg laying in Pieris rapae, https://www.jstor.org/stable/pdf/2401827.pdf
 #temperature dependent survival rate
+#egg production as a function of temperature accumulation during day
+#Fig 6: proportion adults surviving to age x (degree days greater than 10C)= 1/(1+0.013*exp(0.28*x))
+add.surv= function(dd10) 1/(1+0.013*exp(0.028*dd10)) #0.028 changed from 0.28 in paper to match plot
 
 #https://www.jstor.org/stable/3956
 #P. rapae vancouver
-#eggs per visit
+#eggs per visit: cabbage= 0.68, kale= 0.49, radish= 0.39
+#use 0.52?
+
+#https://www.jstor.org/stable/pdf/4217728.pdf
+#Davies and Gilbert 1985
+#P. rapae larval development, Ascot, UK
+#eggs: 10C developmental threshold, 54 degree days to hatch
+#larval: 157 DD_10 for larval development
+#pupal development: 116 DD_9.3
+# 18% egg survival
+
+#https://www.jstor.org/stable/pdf/4536.pdf
+#P. rapae, Vancouver
+#size heritability
+#survival data
+
+#fit absolute growth rate
+#https://doi.org/10.1111/j.0014-3820.2004.tb01732.x
+#Fig 2, mg/hr for 4th instaar
+temps= c(11,17,23,29,35,40)
+growth= c(0.192,0.448,0.993,1.111,1.461,0.700)
+#or estimate pupal weight as a function of temperature, Fig 2,Control of Fecundity II
+growth_mgh= function(temp) weibull_1995(temp, a=1.415,topt=32.6,b=4.12*10^5,c=5.27*10^4)
 
 #convert from wing traits to absorptivity
-
 
 library(truncnorm)
 library(dplyr)
@@ -30,13 +55,21 @@ library(rTPC)
 #LOAD PARAMETERS
 #Demographic parameters
 #Kingsolver 1983 Ecology 64
-OviRate=0.73; # Ovipositing rates: 0.73 eggs/min (Stanton 1980) 
-MaxEggs=700; # Max egg production: 700 eggs (Tabashnik 1980)
-PropFlight= 0.5; # Females spend 50# of available activity time for oviposition-related
+#OviRate=0.73 #Ovipositing rates: 0.73 eggs/min (Stanton 1980) 
+
+#P. rapae vancouver, https://www.jstor.org/stable/3956
+#eggs per visit: cabbage= 0.68, kale= 0.49, radish= 0.39, use mean 0.52 eggs per visit 
+#CT ovipositing https://doi.org/10.1890/05-0647
+#Pieris virginiensis, Table 1, 0.36 host plants investigated per minute
+OviRate= 0.36*0.52 #eggs/minute
+  
+#MaxEggs=700; # Max egg production: 700 eggs (Tabashnik 1980)
+PropFlight= 0.5; # Females spend 50% of available activity time for oviposition-related
 # Watt 1979 Oecologia
-SurvDaily=0.6; # Daily loss rate for Colias p. eriphyle at Crested Butte, female values
+
+#SurvDaily=0.6; # Daily loss rate for Colias p. eriphyle at Crested Butte, female values
 #Hayes 1981, Data for Colias alexandra at RMBL
-SurvMat=0.014; #1.4# survival to maturity
+#SurvMat=0.014; #1.4# survival to maturity
 
 #read/make species data
 solar.abs= 0.65 # Solar absorptivity, proportion
@@ -239,16 +272,32 @@ for(yr.k in 1:length(years) ){
   #============================================================================
   #CALCULATE DEVELOPMENT TIMING AND TEMPS
  
+  #https://www.jstor.org/stable/pdf/4217728.pdf
+  #Davies and Gilbert 1985
+  #P. rapae larval development, Ascot, UK
+  #eggs: 10C developmental threshold, 54 degree days to hatch
+  #larval: 157 DD_10 for larval development
+  #pupal development: 116 DD_9.3
+  
   # ESTIMATE DEVELOPMENTAL TIMING
   #https://www.jstor.org/stable/4913
   
-  DevZeros= c(10) #egg to pupal
-  GddReqs= c(105) 
+  DevZeros= 10 #egg to larval
+  DevZeros_pup= 9.3 #pupal
+  
+  GddReqs_egg= c(157) #base 10C, https://www.jstor.org/stable/pdf/4217728.pdf
+  GddReqs_larv= c(157) #base 10C, https://www.jstor.org/stable/pdf/4217728.pdf
+  GddReqs_pup= c(157)  #base 9.3C, https://www.jstor.org/stable/pdf/4217728.pdf
   
   dat.yr$dd= dat.yr$TALOC -DevZeros
   dat.yr$dd[dat.yr$dd<0]= 0 #set negative to zero
-  dat.yr$dd= dat.yr$dd/24 #divide by 24 to swirch from degree days to hours
+  dat.yr$dd= dat.yr$dd/24 #divide by 24 to switch from degree days to hours
   dat.yr$dd.cs= cumsum(dat.yr$dd)
+  
+  dat.yr$dd_pup= dat.yr$TALOC -DevZeros_pup
+  dat.yr$dd_pup[dat.yr$dd_pup<0]= 0 #set negative to zero
+  dat.yr$dd_pup= dat.yr$dd_pup/24 #divide by 24 to switch from degree days to hours
+  dat.yr$dd.cs_pup= cumsum(dat.yr$dd_pup)
   
   #estimate pupal timing
   #compare to empirical data
@@ -264,19 +313,24 @@ for(yr.k in 1:length(years) ){
   
     for(gen.k in 1:5){
       
-      #Assume 7 days from eclosion to eggs laid
-      #Hatching ~5days 
-      Jlarv= ifelse(gen.k>1, Jadult+12, dat.yr$DOY[which.max(dat.yr$dd>0)] )  
-      if(Jlarv>max(dat.yr$DOY)) Jlarv=max(dat.yr$DOY)
+      #Assume 7 days from eclosion to eggs laid ##UPDATE?
+      #TO LARVAE
+      Jegg.start= ifelse(gen.k>1, Jadult+7, dat.yr$DOY[which.max(dat.yr$dd>0)] )  
+      if(Jegg.start>max(dat.yr$DOY)) Jegg.start=max(dat.yr$DOY)
+      inds= which(dat.yr$DOY==Jegg.start)[1]:nrow(dat.yr)
+      Jlarv= dat.yr$DOY[inds[which.max(cumsum(dat.yr$dd[inds])> GddReqs_egg)]] 
+      if(Jlarv>max(dat.yr$DOY) | length(Jlarv)==0) Jlarv=max(dat.yr$DOY)
       
       ##TO PUPATION
       inds= which(dat.yr$DOY==Jlarv)[1]:nrow(dat.yr)
-      Jpup= dat.yr$DOY[inds[which.max(cumsum(dat.yr$dd[inds])> GddReqs)]] 
+      Jpup= dat.yr$DOY[inds[which.max(cumsum(dat.yr$dd[inds])> GddReqs_larv)]] 
        if(Jpup>max(dat.yr$DOY) | length(Jpup)==0) Jpup=max(dat.yr$DOY) 
       
       #PUPATION 
-      # ~7 day pupation basedd on CUH field data
-      Jadult= Jpup + 7
+      # ~7 day pupation based on CUH field data
+      #Change to DD
+      inds= which(dat.yr$DOY==Jpup)[1]:nrow(dat.yr)
+      Jadult= dat.yr$DOY[inds[which.max(cumsum(dat.yr$dd_pup[inds])> GddReqs_pup)]] 
       if(Jadult>max(dat.yr$DOY) | length(Jadult)==0) Jadult=max(dat.yr$DOY)
       
       #----------------------
@@ -381,15 +435,18 @@ for(yr.k in 1:length(years) ){
         #Egg viability
         dat.yr$egg.v= sapply(dat.yr$Tb.a, FUN=egg.viab)
       
-        #larval growth
-        #Use P. rapae curve
-        tpc.gaus= c(0.06340297, 30.92347862,  8.40085316)
-        dat.yr$larv.growth= sapply(dat.yr$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=tpc.gaus[2], a=tpc.gaus[3])
+        #absolute growth rate
+        #https://doi.org/10.1111/j.0014-3820.2004.tb01732.x
+        #Fig 2, mg/hr for 4th instaar
+        dat.yr$larv.growth= sapply(dat.yr$TALOC, FUN=growth_mgh)
+        #aggregate larval growth as mean across hours and multiply by 24 to reach year
+        
+        #or estimate pupal weight as a function of temperature, Fig 2,Control of Fecundity II
         
        # daily values
         dat.day<- dat.yr %>%
           group_by(DOY) %>%
-          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = sum(larv.growth),
+          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = mean(larv.growth)*24,
                     .groups="keep")
         
         #flight day
@@ -427,13 +484,32 @@ for(yr.k in 1:length(years) ){
         Eggs= mean(Eggs.ind)
         Eggs_noViab= mean(Eggs.ind_noViab)
         
+        #Set max eggs as a function of ppupal size
+        #https://doi.org/10.1071/ZO9820223
+        #Fig 5 in Jones et al. life time fecundity, y= 4.84w -273, w=weight(mg)
+        #bound pupal weight 110-210 mg
+        if(Gr.larv<110) Gr.larv=110
+        if(Gr.larv>210) Gr.larv=210
+        MaxEggs= 4.84*Gr.larv-273
+        
+        #Survival to Maturity
+        #egg surivival 0.18, Davies and Gilbert 1985, https://www.jstor.org/stable/pdf/4217728.pdf
+        #pupal survival?
+        days.larv= pup.temps["Jpup", yr.k, gen.k]-pup.temps["Jlarv", yr.k, gen.k]+1
+        #P. virginiensis larval survival, https://doi.org/10.1890/05-0647
+        SurvMat= 0.18*larv.surv(days.larv)
+        
         if(!is.nan(Eggs)){
           MaxDay=5
           Lambda1=0
           for(day in 1:MaxDay){
-            Eggs1= min(Eggs, MaxEggs-Eggs*(day-1))  ###LIMIT MAX NUMBER EGGS
+            Eggs1= min(Eggs, MaxEggs-Eggs*(day-1))
             if(Eggs1<0) Eggs1=0
-            Lambda1= Lambda1+ SurvMat * SurvDaily^day *Eggs1;                        
+            
+            #Pieris virginiensis, https://doi.org/10.1890/05-0647
+            SurvDaily= mean(add.surv((T.ind-10)*day))
+            
+            Lambda1= Lambda1+ SurvMat * SurvDaily *Eggs1;                        
           }#end loop days
           
           Lambda[yr.k, abs.k.pv, abs.k.hb, gen.k, ]= c(Lambda1, mean(FAT.ind), mean(ev.ind), mean(T.ind, na.rm=T), Gr.larv )

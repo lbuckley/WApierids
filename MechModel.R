@@ -57,6 +57,13 @@ library(nls.multstart)
 library(broom)
 library(tidyverse)
 
+#fit absolute growth rate
+#https://doi.org/10.1111/j.0014-3820.2004.tb01732.x
+#Fig 2, mg/hr for 4th instaar
+temps= c(11,17,23,29,35,40)
+growth= c(0.192,0.448,0.993,1.111,1.461,0.700)
+gr= as.data.frame(cbind(temps, growth))
+
 colnames(gr)=c("temp","rate")
 d=gr
 
@@ -137,6 +144,10 @@ preds <- broom::augment(mod, newdata = preds)
 #extract coefficients
 tpc.beta= coef(mod)
 #beta_2012(temp, a, b, c, d, e)
+
+#extract weibull model
+#mod= d_fits$weibull[[1]]
+#coef(mod)
 
 #--------
 #plot P. rapae temperature distributions
