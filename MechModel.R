@@ -26,7 +26,8 @@ library(patchwork)
 #larval TPC
 #growth rate
 #Figure 2, mean short term mass-specific growth rate, from kingsolver 2000, 
-#mg/g/hr
+#time period: July 25-30, Aug 12-19, Aug 21-26
+#g/g/hr
 temps= c(11,17,23,29,35,40,41)
 mgr= c(.010, .018, .0435, .0494, .0726, .0388, .0165)
 gr= as.data.frame(cbind(temps, mgr))
@@ -60,9 +61,9 @@ library(tidyverse)
 #fit absolute growth rate
 #https://doi.org/10.1111/j.0014-3820.2004.tb01732.x
 #Fig 2, mg/hr for 4th instaar
-temps= c(11,17,23,29,35,40)
-growth= c(0.192,0.448,0.993,1.111,1.461,0.700)
-gr= as.data.frame(cbind(temps, growth))
+#temps= c(11,17,23,29,35,40)
+#growth= c(0.192,0.448,0.993,1.111,1.461,0.700)
+#gr= as.data.frame(cbind(temps, growth))
 
 colnames(gr)=c("temp","rate")
 d=gr
@@ -247,13 +248,39 @@ dat.day.sh= dat.day
 p1= ggplot(dat.day.sun, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  xlab("Day of year")+
-  ylab("Temperature at plant height (°C)" )+
+  ylab("Growth rate (g/g/h)")+
+  xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.65, 0.8))
 #D0cm, TALOC, TAREF
 
 #use sun
 dat.day= dat.day.sun
+
+#------------------
+#Plot just for period of selection study: July 28-Aug 5, 9 days expand to 14 days, July 26-Aug 8 
+
+dat.day1= dat.day[which(dat.day$DOY %in% c(207:220)),]
+
+#relabel period
+pers= c("initial","middle","recent")
+yrs= c("2001-2007","2008-2014","2015-2021")
+
+dat.day1$period= yrs[match(dat.day1$period, pers)]
+
+#plot density distributions
+p1= ggplot(dat.day1, aes(x=TALOC))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  ylab("Growth rate (g/g/h)")+
+  xlab("Temperature at plant height (°C)" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))
+
+## get 1999 (study) data
+#plot just during study
+ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  ylab("Growth rate (g/g/h)")+
+  xlab("Temperature at plant height (°C)" )+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))
 
 #===============================
 #P. rapae larvae
@@ -271,6 +298,8 @@ p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm
                       arrow = arrow(length = unit(0.3, "cm")), lwd=1)
 
 #-----------
+#just study period
+dat.day=dat.day1
 
 #estimate performance
 dat.day$perf= beta_2012(dat.day$TALOC, tpc.beta[1], tpc.beta[2], tpc.beta[3], tpc.beta[4], tpc.beta[5])
@@ -308,8 +337,9 @@ dat.day2$counts= counts$count[match(dat.day2$per_seas, counts$per_seas)]
 #normalize
 dat.day2$sumperf.norm= dat.day2$sumperf/dat.day2$counts
 
-p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+geom_line()+   #geom_smooth()+
-  facet_wrap(~seas)+
+p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+   
+  geom_smooth()+
+ # facet_wrap(~seas)+
   xlab("Temperature at reference height (°C)")+
   ylab("Sum of growth rate (g/g/h)" )+
   theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.8))
@@ -319,6 +349,7 @@ pdf("Fig_Prapae.pdf", height = 10, width = 12)
 p3 / p4
 dev.off()
 
+#-----------------
 #P. rapae
 #Kingsolver JG (2000) Feeding, growth, and the thermal environment of cabbage white caterpillars, Pieris rapae L. Physiological and Biochemical Zoology, 73(5):621–628.
 
@@ -357,8 +388,13 @@ for(topt.k in 1:length(topts)){
 #combine dates
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 #aggregate
-perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-names(perfs1)=c("year","period","seas", seq(10, 30, 1))
+#perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
+#names(perfs1)=c("year","period","seas", seq(10, 30, 1))
+
+#not seasons, just study period
+perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period), FUN=mean)
+names(perfs1)=c("year","period",seq(10, 30, 1))
+
 #make column for slopes
 perfs1$B= NA
 
@@ -375,19 +411,29 @@ for(row.k in 1: nrow(perfs1)){
 } 
 
 #plot fitness curves through time
-perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
-names(perfs.l)[4:5]=c("temperature","performance")
+#perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
+#names(perfs.l)[4:5]=c("temperature","performance")
+
+perfs.l= melt(perfs1[,1:24], id.vars = c("year","period"))
+names(perfs.l)[3:4]=c("temperature","performance")
 perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
 fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
-  facet_wrap(~seas) +scale_color_viridis_c()+
+  #facet_wrap(~seas) +
+  scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")
+  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")+theme(legend.position = c(0.6, 0.3))
 
 #plot selection gradients through time
 fig.selb=ggplot(perfs1, aes(x=year, y=B, color=seas))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(se=FALSE)
 fig.selcurve= ggplot(perfs1, aes(x=year, y=curve, color=seas))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(se=FALSE)
+
+#drop season
+fig.selb=ggplot(perfs1, aes(x=year, y=B))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(se=FALSE)
+fig.selcurve= ggplot(perfs1, aes(x=year, y=curve))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(se=FALSE)
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
@@ -402,6 +448,19 @@ perfs1$Topt= apply(perfs1[,4:26], MARGIN=1, FUN=which.max )
 
 ggplot(perfs1, aes(x=year, y=Topt, color=seas))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)
+
+#drop season
+perfs1$Topt= apply(perfs1[,3:25], MARGIN=1, FUN=which.max )
+
+fig.topt= ggplot(perfs1, aes(x=year, y=Topt))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
+  ylab("thermal optima (C)")
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_PrapaeStudy.pdf", height = 8, width = 14)
+p3 + fig.fitnesscurves+fig.topt +
+  plot_layout(widths = c(2, 1.5, 1.25))
+dev.off()
 
 #----------------------------
 ##P. rapae 1999 selection data
