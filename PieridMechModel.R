@@ -439,14 +439,15 @@ for(yr.k in 1:length(years) ){
         #https://doi.org/10.1111/j.0014-3820.2004.tb01732.x
         #Fig 2, mg/hr for 4th instaar
         dat.yr$larv.growth= sapply(dat.yr$TALOC, FUN=growth_mgh)
-        #aggregate larval growth as mean across hours and multiply by 24 to reach year
+        #current usign sum
+        #or aggregate larval growth as mean across hours and multiply by 24 to reach year?
         
         #or estimate pupal weight as a function of temperature, Fig 2,Control of Fecundity II
         
        # daily values
         dat.day<- dat.yr %>%
           group_by(DOY) %>%
-          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = mean(larv.growth)*24,
+          summarise(FAT = sum(fl.p), EggViab= geo_mean(egg.v), Tb.mean= mean(Tb.a), Gt.l = sum(larv.growth),
                     .groups="keep")
         
         #flight day
@@ -454,7 +455,7 @@ for(yr.k in 1:length(years) ){
 
         ##CALCULATE EGG VIABILITY OVER 5 DAY PERIOD (GEOMETRIC MEAN ACROSS HOURS)
         #sample flight day from truncated normal distribution
-        Nind=1000 #changed from 100
+        Nind=200 #1000 #changed from 100
         f.low= max(Jfl-7,min(dat.sub$DOY)+2)
         f.up= min(Jfl+7,max(dat.sub$DOY)-2)
         
@@ -543,12 +544,12 @@ Lambda.l$gen= gsub("gen","generation ",Lambda.l$gen)
 #plot lambdas
 Lambda.l$gyr= paste(Lambda.l$gen, Lambda.l$year, sep="")
 
-fig.OccFit.pv= ggplot(Lambda.l[which(Lambda.l$abs.hb==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
+fig.OccFit.pv= ggplot(Lambda.l[which(Lambda.l$abs.hb==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)","larval growth")),], 
                    aes(x=abs.pv, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
   theme_classic()+xlab("PV absorptivity (%)")+ylab("")
 
-fig.OccFit.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)")),], 
+fig.OccFit.hb= ggplot(Lambda.l[which(Lambda.l$abs.pv==0.55 & Lambda.l$metric %in% c("fitness","FAT (h)","egg viab (%)","larval growth")),], 
                       aes(x=abs.hb, y=value, color=year, group=gyr))+geom_line()+
   facet_grid(metric~gen, scale="free_y") +scale_color_viridis_c()+
   theme_classic()+xlab("HB absorptivity (%)")+ylab("")

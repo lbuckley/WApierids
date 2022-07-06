@@ -44,7 +44,7 @@ if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle
 #if(loc.k==1) years=c(1989:1993, 2017:2021)
 #if(loc.k==2) years=c(2001:2005, 2017:2021)
 if(loc.k==1) years=c(2002:2017)
-if(loc.k==2) years=c(2009:2016) ##Error with 2008
+if(loc.k==2) years=c(1995:2000) ##Error with 2008
 
 #set microclim path
 file_prefix="era5"
@@ -174,7 +174,7 @@ for(i in 1:10){
 locations= c("Corfu","Seattle")
 
 loc.k<- 2
-shade<- F
+shade<- T
 
 height= c(0.3,0.2)[loc.k]
 
@@ -182,7 +182,7 @@ if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
 
   if(loc.k==1) years=c(1989:2021) 
-  if(loc.k==2) years=c(2001:2021) ##2001:2021
+  if(loc.k==2) years=c(1995:2000) ##2001:2021
   
   #set microclim path
   file_prefix="era5"

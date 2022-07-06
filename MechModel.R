@@ -158,7 +158,7 @@ loc.k=2
 
 #years for data
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
-if(loc.k==2) years=c(2001:2021) #2001:2005, 2017:2021
+if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 #SUN
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
@@ -174,9 +174,9 @@ if(loc.k==1){
   if(years[yr.k]>=2010)dat$period="recent"
 }
 if(loc.k==2){
-  if(years[yr.k]<2007)dat$period="initial"
-  if(years[yr.k]>=2007 & years[yr.k]<2014)dat$period="middle"
-  if(years[yr.k]>=2014)dat$period="recent"
+  if(years[yr.k]<2006)dat$period="initial"
+  if(years[yr.k]>=2006 & years[yr.k]<2015)dat$period="middle"
+  if(years[yr.k]>=2015)dat$period="recent"
 }
 
 if(yr.k==1) dat.all=dat
@@ -216,10 +216,10 @@ for(yr.k in 1:length(years)){
     if(years[yr.k]>=2010)dat$period="recent"
   }
   if(loc.k==2){
-    if(years[yr.k]<2007)dat$period="initial"
-    if(years[yr.k]>=2007 & years[yr.k]<2014)dat$period="middle"
-    if(years[yr.k]>=2014)dat$period="recent"
-  }
+      if(years[yr.k]<2006)dat$period="initial"
+      if(years[yr.k]>=2006 & years[yr.k]<2015)dat$period="middle"
+      if(years[yr.k]>=2015)dat$period="recent"
+    }
   
   if(yr.k==1) dat.all=dat
   if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -263,7 +263,7 @@ dat.day1= dat.day[which(dat.day$DOY %in% c(207:220)),]
 
 #relabel period
 pers= c("initial","middle","recent")
-yrs= c("2001-2007","2008-2014","2015-2021")
+yrs= c("1998-2005","2006-2013","2014-2021")
 
 dat.day1$period= yrs[match(dat.day1$period, pers)]
 
@@ -272,7 +272,7 @@ p1= ggplot(dat.day1, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.22, 0.9))
 
 ## get 1999 (study) data
 #plot just during study
