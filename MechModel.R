@@ -146,8 +146,9 @@ preds <- broom::augment(mod, newdata = preds)
 tpc.beta= coef(mod)
 #beta_2012(temp, a, b, c, d, e)
 
-#extract weibull model
+#extract models
 #mod= d_fits$weibull[[1]]
+#mod= d_fits$gaussian[[1]]
 #coef(mod)
 
 #--------
@@ -267,6 +268,13 @@ yrs= c("1998-2005","2006-2013","2014-2021")
 
 dat.day1$period= yrs[match(dat.day1$period, pers)]
 
+#percent temps exceeding 34.5C
+length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>34.5))/length(dat.day1$TALOC)
+length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>34.5))/length(dat.day1$TALOC)
+#percent temps exceeding 40C
+length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>40))/length(dat.day1$TALOC)
+length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>40))/length(dat.day1$TALOC)
+
 #plot density distributions
 p1= ggplot(dat.day1, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
@@ -367,9 +375,10 @@ mod= d_fits$gaussian[[1]]
 tpc.gaus= coef(mod)
 
 #generate parameter combinations
-temps=1:70
+topt.low= 20
+topt.high= 40
 
-params= expand.grid(temp = seq(0,70,2), topt = seq(10, 30, 1) )
+params= expand.grid(temp = seq(0,70,2), topt = seq(topt.low, topt.high, 1) )
   
 gauss.mat= function(pmat,rmax,a) gaussian_1987(pmat[1], rmax, pmat[2], a)
 
@@ -379,7 +388,7 @@ ggplot(params, aes(x=temp, y=perf, color=topt, group=topt))+geom_line()
 
 #estimate growth and development
 #RUN
-topts= seq(10, 30, 1)
+topts= seq(topt.low, topt.high, 1)
 perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= length(topts) )
 for(topt.k in 1:length(topts)){
   perf.mat[,topt.k]= sapply(dat.day$TALOC, FUN=gaussian_1987, rmax=tpc.gaus[1], topt=topts[topt.k], a=tpc.gaus[3])
@@ -389,18 +398,18 @@ for(topt.k in 1:length(topts)){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 #aggregate
 #perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-#names(perfs1)=c("year","period","seas", seq(10, 30, 1))
+#names(perfs1)=c("year","period","seas", seq(topt.low, topt.high, 1))
 
 #not seasons, just study period
-perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period), FUN=mean)
-names(perfs1)=c("year","period",seq(10, 30, 1))
+perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period), FUN=mean)
+names(perfs1)=c("year","period",seq(topt.low, topt.high, 1))
 
 #make column for slopes
 perfs1$B= NA
 
 for(row.k in 1: nrow(perfs1)){
   #put into format for regression
-  perfs2= as.data.frame(cbind(10:30, t(perfs1[row.k,4:24]) ))
+  perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
   colnames(perfs2)=c("topt","perf")
   
   plot(perfs2$topt, perfs2$perf)
@@ -414,7 +423,7 @@ for(row.k in 1: nrow(perfs1)){
 #perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
 #names(perfs.l)[4:5]=c("temperature","performance")
 
-perfs.l= melt(perfs1[,1:24], id.vars = c("year","period"))
+perfs.l= melt(perfs1[,1:ncol(perfs1)], id.vars = c("year","period"))
 names(perfs.l)[3:4]=c("temperature","performance")
 perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
@@ -422,7 +431,8 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, 
   #facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")+theme(legend.position = c(0.6, 0.3))
+  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")+theme(legend.position = c(0.2, 0.2))+
+  ylim(0.025,0.057)
 
 #plot selection gradients through time
 fig.selb=ggplot(perfs1, aes(x=year, y=B, color=seas))+geom_line()+
@@ -444,13 +454,13 @@ dev.off()
 #account for temperatures exceeding tpcs
 
 #find thermal optima through years 
-perfs1$Topt= apply(perfs1[,4:26], MARGIN=1, FUN=which.max )
+perfs1$Topt= apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )
 
 ggplot(perfs1, aes(x=year, y=Topt, color=seas))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)
 
 #drop season
-perfs1$Topt= apply(perfs1[,3:25], MARGIN=1, FUN=which.max )
+perfs1$Topt= c(topt.low:topt.high)[apply(perfs1[,3:25], MARGIN=1, FUN=which.max )]
 
 fig.topt= ggplot(perfs1, aes(x=year, y=Topt))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+

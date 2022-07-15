@@ -202,6 +202,13 @@ dat.sub$Tb= apply(Temat, MARGIN=1, FUN=Tb_butterfly.mat,
 #fix high
 dat.sub$Tb[which(dat.sub$Tb>80)]<-NA
 
+#percent temps exceeding 34.5C
+length(which(dat.sub$Tb[dat.sub$period=="1989-1999"]>34.5))/length(dat.sub$Tb)
+length(which(dat.sub$Tb[dat.sub$period=="2011-2021"]>34.5))/length(dat.sub$Tb)
+#percent temps exceeding 40C
+length(which(dat.sub$Tb[dat.sub$period=="1989-1999"]>40))/length(dat.sub$Tb)
+length(which(dat.sub$Tb[dat.sub$period=="2011-2021"]>40))/length(dat.sub$Tb)
+
 #plot Tb distributions
 ggplot(data=dat.sub, aes(x=d.hr, y = Tb))+ geom_line(alpha=0.4)+
   theme_bw()+scale_color_viridis_d()
