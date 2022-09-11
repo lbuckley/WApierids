@@ -29,30 +29,55 @@ ecmwfr::wf_set_key(user = uid, key = cds_api_key, service = "cds")
 
 #locations Corfu, P. occidentalis, Apr to Sept
 #Seattle, P. rapae,
-locations= c("Corfu","Seattle")
+locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 
-for(loc.k in 1:2){
+#add additional TPCs
+#Higgins: 
+#Montrose Valley, CO: 1961-1971; 2001-2011;N 38.62, W 108.02, 1633m
+#Sacramento Valley, CA: 1961-1971; 2001-2011; N 38.44, W121.86, 19m
+
+#Nielsen
+#Los Banos, CA: ; 37.06N, 120.85W, 36M, iniital 1970/1971, 2018;
+#data: 1962-1971, 2009-2018
+
+for(loc.k in 3:5){
 
 # bounding coordinates (in WGS84 / EPSG:4326)
 if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
 if(loc.k==2){xmn <- -122.45; xmx <- -122.2; ymn <- 47.5; ymx <- 47.75}
-
+if(loc.k==3){xmn <- -108.03; xmx <- -108.01; ymn <- 38.61; ymx <- 38.63}
+if(loc.k==4){xmn <- -121.87; xmx <- -121.85; ymn <- 38.43; ymx <- 38.45}
+if(loc.k==5){xmn <- -120.86; xmx <- -120.84; ymn <- 37.05; ymx <- 37.07}
+   
 if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
+if(loc.k==3){loc <- c(-108.02,38.62)} #Montrose  
+if(loc.k==4){loc <- c(-121.86, 38.44)} #Sacramento 
+if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos 
   
 #years for data
 #if(loc.k==1) years=c(1989:1993, 2017:2021)
 #if(loc.k==2) years=c(2001:2005, 2017:2021)
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
+if(loc.k==3) years=c(1961:1971, 2001:2011)
+if(loc.k==4) years=c(1961:1971, 2001:2011)
+if(loc.k==5) years=c(1962:1971, 2009:2018)
 
 #set microclim path
 file_prefix="era5"
 if(loc.k==1) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/',file_prefix, sep="")
 if(loc.k==2) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/',file_prefix, sep="")
+if(loc.k==3) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/',file_prefix, sep="")
+if(loc.k==4) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/',file_prefix, sep="")
+if(loc.k==5) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_LosBanos/',file_prefix, sep="")
+
 # filename and location for downloaded .nc files
 if(loc.k==1) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/'
 if(loc.k==2) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/'
+if(loc.k==3) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/'
+if(loc.k==4) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/'
+if(loc.k==5) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_LosBanos/'
 
 #check works
 
@@ -79,7 +104,7 @@ str(req)
 request_era5(request = req, uid = uid, out_path = op)
 
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.01, runshade = 1, spatial = spatial_path)
+micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.2, runshade = 0, spatial = spatial_path)
 #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
 #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
 #maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
