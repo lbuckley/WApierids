@@ -40,7 +40,7 @@ locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 #Los Banos, CA: ; 37.06N, 120.85W, 36M, iniital 1970/1971, 2018;
 #data: 1962-1971, 2009-2018
 
-for(loc.k in 3:5){
+for(loc.k in 3:4){ #3:5
 
 # bounding coordinates (in WGS84 / EPSG:4326)
 if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
@@ -60,8 +60,8 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos
 #if(loc.k==2) years=c(2001:2005, 2017:2021)
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
-if(loc.k==3) years=c(1961:1971, 2001:2011)
-if(loc.k==4) years=c(1961:1971, 2001:2011)
+if(loc.k==3) years= c(2016:2021)   #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==4) years= c(2012:2021)  #c(1961:1971, 2001:2011, 2012:2021)
 if(loc.k==5) years=c(1962:1971, 2009:2018)
 
 #set microclim path
@@ -196,26 +196,35 @@ for(i in 1:10){
 
 #locations Corfu, P. occidentalis, Apr to Sept
 #Seattle, P. rapae,
-locations= c("Corfu","Seattle")
+locations= c("Corfu","Seattle","Montrose","Sacramento")
+#Also Los Banos
 
-loc.k<- 2
-shade<- T
+loc.k<- 4
+shade<- F
 
-height= c(0.3,0.2)[loc.k]
+height= c(0.3,0.2,0.2,0.2)[loc.k]
 
 if(loc.k==1){loc <- c(-119.535331192, 46.850663264)}  #Corfu
 if(loc.k==2){loc <- c(-122.290255, 47.657628)} #Seattle  
+if(loc.k==3){loc <- c(-108.02,38.62)} #Montrose  
+if(loc.k==4){loc <- c(-121.86, 38.44)} #Sacramento 
 
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
+  if(loc.k %in% c(3,4)) years=c(1961:1971, 2001:2011) 
   
   #set microclim path
   file_prefix="era5"
   if(loc.k==1) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/',file_prefix, sep="")
   if(loc.k==2) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/',file_prefix, sep="")
+  if(loc.k==3) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/',file_prefix, sep="")
+  if(loc.k==4) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/',file_prefix, sep="")
+  
   # filename and location for downloaded .nc files
   if(loc.k==1) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/'
   if(loc.k==2) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Seattle/'
+  if(loc.k==3) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/'
+  if(loc.k==4) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/'
   
   for(yr in years){
     
