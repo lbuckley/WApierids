@@ -40,7 +40,7 @@ locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 #Los Banos, CA: ; 37.06N, 120.85W, 36M, iniital 1970/1971, 2018;
 #data: 1962-1971, 2009-2018
 
-for(loc.k in 3:4){ #3:5
+for(loc.k in 4){ #3:5
 
 # bounding coordinates (in WGS84 / EPSG:4326)
 if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
@@ -61,7 +61,7 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
 if(loc.k==3) years= c(2016:2021)   #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==4) years= c(2012:2021)  #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==4) years= c(2016:2021)  #c(1961:1971, 2001:2011, 2012:2021)
 if(loc.k==5) years=c(1962:1971, 2009:2018)
 
 #set microclim path
@@ -199,7 +199,7 @@ for(i in 1:10){
 locations= c("Corfu","Seattle","Montrose","Sacramento")
 #Also Los Banos
 
-loc.k<- 4
+loc.k<- 3
 shade<- F
 
 height= c(0.3,0.2,0.2,0.2)[loc.k]
@@ -211,7 +211,7 @@ if(loc.k==4){loc <- c(-121.86, 38.44)} #Sacramento
 
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
-  if(loc.k %in% c(3,4)) years=c(1961:1971, 2001:2011) 
+  if(loc.k %in% c(3,4)) years=c(2011:2014,2016:2021)  #c(1961:1971, 2001:2011) 
   
   #set microclim path
   file_prefix="era5"

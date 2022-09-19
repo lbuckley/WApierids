@@ -7,6 +7,11 @@ library(patchwork)
 #Montrose Valley, CO: 1961-1971; 2001-2011;N 38.62, W 108.02, 1633m
 #Sacramento Valley, CA: 1961-1971; 2001-2011; N 38.44, W121.86, 19m
 
+#Empirical data
+#https://onlinelibrary.wiley.com/doi/full/10.1111/ele.13515
+
+
+
 #-----------------------------------------------
 #Montrose Colias
 
@@ -122,8 +127,8 @@ tpc.beta= coef(mod)
 
 #===================================================
 #plot temperature distributions
-#locations= c("Montrose")
-locations= c("Sacramento")
+locations= c("Montrose")
+#locations= c("Sacramento")
 loc.k=1
 
 #years for data
