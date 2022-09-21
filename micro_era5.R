@@ -1,3 +1,7 @@
+#Envi data to process
+#Sacramento: shade 2011-2016, sun 1961:1971, 2001:2021
+#Los Banos: run sun and shade
+
 # Adapt Colias niche model
 
 #Center for urban horticulture
@@ -199,8 +203,8 @@ for(i in 1:10){
 locations= c("Corfu","Seattle","Montrose","Sacramento")
 #Also Los Banos
 
-loc.k<- 3
-shade<- F
+loc.k<- 4
+shade<- T
 
 height= c(0.3,0.2,0.2,0.2)[loc.k]
 
@@ -211,8 +215,9 @@ if(loc.k==4){loc <- c(-121.86, 38.44)} #Sacramento
 
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
-  if(loc.k %in% c(3,4)) years=c(2011:2014,2016:2021)  #c(1961:1971, 2001:2011) 
-  
+  if(loc.k==3) years=c(2011:2014,2016:2021)  #c(1961:1971, 2001:2011) 
+  if(loc.k==4) years=c(2011:2016)  #c(1961:1971, 2001:2016)
+
   #set microclim path
   file_prefix="era5"
   if(loc.k==1) spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Corfu/',file_prefix, sep="")
