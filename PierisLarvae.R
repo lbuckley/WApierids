@@ -246,6 +246,9 @@ p2= p1 + geom_line(data=p.dat, aes(x = Tb, y = performance) )
 p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
                       arrow = arrow(length = unit(0.3, "cm")), lwd=1)
 
+#add points 
+p3= p3 + geom_point(data=d, aes(x = temp, y = rate))
+
 #-----------
 #just study period
 dat.day=dat.day1
@@ -287,14 +290,15 @@ dat.day2$counts= counts$count[match(dat.day2$per_seas, counts$per_seas)]
 dat.day2$sumperf.norm= dat.day2$sumperf/dat.day2$counts
 
 p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+   
-  geom_smooth()+
+  geom_smooth(se=FALSE)+
  # facet_wrap(~seas)+
   xlab("Temperature at reference height (°C)")+
   ylab("Sum of growth rate (g/g/h)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.8))
+  #ylim(0,0.0015)+xlim(0,40)+
+  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.2))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Prapae.pdf", height = 10, width = 12)
+pdf("Fig_Prapae.pdf", height = 10, width = 6)
 p3 / p4
 dev.off()
 
@@ -321,13 +325,14 @@ tpc.beta
 topt.low= 25
 topt.high= 45
 
-params= expand.grid(temp = seq(0,70,2), topt = seq(topt.low, topt.high, 1) )
+params= expand.grid(temp = seq(0,70,1), topt = seq(topt.low, topt.high, 1) )
   
 beta.mat= function(pmat,a,c,d,e) beta_2012(pmat[1], a, pmat[2], c, d, e)
 
 params$perf= apply(params, MARGIN=1, FUN=beta.mat, a=tpc.beta[1],c=tpc.beta[3],d=tpc.beta[4],e=tpc.beta[5])
+params$perf[is.nan(params$perf)]= 0
 
-ggplot(params, aes(x=temp, y=perf, color=topt, group=topt))+geom_line()
+ggplot(params, aes(x=temp, y=perf, color=topt, group=topt))+geom_line() #[params$topt==26,]
 
 #check high values
 #extrapolate to zero
@@ -345,6 +350,7 @@ for(topt.k in 1:length(topts)){
 
 #combine dates
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
+
 #aggregate
 #perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
 #names(perfs1)=c("year","period","seas", seq(topt.low, topt.high, 1))
@@ -361,7 +367,7 @@ for(row.k in 1: nrow(perfs1)){
   perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
   colnames(perfs2)=c("topt","perf")
   
-  plot(perfs2$topt, perfs2$perf)
+  #plot(perfs2$topt, perfs2$perf)
   #mod1= lm(perf~topt , data=perfs2)
   mod1= lm(perf~topt +I(topt^2) , data=perfs2)
   perfs1$B[row.k]= coefficients(mod1)[2]
@@ -396,7 +402,7 @@ fig.selcurve= ggplot(perfs1, aes(x=year, y=curve))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(se=FALSE)
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PrapaeSelection.pdf", height = 12, width = 10)
+pdf("Fig_PrapaeSelection.pdf", height = 12, width = 5)
 fig.fitnesscurves / fig.selb / fig.selcurve
 dev.off()
 
