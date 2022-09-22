@@ -315,7 +315,6 @@ dev.off()
 #estimate for each season and year to estimate selection through time
 
 #vary TPC mode
-tpc.beta
 #TPC_beta(T_b, shift = -1, breadth = 0.1, aran = 0, tolerance = 43, skew = 0.7)
 #plot(1:50, beta_2012(1:50,  a=tpc.beta[1],  b=tpc.beta[2],  c=tpc.beta[3],  d=tpc.beta[4],  e=tpc.beta[5] ),type="l")
 
