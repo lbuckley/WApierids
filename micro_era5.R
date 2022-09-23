@@ -11,6 +11,16 @@
 #12 miles west of Othello
 #46.850663264 -119.535331192
 
+#Nielsen and Kingsolver Site: Isleton, California, United States (38.154°N, 121.677°W, 0 m)
+#Initial Hoffman site: Los Banos, California (37.06°N, 120.85°W, 36 m)
+#Initial Hoffman 1978: https://www.jstor.org/stable/pdf/2460345.pdf
+
+#Higgins
+#Sacramento Valley: 38.44N, 121.86W
+#Montrose CO: 38.62N, 108.02W
+#Initial Sherman and Watt: https://link.springer.com/article/10.1007/BF00694570
+#Los Banos, Merced Co., California, and from Hotchkiss, Delta Co., Colorado
+
 #------------------
 #setwd("/Users/laurenbuckley/Downloads/")
 
@@ -65,8 +75,8 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
 if(loc.k==3) years= c(2016:2021)   #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==4) years= c(2016:2021)  #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==5) years=c(1962:1971, 2009:2018)
+if(loc.k==4) years= c(1961:2021)  #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==5) years=c(1961:2021)
 
 #set microclim path
 file_prefix="era5"
@@ -83,15 +93,14 @@ if(loc.k==3) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/dat
 if(loc.k==4) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/'
 if(loc.k==5) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_LosBanos/'
 
-#check works
-
-for(yr in years){
+for(yr in 1964:2021){ #years
 
 #set dates for era5 call and NicheMapr
 st_date<- paste(yr,":04:01",sep="")  
 en_date<- paste(yr,":09:30",sep="") 
 
 dstart <- paste("01/04/", yr,sep="")
+if(loc.k %in% c(4,5)) dstart <- paste("01/03/", yr,sep="")
 dfinish <- paste("30/09/", yr,sep="")
 
 # temporal extent
