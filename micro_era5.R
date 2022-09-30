@@ -54,7 +54,7 @@ locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 #Los Banos, CA: ; 37.06N, 120.85W, 36M, iniital 1970/1971, 2018;
 #data: 1962-1971, 2009-2018
 
-for(loc.k in 4){ #3:5
+for(loc.k in 3){ #3:5
 
 # bounding coordinates (in WGS84 / EPSG:4326)
 if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
@@ -74,9 +74,9 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos
 #if(loc.k==2) years=c(2001:2005, 2017:2021)
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
-if(loc.k==3) years= c(2016:2021)   #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==4) years= c(1961:2021)  #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==5) years=c(1961:2021)
+if(loc.k==3) years= c(1972:2001)   #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==4) years= c(2017:2021,1962)  #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==5) years= c(1961:2021)
 
 #set microclim path
 file_prefix="era5"
@@ -93,10 +93,11 @@ if(loc.k==3) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/dat
 if(loc.k==4) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/'
 if(loc.k==5) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_LosBanos/'
 
-for(yr in 1964:2021){ #years
+for(yr in c(1972:2001)){ #years
 
 #set dates for era5 call and NicheMapr
-st_date<- paste(yr,":04:01",sep="")  
+st_date<- paste(yr,":04:01",sep="") 
+if(loc.k %in% c(4,5)) st_date<- paste(yr,":03:01",sep="")
 en_date<- paste(yr,":09:30",sep="") 
 
 dstart <- paste("01/04/", yr,sep="")
@@ -116,39 +117,39 @@ req <- build_era5_request(xmin = xmn, xmax = xmx,
 str(req)
 request_era5(request = req, uid = uid, out_path = op)
 
-# run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.2, runshade = 0, spatial = spatial_path)
-#https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
-#minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
-#maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
-#Usrhyt, Local height (m) at which air temperature, wind speed and humidity are to be computed for organism of interest
-# runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
-
-#test with direct download
-#file_prefix="Corfu"
-#spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/',file_prefix, sep="")
-
-#--------------
-
-#combine and save data 
-metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
-soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
-soilmoist<-as.data.frame(micro$soilmoist) # soil temperatures, minimum shade
-
-# append dates
-tzone<-paste("Etc/GMT+",0,sep="")
-dates<-seq(as.POSIXct(dstart, format="%d/%m/%Y",tz=tzone)-3600*12, as.POSIXct(dfinish, format="%d/%m/%Y",tz=tzone)+3600*11, by="hours")
-
-metout <- cbind(dates,metout)
-soil <- cbind(dates,soil)
-#soilmoist <- cbind(dates, soilmoist)
-
-#extract air temperature and soil
-#dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
-dat <- cbind(metout, soil[,4:13])
-
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
-write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
+# # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
+# micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=0.2, runshade = 0, spatial = spatial_path)
+# #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
+# #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
+# #maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
+# #Usrhyt, Local height (m) at which air temperature, wind speed and humidity are to be computed for organism of interest
+# # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
+# 
+# #test with direct download
+# #file_prefix="Corfu"
+# #spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5/',file_prefix, sep="")
+# 
+# #--------------
+# 
+# #combine and save data 
+# metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
+# soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
+# soilmoist<-as.data.frame(micro$soilmoist) # soil temperatures, minimum shade
+# 
+# # append dates
+# tzone<-paste("Etc/GMT+",0,sep="")
+# dates<-seq(as.POSIXct(dstart, format="%d/%m/%Y",tz=tzone)-3600*12, as.POSIXct(dfinish, format="%d/%m/%Y",tz=tzone)+3600*11, by="hours")
+# 
+# metout <- cbind(dates,metout)
+# soil <- cbind(dates,soil)
+# #soilmoist <- cbind(dates, soilmoist)
+# 
+# #extract air temperature and soil
+# #dat <- cbind(metout[,1:3],metout$TAREF, metout$ZEN, metout$SOLR, soil$D0cm)
+# dat <- cbind(metout, soil[,4:13])
+# 
+# setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro/")
+# write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
 
 } #end loop years
 } #end loop locations
@@ -212,7 +213,7 @@ for(i in 1:10){
 locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 
 loc.k<- 4
-shade<- F
+shade<- T
 
 height= c(0.3,0.2,0.2,0.2,0.2)[loc.k]
 
@@ -225,7 +226,7 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #Los Banos
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
   if(loc.k==3) years=c(2011:2014,2016:2021)  #c(1961:1971, 2001:2011) 
-  if(loc.k==4) years=c(1969:1971, 2001:2016)  #c(1961:1971, 2001:2016)
+  if(loc.k==4) years=c(1961:2021)  #c(1961:1971, 2001:2016)
   if(loc.k==5) years=c(1962:1971, 2009:2018)  #c(1961:1971, 2001:2016)
 
   #set microclim path

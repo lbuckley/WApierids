@@ -5,6 +5,9 @@ library(viridisLite)
 library(patchwork)
 library(TrenchR)
 library(tidyverse)
+library(rTPC)
+library(nls.multstart)
+library(dplyr)
 
 #Montrose Valley, CO: 1961-1971; 2001-2011;N 38.62, W 108.02, 1633m
 #Sacramento Valley, CA: 1961-1971; 2001-2011; N 38.44, W121.86, 19m
@@ -187,32 +190,32 @@ d_fits <- nest(d, data = c(temp, rate)) %>%
 d_stack <- dplyr::select(d_fits, -data) %>%
   pivot_longer(., names_to = 'model_name', values_to = 'fit', beta:weibull)
 
-# get parameters using tidy
-params <- d_stack %>%
-  mutate(., est = map(fit, tidy)) %>%
-  dplyr::select(-fit) %>%
-  unnest(est)
-
-# get predictions using augment
-newdata <- tibble(temp = seq(min(d$temp), max(d$temp), length.out = 100))
-d_preds <- d_stack %>%
-  mutate(., preds = map(fit, augment, newdata = newdata)) %>%
-  dplyr::select(-fit) %>%
-  unnest(preds)
-
-# plot fits
-ggplot(d_preds, aes(temp, rate)) +
-  geom_point(aes(temp, rate), d) +
-  geom_line(aes(temp, .fitted), col = 'blue') +
-  facet_wrap(~model_name, labeller = labeller(model_name = label_facets_num), scales = 'free', ncol = 5) +
-  theme_bw(base_size = 12) +
-  theme(legend.position = 'none',
-        strip.text = element_text(hjust = 0),
-        strip.background = element_blank()) +
-  labs(x = 'Temperature (ºC)',
-       y = 'Metabolic rate',
-       title = 'Fits of every model available in rTPC') +
-  geom_hline(aes(yintercept = 0), linetype = 2)
+# # get parameters using tidy
+# params <- d_stack %>%
+#   mutate(., est = map(fit, tidy)) %>%
+#   dplyr::select(-fit) %>%
+#   unnest(est)
+# 
+# # get predictions using augment
+# newdata <- tibble(temp = seq(min(d$temp), max(d$temp), length.out = 100))
+# d_preds <- d_stack %>%
+#   mutate(., preds = map(fit, augment, newdata = newdata)) %>%
+#   dplyr::select(-fit) %>%
+#   unnest(preds)
+# 
+# # plot fits
+# ggplot(d_preds, aes(temp, rate)) +
+#   geom_point(aes(temp, rate), d) +
+#   geom_line(aes(temp, .fitted), col = 'blue') +
+#   facet_wrap(~model_name, labeller = labeller(model_name = label_facets_num), scales = 'free', ncol = 5) +
+#   theme_bw(base_size = 12) +
+#   theme(legend.position = 'none',
+#         strip.text = element_text(hjust = 0),
+#         strip.background = element_blank()) +
+#   labs(x = 'Temperature (ºC)',
+#        y = 'Metabolic rate',
+#        title = 'Fits of every model available in rTPC') +
+#   geom_hline(aes(yintercept = 0), linetype = 2)
 
 #extract model
 mod= d_fits$beta[[1]]
@@ -228,7 +231,7 @@ tpc.beta$pop= pops[loc.k]
 if(loc.k==1) tpc.betas= tpc.beta
 if(loc.k>1) tpc.betas= rbind(tpc.betas, tpc.beta)
 
-} #end location look
+} #end location loop
 
 tpc.betas= as.data.frame(tpc.betas)
 
@@ -261,8 +264,7 @@ ggplot(ps.all,aes(x=Temp, y=Perf, color=Pop))+geom_line()
 #Colias feeding
 
 #Fig 1: modern
-#Fig 3: Historic, Sacramento and Montrose; 1961-1971, 2001-2011
-#ASK FOR DATA
+#Fig 3: Historic, Sacramento and Montrose; 1961-1971, 2001-2011 
 #analyze feeding rate distributions?
 
 #plot temperature distributions
@@ -273,7 +275,7 @@ for(loc.k in c(1:2)){
 #years for data
 if (loc.k==1) years=c(1961:1971, 2001:2014, 2016:2021) 
 #check 2015
-if (loc.k==2) years=c(1961:1971, 2001:2016) 
+if (loc.k==2) years=c(1961:2021) 
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
 #SUN
@@ -437,13 +439,14 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, 
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("growth rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years 
-perfs1$Topt= apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )
+perfs1$Topt= topts[apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )]
 
 fig.topt= ggplot(perfs1, aes(x=year, y=Topt, color=seas))+geom_line()+
-  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)
+  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
+  xlab("year")+ylab("thermal optima (C) for maximum growth")
 
 if(loc.k==1) fig.fitnesscurves.co= fig.fitnesscurves
 if(loc.k==2) fig.fitnesscurves.ca= fig.fitnesscurves
