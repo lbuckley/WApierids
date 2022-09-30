@@ -186,9 +186,46 @@ d_fits <- nest(d, data = c(temp, rate)) %>%
                                             supp_errors = 'Y',
                                             convergence_count = FALSE)))
 
+#-------------
+#Try other beta function
+
+fits <- nls_multstart(rate~TPC_beta(T_b=temp, shift, breadth, aran=0, tolerance, skew=0.7),
+                      data = d,
+                      iter = 200, #grid approach c(10,10,10)
+                      start_lower = c(shift = -9, breadth = 0.07, tolerance=40),
+                      start_upper = c(shift = 5, breadth = 0.14, tolerance = 45),
+                      supp_errors = 'N')
+
+#scale to max height
+d$rate_scale= d$rate*2.5/max(d$rate)
+
+fits <- nls(rate_scale~TPC_beta(T_b=temp, shift, breadth, aran=0, tolerance=43),
+                      data = d,
+                      start= c(shift = 0, breadth = 0.1, skew=0.7), 
+                      algorithm = "port",
+                      lower = c(shift = -9, breadth = 0.04, skew=0.3),
+                      upper = c(shift = 5, breadth = 0.14, skew=0.8)
+                      )
+
+param.grid= expand.grid(shift=-9:5, breadth=seq(0.04,0.14,0.01), skew=seq(0.1,0.9,0.1) )
+plot(1:50, TPC_beta(T_b=1:50, shift=-9, breadth=0.07, aran=0, tolerance=43, skew=0.7), type="l")
+for(n.row in 1:nrow(param.grid)){
+  points(1:50, TPC_beta(T_b=1:50, shift=param.grid[n.row,1], breadth=param.grid[n.row,2], aran=0, tolerance=43, skew=0.7), type="l")
+}
+
+
+plot(d$temp,d$rate_scale, ylim=c(0,5))
+points(1:50, TPC_beta(T_b=1:50, shift=-6.1, breadth=0.04, aran=0, tolerance=43, skew=0.7), type="l")
+
+
+plot(1:50, beta_2012(1:50, tpc.beta[1],tpc.beta[2],tpc.beta[3],tpc.beta[4],tpc.beta[5]), type="l")
+points(1:50, beta_2012(1:50, tpc.beta[1],tpc.beta[2],tpc.beta[3],tpc.beta[4]-tpc.beta[4]/5,tpc.beta[5]), type="l", col="red")
+plot(d$temp,d$rate)
+#-------------
+
 # stack models
 d_stack <- dplyr::select(d_fits, -data) %>%
-  pivot_longer(., names_to = 'model_name', values_to = 'fit', beta:weibull)
+  pivot_longer(., names_to = 'model_name', values_to = 'fit', beta:beta2)
 
 # # get parameters using tidy
 # params <- d_stack %>%
