@@ -394,10 +394,10 @@ pop.times= c("CO_historic","CA_historic")
 for(loc.k in 1:length(pop.times)){
 
 #generate parameter combinations
-tpc.beta= tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),1:5]  
+tpc.beta= as.numeric(tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),1:5] ) 
 
-param.grid= expand.grid(shift= seq(tpc.beta$shift-10,tpc.beta$shift+10,1),
-                        breadth=seq(tpc.beta$breadth-0.05,tpc.beta$breadth+0.05,0.01) )
+param.grid= expand.grid(shift= seq(tpc.beta[1]-10,tpc.beta[1]+10,1),
+                        breadth=c(tpc.beta[2]-0.03,tpc.beta[2],tpc.beta[2]+0.03) )
 
 if(loc.k==1) dat.day= dat.day.co
 if(loc.k==2) dat.day= dat.day.ca
@@ -418,54 +418,84 @@ for(topt.k in 1:nrow(param.grid) ){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 
 #aggregate
-perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-names(perfs1)=c("year","period","seas", seq(topt.low, topt.high, 1))
+perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
+names(perfs1)=c("year","period","seas", 1:nrow(param.grid) )
 
 ##not seasons, just study period
 #perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period), FUN=mean)
 #names(perfs1)=c("year","period",seq(topt.low, topt.high, 1))
 
-#make column for slopes
-perfs1$B= NA
-
-for(row.k in 1: nrow(perfs1)){
-  #put into format for regression
-  perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
-  colnames(perfs2)=c("topt","perf")
-  
-  #plot(perfs2$topt, perfs2$perf)
-  #mod1= lm(perf~topt , data=perfs2)
-  mod1= lm(perf~topt +I(topt^2) , data=perfs2)
-  perfs1$B[row.k]= coefficients(mod1)[2]
-  perfs1$curve[row.k]= coefficients(mod1)[3]
-} 
+# #make column for slopes
+# perfs1$B= NA
+# 
+# for(row.k in 1: nrow(perfs1)){
+#   #put into format for regression
+#   perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
+#   colnames(perfs2)=c("topt","perf")
+#   
+#   #plot(perfs2$topt, perfs2$perf)
+#   #mod1= lm(perf~topt , data=perfs2)
+#   mod1= lm(perf~topt +I(topt^2) , data=perfs2)
+#   perfs1$B[row.k]= coefficients(mod1)[2]
+#   perfs1$curve[row.k]= coefficients(mod1)[3]
+# } 
 
 #plot fitness curves through time
-perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
+perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","period","seas"))
 names(perfs.l)[4:5]=c("temperature","performance")
+
+perfs.l$shift= param.grid$shift[perfs.l$temperature]
+perfs.l$breadth= param.grid$breadth[perfs.l$temperature]
 
 #perfs.l= melt(perfs1[,1:ncol(perfs1)], id.vars = c("year","period"))
 #names(perfs.l)[3:4]=c("temperature","performance")
 perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
-fig.fitnesscurves=ggplot(perfs.l, aes(x=temperature, y=performance, color=year, group=year))+geom_line()+
+#group by breadth
+perfs.l$yrbr= paste(perfs.l$year, perfs.l$breadth,sep="_")
+
+#combine shift, breadth
+fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=factor(breadth)))+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
-#find thermal optima through years 
-perfs1$Topt= topts[apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )]
+#fitness at fixed breadth
+fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=shift, y=performance, color=year, group=year) )+geom_line()+
+  facet_wrap(~seas) +
+  scale_color_viridis_c()+
+  theme_classic(base_size = 20)+
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
-fig.topt= ggplot(perfs1, aes(x=year, y=Topt, color=seas))+geom_line()+
+#fitness at fixed shift
+fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=performance, color=year, group=year) )+geom_line()+
+  facet_wrap(~seas) +
+  scale_color_viridis_c()+
+  theme_classic(base_size = 20)+
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+
+#find thermal optima through years  
+ind.max= apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )
+perfs1$shift_opt= param.grid$shift[ind.max]
+perfs1$breadth_opt= param.grid$breadth[ind.max]
+
+fig.shift_opt= ggplot(perfs1, aes(x=year, y=shift_opt, color=seas, lty=factor(breadth_opt)))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("year")+ylab("thermal optima (C) for maximum growth")
+
+#fig.breadth_opt= ggplot(perfs1, aes(x=year, y=breadth_opt, color=seas))+geom_line()+
+#  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
+#  xlab("year")+ylab("thermal optima (C) for maximum growth")
 
 if(loc.k==1) fig.fitnesscurves.co= fig.fitnesscurves
 if(loc.k==2) fig.fitnesscurves.ca= fig.fitnesscurves
 
-if(loc.k==1) fig.topt.co= fig.topt
-if(loc.k==2) fig.topt.ca= fig.topt
+if(loc.k==1) fig.shift_opt.co= fig.shift_opt
+if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
+
+if(loc.k==1) fig.breadth_opt.co= fig.breadth_opt
+if(loc.k==2) fig.breadth_opt.ca= fig.breadth_opt
 
 } # end loop locations
 
@@ -476,7 +506,8 @@ setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Colias.pdf",height = 14, width = 14)
 (co.colias+ ca.colias)/
   (fig.fitnesscurves.co + fig.fitnesscurves.ca)/
-  (fig.topt.co + fig.topt.ca)+
+  (fig.shift_opt.co + fig.shift_opt.ca)/
+  (fig.breadth_opt.co + fig.breadth_opt.ca)+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
