@@ -185,85 +185,39 @@ d_fits <- nest(d, data = c(temp, rate)) %>%
                                             upper = get_upper_lims(.x$temp, .x$rate, model_name = 'weibull_1995'),
                                             supp_errors = 'Y',
                                             convergence_count = FALSE)))
+} #end loc.k loop
 
 #-------------
-#Try other beta function
+#Fit Asbury and Angilletta beta function
 
-fits <- nls_multstart(rate~TPC_beta(T_b=temp, shift, breadth, aran=0, tolerance, skew=0.7),
-                      data = d,
-                      iter = 200, #grid approach c(10,10,10)
-                      start_lower = c(shift = -9, breadth = 0.07, tolerance=40),
-                      start_upper = c(shift = 5, breadth = 0.14, tolerance = 45),
-                      supp_errors = 'N')
+for(loc.k in 1:length(pops)){
+  
+  d= c.dat[which(c.dat$PopTime==pops[loc.k]),c("Temp","mean")]
+  colnames(d)=c("temp","rate")
 
 #scale to max height
 d$rate_scale= d$rate*2.5/max(d$rate)
 
-fits <- nls(rate_scale~TPC_beta(T_b=temp, shift, breadth, aran=0, tolerance=43),
-                      data = d,
-                      start= c(shift = 0, breadth = 0.1, skew=0.7), 
-                      algorithm = "port",
-                      lower = c(shift = -9, breadth = 0.04, skew=0.3),
-                      upper = c(shift = 5, breadth = 0.14, skew=0.8)
-                      )
+fits <- nls(rate_scale~TPC_beta(T_b=temp, shift, breadth, tolerance, aran=0, skew),
+            data = d,
+            start= c(shift = 0, breadth = 0.1, tolerance=43, skew=0.6), 
+            algorithm = "port",
+            lower = c(shift = -9, breadth = 0.04, tolerance=20, skew=0.5),
+            upper = c(shift = 9, breadth = 0.15, tolerance=60, skew=0.8)
+        )
 
-param.grid= expand.grid(shift=-9:5, breadth=seq(0.04,0.14,0.01), skew=seq(0.1,0.9,0.1) )
-plot(1:50, TPC_beta(T_b=1:50, shift=-9, breadth=0.07, aran=0, tolerance=43, skew=0.7), type="l")
-for(n.row in 1:nrow(param.grid)){
-  points(1:50, TPC_beta(T_b=1:50, shift=param.grid[n.row,1], breadth=param.grid[n.row,2], aran=0, tolerance=43, skew=0.7), type="l")
-}
+# param.grid= expand.grid(shift=-9:5, breadth=seq(0.04,0.14,0.01), skew=seq(0.1,0.9,0.1) )
+# plot(1:50, TPC_beta(T_b=1:50, shift=-9, breadth=0.07, aran=0, tolerance=43, skew=0.7), type="l")
+# for(n.row in 1:nrow(param.grid)){
+#   points(1:50, TPC_beta(T_b=1:50, shift=param.grid[n.row,1], breadth=param.grid[n.row,2], aran=0, tolerance=43, skew=0.7), type="l")
+# }
 
-
-plot(d$temp,d$rate_scale, ylim=c(0,5))
-points(1:50, TPC_beta(T_b=1:50, shift=-6.1, breadth=0.04, aran=0, tolerance=43, skew=0.7), type="l")
-
-
-plot(1:50, beta_2012(1:50, tpc.beta[1],tpc.beta[2],tpc.beta[3],tpc.beta[4],tpc.beta[5]), type="l")
-points(1:50, beta_2012(1:50, tpc.beta[1],tpc.beta[2],tpc.beta[3],tpc.beta[4]-tpc.beta[4]/5,tpc.beta[5]), type="l", col="red")
-plot(d$temp,d$rate)
-#-------------
-
-# stack models
-d_stack <- dplyr::select(d_fits, -data) %>%
-  pivot_longer(., names_to = 'model_name', values_to = 'fit', beta:beta2)
-
-# # get parameters using tidy
-# params <- d_stack %>%
-#   mutate(., est = map(fit, tidy)) %>%
-#   dplyr::select(-fit) %>%
-#   unnest(est)
-# 
-# # get predictions using augment
-# newdata <- tibble(temp = seq(min(d$temp), max(d$temp), length.out = 100))
-# d_preds <- d_stack %>%
-#   mutate(., preds = map(fit, augment, newdata = newdata)) %>%
-#   dplyr::select(-fit) %>%
-#   unnest(preds)
-# 
-# # plot fits
-# ggplot(d_preds, aes(temp, rate)) +
-#   geom_point(aes(temp, rate), d) +
-#   geom_line(aes(temp, .fitted), col = 'blue') +
-#   facet_wrap(~model_name, labeller = labeller(model_name = label_facets_num), scales = 'free', ncol = 5) +
-#   theme_bw(base_size = 12) +
-#   theme(legend.position = 'none',
-#         strip.text = element_text(hjust = 0),
-#         strip.background = element_blank()) +
-#   labs(x = 'Temperature (ºC)',
-#        y = 'Metabolic rate',
-#        title = 'Fits of every model available in rTPC') +
-#   geom_hline(aes(yintercept = 0), linetype = 2)
-
-#extract model
-mod= d_fits$beta[[1]]
-
-## get predictions
-#preds <- data.frame(temp = seq(min(d$temp), max(d$temp), length.out = 100))
-#preds <- broom::augment(mod, newdata = preds)
+coefs= summary(fits)$coefficients
 
 #extract coefficients
-tpc.beta= coef(mod)
+tpc.beta= coef(fits)
 tpc.beta$pop= pops[loc.k]
+tpc.beta$maxp= max(d$rate)
 
 if(loc.k==1) tpc.betas= tpc.beta
 if(loc.k>1) tpc.betas= rbind(tpc.betas, tpc.beta)
@@ -271,6 +225,28 @@ if(loc.k>1) tpc.betas= rbind(tpc.betas, tpc.beta)
 } #end location loop
 
 tpc.betas= as.data.frame(tpc.betas)
+tpc.betas$shift= as.numeric(tpc.betas$shift)
+tpc.betas$breadth= as.numeric(tpc.betas$breadth)
+tpc.betas$tolerance= as.numeric(tpc.betas$tolerance)
+tpc.betas$skew= as.numeric(tpc.betas$skew)
+tpc.betas$maxp= as.numeric(tpc.betas$maxp)
+
+#plot with points
+par(mfrow=c(2,2))
+
+for(loc.k in 1:4){
+  d= c.dat[which(c.dat$PopTime==pops[loc.k]),c("Temp","mean")]
+  colnames(d)=c("temp","rate")
+  
+  #scale to max height
+  d$rate_scale= d$rate*2.5/max(d$rate)
+  
+  plot(d$temp,d$rate_scale, ylim=c(0,3), xlim=c(0,50))
+  points(1:50, TPC_beta(T_b=1:50, shift=tpc.betas[loc.k,1], breadth=tpc.betas[loc.k,2], aran=0, tolerance=tpc.betas[loc.k,3], skew=tpc.betas[loc.k,4]), type="l")
+  
+}
+
+#-------------
 
 #plot tpcs
 temps= 1:50
@@ -278,7 +254,7 @@ temps= 1:50
 for(loc.k in 1:4){
 
 ps= cbind(temps,
-beta_2012(temps, as.numeric(tpc.betas[loc.k,1]), as.numeric(tpc.betas[loc.k,2]), as.numeric(tpc.betas[loc.k,3]), as.numeric(tpc.betas[loc.k,4]), as.numeric(tpc.betas[loc.k,5]) ))
+          TPC_beta(T_b=1:50, shift=tpc.betas[loc.k,1], breadth=tpc.betas[loc.k,2], aran=0, tolerance=tpc.betas[loc.k,3], skew=tpc.betas[loc.k,4])/(2.5/tpc.betas[loc.k,6]) )
 ps= as.data.frame(ps)
 ps$Pop= pops[loc.k]
 
@@ -418,22 +394,22 @@ pop.times= c("CO_historic","CA_historic")
 for(loc.k in 1:length(pop.times)){
 
 #generate parameter combinations
-topt.low= 25
-topt.high= 45
+tpc.beta= tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),1:5]  
+
+param.grid= expand.grid(shift= seq(tpc.beta$shift-10,tpc.beta$shift+10,1),
+                        breadth=seq(tpc.beta$breadth-0.05,tpc.beta$breadth+0.05,0.01) )
 
 if(loc.k==1) dat.day= dat.day.co
 if(loc.k==2) dat.day= dat.day.ca
 
-tpc.beta= unlist(tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),1:5])
-
 #estimate growth and development
 #RUN
-topts= seq(topt.low, topt.high, 1)
-perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= length(topts) )
-for(topt.k in 1:length(topts)){
-  perf.mat[,topt.k]= sapply(dat.day$TALOC, FUN=beta_2012, 
-                            a=tpc.beta[1],b=topts[topt.k],c=tpc.beta[3],
-                            d=tpc.beta[4],e=tpc.beta[5] )
+perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= nrow(param.grid) )
+for(topt.k in 1:nrow(param.grid) ){
+  perf.mat[,topt.k]= sapply(dat.day$TALOC, FUN=TPC_beta, 
+                            shift=param.grid[topt.k,1], breadth=param.grid[topt.k,2], aran=0, 
+                            tolerance=tpc.beta[3], skew=tpc.beta[4])
+  
   #set NaN to zero
   perf.mat[which(is.nan(perf.mat[,topt.k])),topt.k]= 0
 }
