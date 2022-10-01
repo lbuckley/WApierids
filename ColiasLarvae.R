@@ -459,7 +459,7 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=shift, y=performance, color=year, group=year) )+geom_line()+
@@ -476,26 +476,37 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
   xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
-ind.max= apply(perfs1[,4:ncol(perfs1)], MARGIN=1, FUN=which.max )
-perfs1$shift_opt= param.grid$shift[ind.max]
-perfs1$breadth_opt= param.grid$breadth[ind.max]
+breadths= sort(unique(param.grid$breadth))
 
-fig.shift_opt= ggplot(perfs1, aes(x=year, y=shift_opt, color=seas, lty=factor(breadth_opt)))+geom_line()+
+inds= which(param.grid$breadth==breadths[1])+3
+perfs1$shift_opt_b1= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+
+inds= which(param.grid$breadth==breadths[2])+3
+perfs1$shift_opt_b2= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+
+inds= which(param.grid$breadth==breadths[3])+3
+perfs1$shift_opt_b3= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+
+#melt
+perfs.b= perfs1[,c("year","period","seas","shift_opt_b1","shift_opt_b2","shift_opt_b3")]
+perfs.b.l= melt(perfs.b, id.vars = c("year","period","seas"))
+names(perfs.b.l)[4:5]=c("breadth","opt_shift")
+perfs.b.l$breadths= NA
+perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b1"]<- breadths[1]
+perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b2"]<- breadths[2]
+perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
+
+perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
+
+fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=factor(breadths)))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("year")+ylab("thermal optima (C) for maximum growth")
-
-#fig.breadth_opt= ggplot(perfs1, aes(x=year, y=breadth_opt, color=seas))+geom_line()+
-#  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-#  xlab("year")+ylab("thermal optima (C) for maximum growth")
 
 if(loc.k==1) fig.fitnesscurves.co= fig.fitnesscurves
 if(loc.k==2) fig.fitnesscurves.ca= fig.fitnesscurves
 
 if(loc.k==1) fig.shift_opt.co= fig.shift_opt
 if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
-
-if(loc.k==1) fig.breadth_opt.co= fig.breadth_opt
-if(loc.k==2) fig.breadth_opt.ca= fig.breadth_opt
 
 } # end loop locations
 
@@ -506,8 +517,7 @@ setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Colias.pdf",height = 14, width = 14)
 (co.colias+ ca.colias)/
   (fig.fitnesscurves.co + fig.fitnesscurves.ca)/
-  (fig.shift_opt.co + fig.shift_opt.ca)/
-  (fig.breadth_opt.co + fig.breadth_opt.ca)+
+  (fig.shift_opt.co + fig.shift_opt.ca)+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
