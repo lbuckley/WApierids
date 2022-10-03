@@ -119,7 +119,7 @@ p1= ggplot(dat.day, aes(x=TALOC))+
   facet_wrap(~seas)+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.45, 0.7))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.45, 0.7))
 #D0cm, TALOC, TAREF
 
 #------------------
@@ -145,7 +145,7 @@ p1= ggplot(dat.day1, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.22, 0.9))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.22, 0.9))
 
 ## get 1999 (study) data
 #plot just during study
@@ -153,7 +153,7 @@ ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.2, 0.8))
 
 #===============================
 #P. rapae larvae
@@ -307,12 +307,14 @@ perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
 #group by breadth
 perfs.l$yrbr= paste(perfs.l$year, perfs.l$breadth,sep="_")
+#make breadth a factor
+perfs.l$breadth= factor(perfs.l$breadth)
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=factor(breadth)))+
+fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #account for temperatures exceeding tpcs
 
@@ -339,10 +341,11 @@ perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b2"]<- breadths[2]
 perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
 
 perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
+perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
-fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=factor(breadths)))+geom_line()+
+fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC shift (C) for maximum growth")
+  xlab("year")+ylab("TPC mode (C) for maximum growth")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PrapaeStudy.pdf", height = 14, width = 8)

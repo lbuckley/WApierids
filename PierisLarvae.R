@@ -195,7 +195,7 @@ p1= ggplot(dat.day, aes(x=TALOC))+
   facet_wrap(~seas)+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.45, 0.7))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.45, 0.7))
 #D0cm, TALOC, TAREF
 
 #------------------
@@ -221,7 +221,7 @@ p1= ggplot(dat.day1, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.22, 0.9))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.22, 0.9))
 
 ## get 1999 (study) data
 #plot just during study
@@ -229,7 +229,7 @@ ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.2, 0.8))
 
 #===============================
 #P. rapae larvae

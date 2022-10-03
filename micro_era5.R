@@ -205,14 +205,14 @@ for(i in 1:10){
   }
 }
 
-#-----------------------
+#============================
 #Check microclimate analysis
 
 #locations Corfu, P. occidentalis, Apr to Sept
 #Seattle, P. rapae,
 locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 
-loc.k<- 4
+loc.k<- 3
 shade<- T
 
 height= c(0.3,0.2,0.2,0.2,0.2)[loc.k]
@@ -225,7 +225,7 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #Los Banos
 
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
-  if(loc.k==3) years=c(2011:2014,2016:2021)  #c(1961:1971, 2001:2011) 
+  if(loc.k==3) years=c(1972:2000)  #c(1961:1971, 2001:2011) 
   if(loc.k==4) years=c(1961:2021)  #c(1961:1971, 2001:2016)
   if(loc.k==5) years=c(1962:1971, 2009:2018)  #c(1961:1971, 2001:2016)
 

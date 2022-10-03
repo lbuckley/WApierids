@@ -286,7 +286,7 @@ locations= c("Montrose","Sacramento", "LosBanos")
 for(loc.k in c(1:2)){
 
 #years for data
-if (loc.k==1) years=c(1961:1971, 2001:2014, 2016:2021) 
+if (loc.k==1) years=c(1961:2014, 2016:2021) 
 #check 2015
 if (loc.k==2) years=c(1961:2021) 
 if (loc.k==3) years=c(1962:1971, 2009:2018)
@@ -331,7 +331,7 @@ p1= ggplot(dat.day, aes(x=TALOC))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -340,7 +340,7 @@ p1.ref= ggplot(dat.day, aes(x=TAREF))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
+  theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day}
 if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day}
@@ -394,7 +394,7 @@ pop.times= c("CO_historic","CA_historic")
 for(loc.k in 1:length(pop.times)){
 
 #generate parameter combinations
-tpc.beta= as.numeric(tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),1:5] ) 
+tpc.beta= as.numeric(tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),c(1:4,6)] ) 
 
 param.grid= expand.grid(shift= seq(tpc.beta[1]-10,tpc.beta[1]+10,1),
                         breadth=c(tpc.beta[2]-0.03,tpc.beta[2],tpc.beta[2]+0.03) )
@@ -453,27 +453,30 @@ perfs.l$temperature= as.numeric(as.character(perfs.l$temperature))
 
 #group by breadth
 perfs.l$yrbr= paste(perfs.l$year, perfs.l$breadth,sep="_")
+perfs.l$breadth= factor(perfs.l$breadth)
+#scale performance
+perfs.l$performance= perfs.l$performance/(2.5/tpc.beta[5])
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=factor(breadth)))+
+fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=shift, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed shift
 fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
@@ -497,10 +500,11 @@ perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b2"]<- breadths[2]
 perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
 
 perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
+perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
-fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=factor(breadths)))+geom_line()+
+fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("thermal optima (C) for maximum growth")
+  xlab("year")+ylab("TPC mode (C) for maximum feeding")
 
 if(loc.k==1) fig.fitnesscurves.co= fig.fitnesscurves
 if(loc.k==2) fig.fitnesscurves.ca= fig.fitnesscurves
@@ -514,7 +518,7 @@ if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
 #PLOT
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Colias.pdf",height = 14, width = 14)
+pdf("Fig_Colias.pdf",height = 12, width = 14)
 (co.colias+ ca.colias)/
   (fig.fitnesscurves.co + fig.fitnesscurves.ca)/
   (fig.shift_opt.co + fig.shift_opt.ca)+
