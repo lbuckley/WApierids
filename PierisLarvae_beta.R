@@ -112,9 +112,12 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 #combine doy and time
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
+#drop middle period
+dat.day.plot= dat.day[-which(dat.day$period=="middle"),]
+
 #--------------------------  
 #plot density distributions
-p1= ggplot(dat.day, aes(x=TALOC))+
+p1= ggplot(dat.day.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Growth rate (g/g/h)")+
@@ -140,8 +143,11 @@ length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>34.5))/length(dat.day1
 length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>40))/length(dat.day1$TALOC)
 length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>40))/length(dat.day1$TALOC)
 
+#drop middle period
+dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
+
 #plot density distributions
-p1= ggplot(dat.day1, aes(x=TALOC))+
+p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
@@ -264,6 +270,14 @@ for(topt.k in 1:nrow(param.grid)){
   perf.mat[,topt.k]= perf.mat[,topt.k]/(2.5/tpc.beta[5])
 }
 
+#estimate topt for curve
+param.grid$Topt=NA
+for(topt.k in 1:nrow(param.grid)){
+  ps= TPC_beta(1:50,shift=param.grid[topt.k,1], breadth=param.grid[topt.k,2], aran=0, 
+               tolerance=tpc.beta[3], skew=tpc.beta[4])
+  param.grid$Topt[topt.k]= c(1:50)[which.max(ps)]
+}
+
 #combine dates
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 
@@ -300,6 +314,7 @@ names(perfs.l)[3:4]=c("temperature","performance")
 
 perfs.l$shift= param.grid$shift[perfs.l$temperature]
 perfs.l$breadth= param.grid$breadth[perfs.l$temperature]
+perfs.l$topt= param.grid$Topt[perfs.l$temperature]
 
 #perfs.l= melt(perfs1[,1:ncol(perfs1)], id.vars = c("year","period"))
 #names(perfs.l)[3:4]=c("temperature","performance")
@@ -311,7 +326,7 @@ perfs.l$yrbr= paste(perfs.l$year, perfs.l$breadth,sep="_")
 perfs.l$breadth= factor(perfs.l$breadth)
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
+fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
@@ -323,13 +338,13 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=
 breadths= sort(unique(param.grid$breadth))
 
 inds= which(param.grid$breadth==breadths[1])+3
-perfs1$shift_opt_b1= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b1= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 inds= which(param.grid$breadth==breadths[2])+3
-perfs1$shift_opt_b2= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b2= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 inds= which(param.grid$breadth==breadths[3])+3
-perfs1$shift_opt_b3= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b3= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 #melt
 perfs.b= perfs1[,c("year","period","shift_opt_b1","shift_opt_b2","shift_opt_b3")]
@@ -343,7 +358,7 @@ perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
 perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
 perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
-fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
+fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("year")+ylab("TPC mode (C) for maximum growth")
 

@@ -34,6 +34,10 @@ a= contempSummary$Larval_Photoperiod
 b= daylengths
 contempSummary$doy= sapply(a, function(a, b) {which.min(abs(a-b))}, b)
 
+#add two weeks to account for lag between pupae and adults
+oldData$doy= oldData$doy +14
+contempSummary$doy= contempSummary$doy +14
+
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_ColiasPhoto.pdf",height = 6, width = 6)
 
@@ -324,22 +328,27 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 #combine doy and time
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
+#drop middle period
+dat.day.plot= dat.day[-which(dat.day$period=="middle"),]
+
 #--------------------------  
 #plot density distributions
-p1= ggplot(dat.day, aes(x=TALOC))+
+p1= ggplot(dat.day.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
+  xlim(-5,50)+ ylim(0,0.082)+
   theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
-p1.ref= ggplot(dat.day, aes(x=TAREF))+
+p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
-  xlab("Temperature at plant height (°C)" )+
+  xlab("Temperature at reference height (°C)" )+
+  xlim(-5,50)+ ylim(0,0.082)+
   theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day}
@@ -367,8 +376,12 @@ ca.colias= ca.colias + geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=me
   geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
 
 #reference temperatures
-temp.co.ref + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)
-temp.ca.ref + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)
+co.colias.ref= temp.co.ref + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)+
+  geom_point(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, y=mean/5, shape=Time),size=3)+
+  geom_errorbar(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
+ca.colias.ref= temp.ca.ref + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)+
+  geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=mean/5, shape=Time),size=3)+
+  geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
 
 #--------------------
 #Global hourly 
@@ -440,12 +453,21 @@ names(perfs1)=c("year","period","seas", 1:nrow(param.grid) )
 #   perfs1$curve[row.k]= coefficients(mod1)[3]
 # } 
 
+#estimate topt for curve
+param.grid$Topt=NA
+for(topt.k in 1:nrow(param.grid)){
+  ps= TPC_beta(1:50,shift=param.grid[topt.k,1], breadth=param.grid[topt.k,2], aran=0, 
+               tolerance=tpc.beta[3], skew=tpc.beta[4])
+  param.grid$Topt[topt.k]= c(1:50)[which.max(ps)]
+}
+
 #plot fitness curves through time
 perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","period","seas"))
 names(perfs.l)[4:5]=c("temperature","performance")
 
 perfs.l$shift= param.grid$shift[perfs.l$temperature]
 perfs.l$breadth= param.grid$breadth[perfs.l$temperature]
+perfs.l$topt= param.grid$Topt[perfs.l$temperature]
 
 #perfs.l= melt(perfs1[,1:ncol(perfs1)], id.vars = c("year","period"))
 #names(perfs.l)[3:4]=c("temperature","performance")
@@ -458,14 +480,14 @@ perfs.l$breadth= factor(perfs.l$breadth)
 perfs.l$performance= perfs.l$performance/(2.5/tpc.beta[5])
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l, aes(x=shift, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
+fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
-fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=shift, y=performance, color=year, group=year) )+geom_line()+
+fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
@@ -482,15 +504,15 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
 breadths= sort(unique(param.grid$breadth))
 
 inds= which(param.grid$breadth==breadths[1])+3
-perfs1$shift_opt_b1= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b1= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 inds= which(param.grid$breadth==breadths[2])+3
-perfs1$shift_opt_b2= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b2= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 inds= which(param.grid$breadth==breadths[3])+3
-perfs1$shift_opt_b3= param.grid$shift[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
+perfs1$shift_opt_b3= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
-#melt
+#melt 
 perfs.b= perfs1[,c("year","period","seas","shift_opt_b1","shift_opt_b2","shift_opt_b3")]
 perfs.b.l= melt(perfs.b, id.vars = c("year","period","seas"))
 names(perfs.b.l)[4:5]=c("breadth","opt_shift")
@@ -502,12 +524,18 @@ perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
 perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
 perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
-fig.shift_opt= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
+#beta= 0.15
+fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("year")+ylab("TPC mode (C) for maximum feeding")
 
-if(loc.k==1) fig.fitnesscurves.co= fig.fitnesscurves
-if(loc.k==2) fig.fitnesscurves.ca= fig.fitnesscurves
+#all betas
+fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
+  xlab("year")+ylab("TPC mode (C) for maximum feeding")
+
+if(loc.k==1) fig.fitnesscurves.co= fig.fit.fb
+if(loc.k==2) fig.fitnesscurves.ca= fig.fit.fb
 
 if(loc.k==1) fig.shift_opt.co= fig.shift_opt
 if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
@@ -518,10 +546,19 @@ if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
 #PLOT
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Colias.pdf",height = 12, width = 14)
-(co.colias+ ca.colias)/
-  (fig.fitnesscurves.co + fig.fitnesscurves.ca)/
-  (fig.shift_opt.co + fig.shift_opt.ca)+
+pdf("Fig_Colias_CO.pdf",height = 12, width = 8)
+co.colias.ref/
+  co.colias/
+  fig.fitnesscurves.co/
+  fig.shift_opt.co +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_Colias_CA.pdf",height = 12, width = 8)
+ca.colias.ref/
+  ca.colias/
+  fig.fitnesscurves.ca/
+  fig.shift_opt.ca +
+  plot_annotation(tag_levels = 'A')
+dev.off()
