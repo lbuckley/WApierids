@@ -122,7 +122,8 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   facet_wrap(~seas)+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20) #+theme(legend.position = c(0.45, 0.7))
+  theme_classic(base_size = 20)+
+  theme(legend.position = c(0.1, 0.9))
 #D0cm, TALOC, TAREF
 
 #------------------
@@ -151,7 +152,17 @@ p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20) #+theme(legend.position = c(0.22, 0.9))
+  theme_classic(base_size = 20) +
+  theme(legend.position = "none")+ #theme(legend.position = c(0.2, 0.9))+
+  xlim(5,45)
+
+p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  ylab("Feeding rate (g/g/h)")+
+  xlab("Temperature at plant height (°C)" )+
+  theme_classic(base_size = 20) +
+  theme(legend.position = c(0.15, 0.9))+
+  xlim(5,45)
 
 ## get 1999 (study) data
 #plot just during study
@@ -178,6 +189,12 @@ p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm
 
 #add points 
 p3= p3 + geom_point(data=d, aes(x = temp, y = rate))
+
+#analogous plot for reference height
+p3.ref= p1.ref + geom_line(data=p.dat, aes(x = Tb, y = performance) )+ 
+  geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
+  arrow = arrow(length = unit(0.3, "cm")), lwd=1)+
+  geom_point(data=d, aes(x = temp, y = rate))
 
 #-----------
 #just study period
@@ -326,10 +343,16 @@ perfs.l$yrbr= paste(perfs.l$year, perfs.l$breadth,sep="_")
 perfs.l$breadth= factor(perfs.l$breadth)
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
+fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line()+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") +
+  theme(legend.position = c(0.2, 0.3))
+
+fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
+  scale_color_viridis_c()+
+  theme_classic(base_size = 20)+
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") 
 
 #account for temperatures exceeding tpcs
 
@@ -358,14 +381,26 @@ perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b3"]<- breadths[3]
 perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
 perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
-fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
+fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC mode (C) for maximum growth")
+  xlab("year")+ylab("Topt (C) for maximum growth")+
+  guides(lty="none")
+
+fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
+  theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
+  xlab("year")+ylab("Topt (C) for maximum growth")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PrapaeStudy.pdf", height = 14, width = 8)
-p3 / fig.fitnesscurves / fig.shift_opt +
-  plot_layout(heights = c(2, 1.5, 1.25))
+pdf("Fig_PrapaeStudy.pdf", height = 18, width = 9)
+p3.ref / p3 / fig.fitnesscurves / fig.shift_opt +
+  plot_layout(heights = c(2, 2, 1.5, 1.25))+
+  plot_annotation(tag_levels = 'A')
+dev.off()
+
+pdf("Fig_PrapaeStudy_supp.pdf", height = 10, width = 8)
+fig.fitnesscurves.all / fig.shift_opt.all +
+  plot_layout(heights = c(1.5, 1.25))+
+  plot_annotation(tag_levels = 'A')
 dev.off()
 
 #----------------------------

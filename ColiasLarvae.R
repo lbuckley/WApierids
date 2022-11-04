@@ -339,7 +339,9 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
   xlim(-5,50)+ ylim(0,0.082)+
-  theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
+  theme_classic(base_size = 20) +
+  theme(strip.text.x = element_blank())+
+  theme(legend.position = "none")
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -349,7 +351,8 @@ p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at reference height (°C)" )+
   xlim(-5,50)+ ylim(0,0.082)+
-  theme_classic(base_size = 20) #+theme(legend.position = c(0.5, 0.6),legend.background = element_rect(fill="transparent"))
+  theme_classic(base_size = 20) +
+  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day}
 if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day}
@@ -491,7 +494,8 @@ fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, co
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
+  theme(strip.text.x = element_blank())
 
 #fitness at fixed shift
 fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=performance, color=year, group=year) )+geom_line()+
@@ -527,18 +531,21 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 #beta= 0.15
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC mode (C) for maximum feeding")
+  xlab("year")+ylab("TPC mode (C) for maximum feeding")+
+  guides(lty="none")+theme(legend.position = c(0.9, 0.1))+ 
+  labs(colour = "season") 
 
 #all betas
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC mode (C) for maximum feeding")
+  xlab("year")+ylab("TPC mode (C) for maximum feeding")+ 
+  labs(colour = "season") 
 
-if(loc.k==1) fig.fitnesscurves.co= fig.fit.fb
-if(loc.k==2) fig.fitnesscurves.ca= fig.fit.fb
+if(loc.k==1) {fig.fitnesscurves.co= fig.fit.fb; fig.fit.all.co= fig.fitnesscurves}
+if(loc.k==2) {fig.fitnesscurves.ca= fig.fit.fb; fig.fit.all.ca= fig.fitnesscurves}
 
-if(loc.k==1) fig.shift_opt.co= fig.shift_opt
-if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
+if(loc.k==1) {fig.shift_opt.co= fig.shift_opt; fig.shift_opt.all.co= fig.shift_opt.all}
+if(loc.k==2) {fig.shift_opt.ca= fig.shift_opt; fig.shift_opt.all.ca= fig.shift_opt.all}
 
 } # end loop locations
 
@@ -546,7 +553,7 @@ if(loc.k==2) fig.shift_opt.ca= fig.shift_opt
 #PLOT
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Colias_CO.pdf",height = 12, width = 8)
+pdf("Fig_Colias_CO.pdf",height = 18, width = 8)
 co.colias.ref/
   co.colias/
   fig.fitnesscurves.co/
@@ -554,11 +561,27 @@ co.colias.ref/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Colias_CA.pdf",height = 12, width = 8)
+pdf("Fig_Colias_CA.pdf",height = 18, width = 8)
 ca.colias.ref/
   ca.colias/
   fig.fitnesscurves.ca/
   fig.shift_opt.ca +
   plot_annotation(tag_levels = 'A')
 dev.off()
+
+#supplementary plots
+pdf("Fig_Colias_CO_supp.pdf",height = 10, width = 8)
+fig.fit.all.co/
+  fig.shift_opt.all.co +
+  plot_annotation(tag_levels = 'A')
+dev.off()
+
+pdf("Fig_Colias_CA_supp.pdf",height = 10, width = 8)
+fig.fit.all.ca/
+  fig.shift_opt.all.ca +
+  plot_annotation(tag_levels = 'A')
+dev.off()
+
+
+
+
