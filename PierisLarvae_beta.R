@@ -346,13 +346,13 @@ perfs.l$breadth= factor(perfs.l$breadth)
 fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line()+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") +
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") +
   theme(legend.position = c(0.2, 0.3))
 
 fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") 
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") 
 
 #account for temperatures exceeding tpcs
 

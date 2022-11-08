@@ -487,14 +487,14 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=y
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
   theme(strip.text.x = element_blank())
 
 #fitness at fixed shift
@@ -502,7 +502,7 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("TPC mode (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
@@ -531,14 +531,14 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 #beta= 0.15
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC mode (C) for maximum feeding")+
+  xlab("year")+ylab("thermal optima (C) for maximum feeding")+
   guides(lty="none")+theme(legend.position = c(0.9, 0.1))+ 
   labs(colour = "season") 
 
 #all betas
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("TPC mode (C) for maximum feeding")+ 
+  xlab("year")+ylab("thermal optima (C) for maximum feeding")+ 
   labs(colour = "season") 
 
 if(loc.k==1) {fig.fitnesscurves.co= fig.fit.fb; fig.fit.all.co= fig.fitnesscurves}

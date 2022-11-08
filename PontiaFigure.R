@@ -91,12 +91,25 @@ p1= ggplot(dat.sub, aes(x=TALOC))+
   facet_wrap(~seas)+
   xlab("Temperature at plant height (°C)")+
   ylab("Density" )+
-  theme_classic(base_size = 16)+theme(legend.position = c(0.45, 0.7))
+  theme_classic(base_size = 16)+theme(legend.position = c(0.45, 0.7))+
+  geom_vline(xintercept=34.5)+
+  ylim(0,0.072)+
+  xlim(0,55)
+
+p1.ref= ggplot(dat.sub, aes(x=TAREF))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+  
+  facet_wrap(~seas)+
+  xlab("Temperature at reference height (°C)")+
+  ylab("Density" )+
+  theme_classic(base_size = 16)+theme(legend.position = c(0.45, 0.7))+
+  geom_vline(xintercept=34.5)+
+  ylim(0,0.072)+
+  xlim(0,55)
 
 #----------------
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Pontia.pdf",height = 6, width = 10)
-plot.sv2 + p1 + plot_layout(widths = c(1, 1.6))+ 
+pdf("Fig_Pontia.pdf",height = 14, width = 6)
+plot.sv2 / p1.ref / p1 + plot_layout(widths = c(1, 1.6))+ 
   plot_annotation(tag_levels = 'A')
 dev.off()
 
