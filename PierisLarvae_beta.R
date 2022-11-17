@@ -151,10 +151,11 @@ dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
 p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   ylab("Feeding rate (g/g/h)")+
-  xlab("Temperature at plant height (°C)" )+
+  xlab("Temperature (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+ #theme(legend.position = c(0.2, 0.9))+
-  xlim(5,45)
+  xlim(5,50)+
+  scale_y_continuous(expand=c(0,0))
 
 p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
@@ -162,7 +163,11 @@ p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.15, 0.9))+
-  xlim(5,45)
+  xlim(5,50)
+
+#plot together
+p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+  theme(legend.position = c(0.7, 0.9))
 
 ## get 1999 (study) data
 #plot just during study
@@ -346,7 +351,7 @@ perfs.l$breadth= factor(perfs.l$breadth)
 fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line()+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") +
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
   theme(legend.position = c(0.2, 0.3))
 
 fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
@@ -383,16 +388,16 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("Topt (C) for maximum growth")+
+  xlab("Year")+ylab("Optimal Topt (C)")+
   guides(lty="none")
 
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("Topt (C) for maximum growth")
+  xlab("Year")+ylab("Optimal Topt (C)")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_PrapaeStudy.pdf", height = 18, width = 9)
-p3.ref / p3 / fig.fitnesscurves / fig.shift_opt +
+p1.pl.ref / p3 / fig.fitnesscurves / fig.shift_opt +
   plot_layout(heights = c(2, 2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
 dev.off()

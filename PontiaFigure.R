@@ -85,6 +85,9 @@ dat.sub$seas= factor(dat.sub$seas, levels=c("May","June-July") )
 #restrict to study periods
 dat.sub= dat.sub[which(!is.na(dat.sub$seas)),]
 
+#drop middle period
+dat.sub= dat.sub[-which(dat.sub$seas$period=="2000-2010"),]
+
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+  
@@ -105,6 +108,8 @@ p1.ref= ggplot(dat.sub, aes(x=TAREF))+
   geom_vline(xintercept=34.5)+
   ylim(0,0.072)+
   xlim(0,55)
+
+##COMBINE TEMPS
 
 #----------------
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")

@@ -337,11 +337,11 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
-  xlab("Temperature at plant height (°C)" )+
+  xlab("Temperature (°C)" )+
   xlim(-5,50)+ ylim(0,0.082)+
   theme_classic(base_size = 20) +
-  theme(strip.text.x = element_blank())+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  scale_y_continuous(expand=c(0,0))
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -354,8 +354,15 @@ p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))
 
-if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day}
-if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day}
+#plot together
+p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+  theme(legend.position = c(0.6, 0.9))
+
+#remove label
+p1= p1+theme(strip.text.x = element_blank())
+
+if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
+if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref}
 
 } # end location loop
 
@@ -367,16 +374,22 @@ p1.all$TALOC= p1.all$temps
 ##divide by 5 to line up, use shade temps? 
 #ca.colias= temp.ca + geom_line(data=p1.all[p1.all$population=="CA",], aes(x=temps, y=p/5, lty=year),size=1.1)
 
+#change names
+ps.all$period= ps.all$Time
+ps.all$period[ps.all$period=="historic"]= "initial"
+c.dat$period= c.dat$Time
+c.dat$period[c.dat$period=="historic"]= "initial"
+
 #beta fits
-co.colias= temp.co + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)
+co.colias= temp.co + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, color=Time),size=1.1)
 #divide by 5 to line up, use shade temps? 
-ca.colias= temp.ca + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)
+ca.colias= temp.ca + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, color=Time),size=1.1)
 
 #add data
-co.colias= co.colias + geom_point(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, y=mean/5, shape=Time),size=3)+
-  geom_errorbar(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
-ca.colias= ca.colias + geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=mean/5, shape=Time),size=3)+
-  geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
+co.colias= co.colias + geom_point(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, y=mean/5, color=period),size=3)+
+  geom_errorbar(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))
+ca.colias= ca.colias + geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=mean/5, color=period),size=3)+
+  geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))
 
 #reference temperatures
 co.colias.ref= temp.co.ref + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)+
@@ -487,14 +500,14 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=y
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
   theme(strip.text.x = element_blank())
 
 #fitness at fixed shift
@@ -502,7 +515,7 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
@@ -531,14 +544,16 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 #beta= 0.15
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("thermal optima (C) for maximum feeding")+
+  xlab("Year")+ylab("Optimal thermal optima (C)")+
   guides(lty="none")+theme(legend.position = c(0.9, 0.1))+ 
+  scale_color_manual(values= c("orange","purple"))+
   labs(colour = "season") 
 
 #all betas
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("year")+ylab("thermal optima (C) for maximum feeding")+ 
+  xlab("Year")+ylab("Optimal thermal optima (C)")+
+  scale_color_manual(values= c("orange","purple"))+
   labs(colour = "season") 
 
 if(loc.k==1) {fig.fitnesscurves.co= fig.fit.fb; fig.fit.all.co= fig.fitnesscurves}
@@ -554,7 +569,7 @@ if(loc.k==2) {fig.shift_opt.ca= fig.shift_opt; fig.shift_opt.all.ca= fig.shift_o
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Colias_CO.pdf",height = 18, width = 8)
-co.colias.ref/
+temps.co/
   co.colias/
   fig.fitnesscurves.co/
   fig.shift_opt.co +
@@ -562,7 +577,7 @@ co.colias.ref/
 dev.off()
 
 pdf("Fig_Colias_CA.pdf",height = 18, width = 8)
-ca.colias.ref/
+temps.ca/
   ca.colias/
   fig.fitnesscurves.ca/
   fig.shift_opt.ca +
