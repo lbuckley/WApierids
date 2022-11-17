@@ -302,10 +302,13 @@ for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
 dat$year= years[yr.k]
 
+dat$period<- NA
 #vary periods
-  if(years[yr.k]<2001)dat$period="initial"
-  if(years[yr.k]>=2001 & years[yr.k]<2011)dat$period="middle"
-  if(years[yr.k]>=2011)dat$period="recent"
+  #if(years[yr.k]<2001)dat$period="initial"
+  #if(years[yr.k]>=2001 & years[yr.k]<2011) dat$period="middle"
+  #if(years[yr.k]>=2011)dat$period="recent"
+  if(years[yr.k]<1972) dat$period<- "1961-1971"
+  if(years[yr.k]>=2001 & years[yr.k]<=2011) dat$period <- "2001-2011"
 
 if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -329,7 +332,7 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
 #drop middle period
-dat.day.plot= dat.day[-which(dat.day$period=="middle"),]
+dat.day.plot= dat.day[is.na(dat.day$period),]
 
 #--------------------------  
 #plot density distributions
@@ -338,10 +341,10 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature (°C)" )+
-  xlim(-5,50)+ ylim(0,0.082)+
+  xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(expand=c(0,0))
+  scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -350,13 +353,14 @@ p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at reference height (°C)" )+
-  xlim(-5,50)+ ylim(0,0.082)+
+  xlim(-5,50)+ 
   theme_classic(base_size = 20) +
-  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))
+  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
+  scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
 
 #plot together
 p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
-  theme(legend.position = c(0.6, 0.9))
+  theme(legend.position = c(0.6, 0.6))
 
 #remove label
 p1= p1+theme(strip.text.x = element_blank())
@@ -376,14 +380,16 @@ p1.all$TALOC= p1.all$temps
 
 #change names
 ps.all$period= ps.all$Time
-ps.all$period[ps.all$period=="historic"]= "initial"
+ps.all$period[ps.all$period=="historic"]= "1961-1971"
+ps.all$period[ps.all$period=="recent"]= "2001-2011"
 c.dat$period= c.dat$Time
-c.dat$period[c.dat$period=="historic"]= "initial"
+c.dat$period[c.dat$period=="historic"]= "1961-1971"
+ps.all$period[ps.all$period=="recent"]= "2001-2011"
 
 #beta fits
-co.colias= temp.co + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, color=Time),size=1.1)
+co.colias= temp.co + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, color=period),size=1.1)
 #divide by 5 to line up, use shade temps? 
-ca.colias= temp.ca + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, color=Time),size=1.1)
+ca.colias= temp.ca + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp, y=Perf/5, color=period),size=1.1)
 
 #add data
 co.colias= co.colias + geom_point(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, y=mean/5, color=period),size=3)+
@@ -499,14 +505,14 @@ perfs.l$performance= perfs.l$performance/(2.5/tpc.beta[5])
 fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
-  theme_classic(base_size = 20)+
+  theme_classic(base_size = 20)+ xlim(-5,50)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
-  theme_classic(base_size = 20)+
+  theme_classic(base_size = 20)+ xlim(-5,50)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
   theme(strip.text.x = element_blank())
 
@@ -514,7 +520,7 @@ fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, co
 fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
-  theme_classic(base_size = 20)+
+  theme_classic(base_size = 20)+ xlim(-5,50)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
@@ -545,7 +551,7 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal thermal optima (C)")+
-  guides(lty="none")+theme(legend.position = c(0.9, 0.1))+ 
+  guides(lty="none")+theme(legend.position = c(0.9, 0.7))+ 
   scale_color_manual(values= c("orange","purple"))+
   labs(colour = "season") 
 
