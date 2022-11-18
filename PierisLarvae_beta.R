@@ -163,7 +163,7 @@ p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.15, 0.9))+
-  xlim(5,50)
+  xlim(5,45)
 
 #plot together
 p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
@@ -352,12 +352,14 @@ fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=p
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
-  theme(legend.position = c(0.2, 0.3))
+  theme(legend.position = c(0.2, 0.5))+
+  xlim(5,45)
 
 fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
-  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") 
+  xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") +
+  xlim(5,45)
 
 #account for temperatures exceeding tpcs
 

@@ -38,28 +38,25 @@ contempSummary$doy= sapply(a, function(a, b) {which.min(abs(a-b))}, b)
 oldData$doy= oldData$doy +14
 contempSummary$doy= contempSummary$doy +14
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_ColiasPhoto.pdf",height = 6, width = 6)
+#plot ggplot
+od= oldData[,c("doy","Reflectance", "RefSE")]
+cd= contempSummary[,c("doy","means", "se")]
+names(cd)= names(od)
+od$year= 1971
+cd$year= 2018
+od= rbind(od, cd)
+od$year= factor(od$year)
 
-#plot export dim (paper): 750x500 pixels
-plot(oldData$doy,oldData$Reflectance,ylim=c(0.2,0.5),cex=1.5, cex.axis=1.2,cex.lab=1.3,ylab="Reflectance (at 650 nm)",xlab="Day of Year", bty="l")
-arrows(oldData$doy, oldData$Reflectance-oldData$RefSE*1.96, oldData$doy, oldData$Reflectance+oldData$RefSE*1.96, length=0.05, angle=90, code=3,lwd=2)
-lines(oldData$doy,oldData$Reflectance,lwd=2, lty=2) #range limits range of doys graphed
-
-points(contempSummary$doy,contempSummary$means,col="blue",cex=1.5, pch=2)
-arrows(contempSummary$doy, contempSummary$means-contempSummary$se*1.96, contempSummary$doy, contempSummary$means+contempSummary$se*1.96, length=0.05, angle=90, code=3,lwd=2, col="blue")
-lines(contempSummary$doy,contempSummary$means,col="blue",lwd=2)
-legend(100,.3,c(1971,2018),col=c("black","blue"),lwd=2,lty=c(2,1)) #presentation only
-
-dev.off()
+fig.co.photo= ggplot(od,aes(x=doy, y=Reflectance, color=year, group=year))+geom_line()+geom_point()+
+  geom_errorbar(aes(x=doy, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
+  theme_classic(base_size = 20)+
+  theme(legend.position = c(0.7, 0.4),legend.background = element_rect(fill="transparent"))+
+  scale_color_manual(values=c("#1B9E77", "#7570B3"))+
+  xlab("Day of Year") +ylab("Reflectance (at 650 nm)")
 
 #dates
 # c(0,50,100,150)
 # Jan 1, Feb 19, Apr 10, May 30
-
-#plot temperature distributions
-locations= c("Sacramento")
-loc.k=1
 
 #===============================================================
 #CO larvae
@@ -332,7 +329,9 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
 #drop middle period
-dat.day.plot= dat.day[is.na(dat.day$period),]
+dat.day.plot= dat.day[!is.na(dat.day$period),]
+#make character factor
+dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 
 #--------------------------  
 #plot density distributions
@@ -365,8 +364,46 @@ p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=per
 #remove label
 p1= p1+theme(strip.text.x = element_blank())
 
+# plot for Nielsen study
+if(loc.k==2){
+  dat.day$period[dat.day$year %in% c(2011:2021)] <- "2011-2021"
+  
+  #drop middle period
+  dat.day.plot= dat.day[which(dat.day$period %in% c("1961-1971", "2011-2021")),]
+  #make character factor
+  dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
+  
+  #--------------------------  
+  #plot density distributions
+  p1n= ggplot(dat.day.plot, aes(x=TALOC))+
+    geom_density(alpha=0.4, aes(fill=period, color=period))+
+    facet_wrap(~seas)+
+    ylab("Feeding rate (g/g/h)")+
+    xlab("Temperature (°C)" )+
+    xlim(-5,50)+
+    theme_classic(base_size = 20) +
+    theme(legend.position = "none")+
+    scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+  #D0cm, TALOC, TAREF
+  
+  #plot reference temperatures
+  p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
+    geom_density(alpha=0.4, aes(fill=period, color=period))+
+    facet_wrap(~seas)+
+    ylab("Feeding rate (g/g/h)")+
+    xlab("Temperature at reference height (°C)" )+
+    xlim(-5,50)+ 
+    theme_classic(base_size = 20) +
+    theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
+    scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+  
+  #plot together
+  p1n.pl.ref=p1n + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+    theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
+}
+
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
-if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref}
+if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.pl.ref}
 
 } # end location loop
 
@@ -384,7 +421,7 @@ ps.all$period[ps.all$period=="historic"]= "1961-1971"
 ps.all$period[ps.all$period=="recent"]= "2001-2011"
 c.dat$period= c.dat$Time
 c.dat$period[c.dat$period=="historic"]= "1961-1971"
-ps.all$period[ps.all$period=="recent"]= "2001-2011"
+c.dat$period[c.dat$period=="recent"]= "2001-2011"
 
 #beta fits
 co.colias= temp.co + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, color=period),size=1.1)
@@ -453,27 +490,8 @@ for(topt.k in 1:nrow(param.grid) ){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 
 #aggregate
-perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-names(perfs1)=c("year","period","seas", 1:nrow(param.grid) )
-
-##not seasons, just study period
-#perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period), FUN=mean)
-#names(perfs1)=c("year","period",seq(topt.low, topt.high, 1))
-
-# #make column for slopes
-# perfs1$B= NA
-# 
-# for(row.k in 1: nrow(perfs1)){
-#   #put into format for regression
-#   perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
-#   colnames(perfs2)=c("topt","perf")
-#   
-#   #plot(perfs2$topt, perfs2$perf)
-#   #mod1= lm(perf~topt , data=perfs2)
-#   mod1= lm(perf~topt +I(topt^2) , data=perfs2)
-#   perfs1$B[row.k]= coefficients(mod1)[2]
-#   perfs1$curve[row.k]= coefficients(mod1)[3]
-# } 
+perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$seas), FUN=mean)
+names(perfs1)=c("year","seas", 1:nrow(param.grid) )
 
 #estimate topt for curve
 param.grid$Topt=NA
@@ -484,8 +502,8 @@ for(topt.k in 1:nrow(param.grid)){
 }
 
 #plot fitness curves through time
-perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","period","seas"))
-names(perfs.l)[4:5]=c("temperature","performance")
+perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","seas"))
+names(perfs.l)[3:4]=c("temperature","performance")
 
 perfs.l$shift= param.grid$shift[perfs.l$temperature]
 perfs.l$breadth= param.grid$breadth[perfs.l$temperature]
@@ -536,9 +554,9 @@ inds= which(param.grid$breadth==breadths[3])+3
 perfs1$shift_opt_b3= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 #melt 
-perfs.b= perfs1[,c("year","period","seas","shift_opt_b1","shift_opt_b2","shift_opt_b3")]
-perfs.b.l= melt(perfs.b, id.vars = c("year","period","seas"))
-names(perfs.b.l)[4:5]=c("breadth","opt_shift")
+perfs.b= perfs1[,c("year","seas","shift_opt_b1","shift_opt_b2","shift_opt_b3")]
+perfs.b.l= melt(perfs.b, id.vars = c("year","seas"))
+names(perfs.b.l)[3:4]=c("breadth","opt_shift")
 perfs.b.l$breadths= NA
 perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b1"]<- breadths[1]
 perfs.b.l$breadths[perfs.b.l$breadth=="shift_opt_b2"]<- breadths[2]
@@ -603,6 +621,9 @@ fig.fit.all.ca/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-
+pdf("Fig4_photo.pdf",height = 10, width = 6)
+temp.nielsen/ fig.co.photo +
+  plot_annotation(tag_levels = 'A')
+dev.off()
 
 

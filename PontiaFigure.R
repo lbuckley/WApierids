@@ -10,8 +10,8 @@ betas= read.csv("Survival_Kingsolver1995b_Table3-4.csv")
 plot.sv= ggplot(sv, aes(x=doy, y=Discriminant.score, shape=Sex))+
   geom_point(size=4) + theme_classic(base_size = 18) +
   geom_line()+
-  theme(legend.position = c(0.2,0.35))+
-  ylab("Discriminant Function Score")+
+  theme(legend.position = c(0.1,0.4),legend.background = element_rect(fill="transparent"))+
+  ylab("Discriminant Function Score \n light                           dark")+
   xlab("Day of Year")+
   scale_shape_manual(values=c(1,2))
 
@@ -86,7 +86,7 @@ dat.sub$seas= factor(dat.sub$seas, levels=c("May","June-July") )
 dat.sub= dat.sub[which(!is.na(dat.sub$seas)),]
 
 #drop middle period
-dat.sub= dat.sub[-which(dat.sub$seas$period=="2000-2010"),]
+dat.sub= dat.sub[-which(dat.sub$period=="2000-2010"),]
 
 #plot density distributions
 p1= ggplot(dat.sub, aes(x=TALOC))+
@@ -94,9 +94,10 @@ p1= ggplot(dat.sub, aes(x=TALOC))+
   facet_wrap(~seas)+
   xlab("Temperature at plant height (°C)")+
   ylab("Density" )+
-  theme_classic(base_size = 16)+theme(legend.position = c(0.45, 0.7))+
-  geom_vline(xintercept=34.5)+
-  ylim(0,0.072)+
+  theme_classic(base_size = 16)+
+  theme(legend.position = c(0.5, 0.8), legend.background = element_rect(fill="transparent"))+
+  geom_vline(xintercept=34.5, color="darkgray")+
+  scale_y_continuous(limits=c(0,0.072), expand=c(0,0))+
   xlim(0,55)
 
 p1.ref= ggplot(dat.sub, aes(x=TAREF))+
@@ -106,15 +107,16 @@ p1.ref= ggplot(dat.sub, aes(x=TAREF))+
   ylab("Density" )+
   theme_classic(base_size = 16)+theme(legend.position = c(0.45, 0.7))+
   geom_vline(xintercept=34.5)+
-  ylim(0,0.072)+
+  scale_y_continuous(limits=c(0,0.072), expand=c(0,0))+
   xlim(0,55)
 
-##COMBINE TEMPS
+#plot together
+p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))
 
 #----------------
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Pontia.pdf",height = 14, width = 6)
-plot.sv2 / p1.ref / p1 + plot_layout(widths = c(1, 1.6))+ 
+pdf("Fig_Pontia.pdf",height = 10, width = 6)
+plot.sv2 / p1.pl.ref + #plot_layout(widths = c(1, 1.6))+ 
   plot_annotation(tag_levels = 'A')
 dev.off()
 
