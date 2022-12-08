@@ -54,7 +54,7 @@ locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 #Los Banos, CA: ; 37.06N, 120.85W, 36M, iniital 1970/1971, 2018;
 #data: 1962-1971, 2009-2018
 
-for(loc.k in 3){ #3:5
+for(loc.k in 4){ #3:5
 
 # bounding coordinates (in WGS84 / EPSG:4326)
 if(loc.k==1){xmn <- -119.6; xmx <- -119.45; ymn <- 46.75; ymx <- 47}
@@ -75,7 +75,7 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #LosBanos
 if(loc.k==1) years=c(2002:2017)
 if(loc.k==2) years=c(1995:2000) ##Error with 2008
 if(loc.k==3) years= c(1972:2001)   #c(1961:1971, 2001:2011, 2012:2021)
-if(loc.k==4) years= c(2017:2021,1962)  #c(1961:1971, 2001:2011, 2012:2021)
+if(loc.k==4) years= c(2017:2021)  #c(2017:2021,1962)  #c(1961:1971, 2001:2011, 2012:2021)
 if(loc.k==5) years= c(1961:2021)
 
 #set microclim path
@@ -93,7 +93,7 @@ if(loc.k==3) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/dat
 if(loc.k==4) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/'
 if(loc.k==5) op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_LosBanos/'
 
-for(yr in c(1972:2001)){ #years
+for(yr in years){ #years
 
 #set dates for era5 call and NicheMapr
 st_date<- paste(yr,":04:01",sep="") 
@@ -212,8 +212,8 @@ for(i in 1:10){
 #Seattle, P. rapae,
 locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 
-loc.k<- 3
-shade<- T
+loc.k<- 4
+shade<- F
 
 height= c(0.3,0.2,0.2,0.2,0.2)[loc.k]
 
@@ -226,7 +226,7 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #Los Banos
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1995:2000) ##2001:2021
   if(loc.k==3) years=c(1972:2000)  #c(1961:1971, 2001:2011) 
-  if(loc.k==4) years=c(1961:2021)  #c(1961:1971, 2001:2016)
+  if(loc.k==4) years=c(1971,2001:2017) #c(1961:1968,1970:1971,2001:2021)  #c(1961:1971, 2001:2016)
   if(loc.k==5) years=c(1962:1971, 2009:2018)  #c(1961:1971, 2001:2016)
 
   #set microclim path
@@ -286,4 +286,5 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #Los Banos
     
   } #end loop years
 
-
+#library(raster)
+#r= raster('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/era5_1961.nc')

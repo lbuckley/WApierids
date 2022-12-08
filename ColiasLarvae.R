@@ -442,6 +442,90 @@ ca.colias.ref= temp.ca.ref + geom_line(data=ps.all[ps.all$Population=="CA",], ae
   geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=mean/5, shape=Time),size=3)+
   geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5))
 
+#==============================
+#Colias feeding MARCH
+
+#Fig 1: modern
+#Fig 3: Historic, Sacramento and Montrose; 1961-1971, 2001-2011 
+#analyze feeding rate distributions?
+
+#plot temperature distributions
+locations= c("Montrose","Sacramento", "LosBanos")
+
+loc.k=2
+
+#years for data
+years=c(1961:1968,1971,2011:2016,2018:2021) 
+
+#SUN
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+#combine data
+for(yr.k in 1:length(years)){
+  dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat$year= years[yr.k]
+  
+  dat$period<- NA
+  #vary periods
+  if(years[yr.k]<1972) dat$period<- "1961-1971"
+  if(years[yr.k]>=2001 & years[yr.k]<=2011) dat$period <- "2011-2021"
+  
+  if(yr.k==1) dat.all=dat
+  if(yr.k>1) dat.all=rbind(dat, dat.all)
+}
+
+#subset to sunlight
+dat.day= subset(dat.all, dat.all$SOLR>0)
+
+#Recode as Apr + May, July +Aug; 91:151, 182:243
+dat.day$seas= NA
+#April to May
+dat.day$seas[dat.day$DOY %in% 60:120]= "MarApr"
+# July to August
+dat.day$seas[dat.day$DOY %in% 182:243]= "JulAug"
+# #order
+dat.day$seas= factor(dat.day$seas, levels=c("MarApr","JulAug") )
+#drop other days
+dat.day= dat.day[which(!is.na(dat.day$seas)),]
+
+#combine doy and time
+dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
+
+#drop middle period
+dat.day.plot= dat.day[!is.na(dat.day$period),]
+#make character factor
+dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
+
+#make character factor
+dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
+
+#plot density distributions
+p1n= ggplot(dat.day.plot, aes(x=TALOC))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  facet_wrap(~seas)+
+  ylab("Feeding rate (g/g/h)")+
+  xlab("Temperature (°C)" )+
+  xlim(-5,50)+
+  theme_classic(base_size = 20) +
+  theme(legend.position = "none")+
+  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))
+#D0cm, TALOC, TAREF
+
+#plot reference temperatures
+p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
+  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  facet_wrap(~seas)+
+  ylab("Feeding rate (g/g/h)")+
+  xlab("Temperature at reference height (°C)" )+
+  xlim(-5,50)+ 
+  theme_classic(base_size = 20) +
+  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
+  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))
+
+#plot together
+temp.nielsen=p1n + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
+#FIX ISSUES WITH YEARS?
+
 #--------------------
 #Global hourly 
 #https://www.ncei.noaa.gov/maps/hourly/
