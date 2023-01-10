@@ -53,7 +53,7 @@ doys= oldData$doy
   
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 dat1970= read.csv("Sacramento1970_Jan.csv")
-dat2018= read.csv("Sacramento1970_Jan.csv")
+dat2018= read.csv("Sacramento2018_Jan.csv")
 
 dat1970$dd= dat1970$TAREF -To
 dat2018$dd= dat2018$TAREF -To
@@ -84,6 +84,10 @@ oldData$AdultDOY= doy.adult.1970[match1]
 
 match1= match(contempSummary$doy, doys)
 contempSummary$AdultDOY= doy.adult.2018[match1]
+
+#check development time
+oldData$AdultDOY - oldData$doy
+contempSummary$AdultDOY - contempSummary$doy
 
 #---
 
