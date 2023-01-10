@@ -34,21 +34,70 @@ a= contempSummary$Larval_Photoperiod
 b= daylengths
 contempSummary$doy= sapply(a, function(a, b) {which.min(abs(a-b))}, b)
 
-#add two weeks to account for lag between pupae and adults
-oldData$doy= oldData$doy +14
-contempSummary$doy= contempSummary$doy +14
+#Use development data to account for lag between pupae and adults
+#load development data
+dt=  read.csv("DevelopmentTime_Table2_AllenSmith.csv")
+
+#use temperature estimates to estimate pupation time
+plot(dt$Temperature, 1/dt$DT_pupa)
+dt.mod= lm(1/dt$DT_pupa ~dt$Temperature)
+b= dt.mod$coefficients[1]
+a= dt.mod$coefficients[2]
+To= -b/a
+DD= 1/a
+
+#extract temperature data
+locations= c("Montrose","Sacramento", "LosBanos")
+yearsn= c(1970, 2018)
+doys= oldData$doy
+  
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+dat1970= read.csv("Sacramento1970_Jan.csv")
+dat2018= read.csv("Sacramento1970_Jan.csv")
+
+dat1970$dd= dat1970$TAREF -To
+dat2018$dd= dat2018$TAREF -To
+dat1970$dd[dat1970$dd<0]=0
+dat2018$dd[dat2018$dd<0]=0
+
+dat1970$cdd= cumsum(dat1970$dd)/24
+dat2018$cdd= cumsum(dat2018$dd)/24
+
+for(yr.k in 1:2){
+  doy.adult= rep(NA, length(doys))
+  
+  if(yr.k==1) dat=dat1970
+  if(yr.k==2) dat=dat2018
+  
+for(day.k in 1:length(doys)){
+  
+  dat$cdd.doy= dat$cdd - dat[match(doys[day.k],dat$DOY),"cdd"]
+  doy.adult[day.k] = dat[which.max(dat$cdd.doy>DD), "DOY"]
+}
+  if(yr.k==1) doy.adult.1970= doy.adult #Fix to 1971
+  if(yr.k==2) doy.adult.2018= doy.adult
+}
+
+#add days
+match1= match(oldData$doy, doys)
+oldData$AdultDOY= doy.adult.1970[match1]
+
+match1= match(contempSummary$doy, doys)
+contempSummary$AdultDOY= doy.adult.2018[match1]
+
+#---
 
 #plot ggplot
-od= oldData[,c("doy","Reflectance", "RefSE")]
-cd= contempSummary[,c("doy","means", "se")]
+od= oldData[,c("doy","Reflectance", "RefSE","AdultDOY")]
+cd= contempSummary[,c("doy","means", "se","AdultDOY")]
 names(cd)= names(od)
 od$year= 1971
 cd$year= 2018
 od= rbind(od, cd)
 od$year= factor(od$year)
 
-fig.co.photo= ggplot(od,aes(x=doy, y=Reflectance, color=year, group=year))+geom_line()+geom_point()+
-  geom_errorbar(aes(x=doy, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
+fig.co.photo= ggplot(od,aes(x=AdultDOY, y=Reflectance, color=year, group=year))+geom_line()+geom_point()+
+  geom_errorbar(aes(x=AdultDOY, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
   theme_classic(base_size = 20)+
   theme(legend.position = c(0.7, 0.4),legend.background = element_rect(fill="transparent"))+
   scale_color_manual(values=c("#1B9E77", "#7570B3"))+
