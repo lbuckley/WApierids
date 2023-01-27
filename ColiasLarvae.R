@@ -364,8 +364,8 @@ if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
-#subset to sunlight
-dat.day= subset(dat.all, dat.all$SOLR>0)
+#keep all hours, no longer subset to sunlight
+dat.day=dat.all #subset(dat.all, dat.all$SOLR>0)
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
 dat.day$seas= NA
@@ -431,7 +431,7 @@ if(loc.k==2){
   p1n= ggplot(dat.day.plot, aes(x=TALOC))+
     geom_density(alpha=0.4, aes(fill=period, color=period))+
     facet_wrap(~seas)+
-    ylab("Feeding rate (g/g/h)")+
+    ylab("Density")+ #"Feeding rate (g/g/h)"
     xlab("Temperature (°C)" )+
     xlim(-5,50)+
     theme_classic(base_size = 20) +
@@ -443,7 +443,7 @@ if(loc.k==2){
   p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
     geom_density(alpha=0.4, aes(fill=period, color=period))+
     facet_wrap(~seas)+
-    ylab("Feeding rate (g/g/h)")+
+    ylab("Density")+
     xlab("Temperature at reference height (°C)" )+
     xlim(-5,50)+ 
     theme_classic(base_size = 20) +
@@ -555,7 +555,7 @@ dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 p1n= ggplot(dat.day.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+ #"Feeding rate (g/g/h)"
   xlab("Temperature (°C)" )+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
@@ -567,7 +567,7 @@ p1n= ggplot(dat.day.plot, aes(x=TALOC))+
 p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+
   xlab("Temperature at reference height (°C)" )+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +

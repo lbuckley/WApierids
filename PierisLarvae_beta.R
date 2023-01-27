@@ -96,7 +96,7 @@ if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
 #subset to sunlight
-dat.day= subset(dat.all, dat.all$SOLR>0)
+dat.day= dat.all #subset(dat.all, dat.all$SOLR>0)
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
 dat.day$seas= NA
@@ -150,7 +150,7 @@ dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
 #plot density distributions
 p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+
   xlab("Temperature (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+ #theme(legend.position = c(0.2, 0.9))+
@@ -159,7 +159,7 @@ p1= ggplot(dat.day1.plot, aes(x=TALOC))+
 
 p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.15, 0.9))+
