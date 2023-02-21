@@ -86,8 +86,11 @@ match1= match(contempSummary$doy, doys)
 contempSummary$AdultDOY= doy.adult.2018[match1]
 
 #check development time
-oldData$AdultDOY - oldData$doy
-contempSummary$AdultDOY - contempSummary$doy
+#cap pupal time at 40 days
+old_Dt=oldData$AdultDOY - oldData$doy
+cont_dt=contempSummary$AdultDOY - contempSummary$doy
+oldData$AdultDOY[which(old_Dt>40)]= oldData$doy[which(old_Dt>40)]+40
+contempSummary$AdultDOY[which(cont_dt>40)]= oldData$doy[which(cont_dt>40)]+40
 
 #---
 
@@ -99,9 +102,15 @@ od$year= 1971
 cd$year= 2018
 od= rbind(od, cd)
 od$year= factor(od$year)
+od$AdultDOY1971= c(oldData$AdultDOY, oldData$AdultDOY[1:5])
 
-fig.co.photo= ggplot(od,aes(x=AdultDOY, y=Reflectance, color=year, group=year))+geom_line()+geom_point()+
-  geom_errorbar(aes(x=AdultDOY, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
+fig.co.photo= ggplot(od,aes(x=AdultDOY1971, y=Reflectance, color=year, group=year))+ geom_segment(aes(x = 60, y =0.48, xend =120, yend =0.48))+
+  geom_segment(aes(x = 182, y =0.48, xend =185, yend =0.48), arrow = arrow(length = unit(0.1, "inches")), show.legend = FALSE)+
+  annotate("text", x = 90, y = 0.49, label = "Mar Apr")+
+  annotate("text", x = 175, y = 0.49, label = "Jul Aug")
+
+fig.co.photo= fig.co.photo+geom_line()+geom_point()+
+  geom_errorbar(aes(x=AdultDOY1971, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
   theme_classic(base_size = 20)+
   theme(legend.position = c(0.7, 0.4),legend.background = element_rect(fill="transparent"))+
   scale_color_manual(values=c("#1B9E77", "#7570B3"))+
@@ -345,8 +354,11 @@ if (loc.k==1) years=c(1961:2014, 2016:2021)
 if (loc.k==2) years=c(1961:2021) 
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
-#SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+##SUN
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+#SHADE
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -389,30 +401,34 @@ dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 #--------------------------  
 #plot density distributions
 p1= ggplot(dat.day.plot, aes(x=TALOC))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature (°C)" )+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+  scale_y_continuous(limits=c(0,0.065), expand=c(0,0))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
 p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Feeding rate (g/g/h)")+
   xlab("Temperature at reference height (°C)" )+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
-  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+  theme(legend.position = c(0.4, 0.8),legend.background = element_rect(fill="transparent"))+
+  scale_y_continuous(limits=c(0,0.065), expand=c(0,0))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
 #plot together
-p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
-  theme(legend.position = c(0.6, 0.6))
+p1.pl.ref=p1 + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
+  theme(legend.position = c(0.4, 0.8))
 
 #remove label
 p1= p1+theme(strip.text.x = element_blank())
@@ -429,29 +445,34 @@ if(loc.k==2){
   #--------------------------  
   #plot density distributions
   p1n= ggplot(dat.day.plot, aes(x=TALOC))+
-    geom_density(alpha=0.4, aes(fill=period, color=period))+
+    geom_density(alpha=0.3, aes(fill=period, color=period))+
     facet_wrap(~seas)+
     ylab("Density")+ #"Feeding rate (g/g/h)"
     xlab("Temperature (°C)" )+
     xlim(-5,50)+
     theme_classic(base_size = 20) +
     theme(legend.position = "none")+
-    scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+    scale_y_continuous(limits=c(0,0.11), expand=c(0,0))+
+    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  
   #D0cm, TALOC, TAREF
   
   #plot reference temperatures
   p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
-    geom_density(alpha=0.4, aes(fill=period, color=period))+
+    geom_density(alpha=0.3, aes(fill=period, color=period))+
     facet_wrap(~seas)+
     ylab("Density")+
     xlab("Temperature at reference height (°C)" )+
     xlim(-5,50)+ 
     theme_classic(base_size = 20) +
     theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-    scale_y_continuous(limits=c(0,0.082), expand=c(0,0))
+    scale_y_continuous(limits=c(0,0.11), expand=c(0,0))+
+    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
   
   #plot together
-  p1n.pl.ref=p1n + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+  p1n.pl.ref=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
     theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
 }
 
@@ -510,8 +531,10 @@ loc.k=2
 #years for data
 years=c(1961:1968,1971,2011:2016,2018:2021) 
 
-#SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+##SUN
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+#SHADE
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 #combine data
 for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -553,29 +576,33 @@ dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 
 #plot density distributions
 p1n= ggplot(dat.day.plot, aes(x=TALOC))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Density")+ #"Feeding rate (g/g/h)"
   xlab("Temperature (°C)" )+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))
+  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
 p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+
+  geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
   ylab("Density")+
   xlab("Temperature at reference height (°C)" )+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))
+  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
 #plot together
-temp.nielsen=p1n + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
+temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
 #FIX ISSUES WITH YEARS?
 
@@ -594,7 +621,7 @@ temp.nielsen=p1n + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color
 #wint= filter(wint, element %in% c("TMIN","TMAX"), year %in% c(1961:1971, 2001:2021) )
 
 #-------------------
-#CO selection analysis
+# Selection analysis
 
 #a= height; b= mode; c= breadth; d= inverse breadth?; e= breadth
 
@@ -605,7 +632,7 @@ for(loc.k in 1:length(pop.times)){
 #generate parameter combinations
 tpc.beta= as.numeric(tpc.betas[which(tpc.betas$pop==pop.times[loc.k]),c(1:4,6)] ) 
 
-param.grid= expand.grid(shift= seq(tpc.beta[1]-10,tpc.beta[1]+10,1),
+param.grid= expand.grid(shift= seq(tpc.beta[1]-15,tpc.beta[1]+10,1),
                         breadth=c(tpc.beta[2]-0.03,tpc.beta[2],tpc.beta[2]+0.03) )
 
 if(loc.k==1) dat.day= dat.day.co
@@ -639,7 +666,7 @@ for(topt.k in 1:nrow(param.grid)){
 }
 
 #plot fitness curves through time
-perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","seas"))
+perfs.l= melt(perfs1[,1:ncol(perfs1)], id.vars = c("year","seas")) #change from perfs1[,1:(ncol(perfs)-1)]
 names(perfs.l)[3:4]=c("temperature","performance")
 
 perfs.l$shift= param.grid$shift[perfs.l$temperature]
@@ -681,13 +708,13 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
 
-inds= which(param.grid$breadth==breadths[1])+3
+inds= which(param.grid$breadth==breadths[1])+2
 perfs1$shift_opt_b1= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
-inds= which(param.grid$breadth==breadths[2])+3
+inds= which(param.grid$breadth==breadths[2])+2
 perfs1$shift_opt_b2= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
-inds= which(param.grid$breadth==breadths[3])+3
+inds= which(param.grid$breadth==breadths[3])+2
 perfs1$shift_opt_b3= param.grid$Topt[apply(perfs1[,inds], MARGIN=1, FUN=which.max )]
 
 #melt 
@@ -706,15 +733,15 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal thermal optima (C)")+
-  guides(lty="none")+theme(legend.position = c(0.9, 0.7))+ 
-  scale_color_manual(values= c("orange","purple"))+
+  guides(lty="none")+theme(legend.position = c(0.9, 0.5))+ 
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
   labs(colour = "season") 
 
 #all betas
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal thermal optima (C)")+
-  scale_color_manual(values= c("orange","purple"))+
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
   labs(colour = "season") 
 
 if(loc.k==1) {fig.fitnesscurves.co= fig.fit.fb; fig.fit.all.co= fig.fitnesscurves}
@@ -729,7 +756,7 @@ if(loc.k==2) {fig.shift_opt.ca= fig.shift_opt; fig.shift_opt.all.ca= fig.shift_o
 #PLOT
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Colias_CO.pdf",height = 18, width = 8)
+pdf("Fig2_Colias_CO.pdf",height = 18, width = 8)
 temps.co/
   co.colias/
   fig.fitnesscurves.co/
@@ -737,7 +764,7 @@ temps.co/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig_Colias_CA.pdf",height = 18, width = 8)
+pdf("Fig3_Colias_CA.pdf",height = 18, width = 8)
 temps.ca/
   ca.colias/
   fig.fitnesscurves.ca/
@@ -758,7 +785,7 @@ fig.fit.all.ca/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig4_photo.pdf",height = 10, width = 6)
+pdf("Fig5_photo.pdf",height = 10, width = 6)
 temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()

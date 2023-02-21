@@ -72,8 +72,11 @@ loc.k=2
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
+##SUN
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -95,7 +98,7 @@ if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
-#subset to sunlight
+#subset to sunlight, keep 24h
 dat.day= dat.all #subset(dat.all, dat.all$SOLR>0)
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
@@ -398,7 +401,7 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   xlab("Year")+ylab("Optimal Topt (C)")
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PrapaeStudy.pdf", height = 18, width = 9)
+pdf("Fig5_PrapaeStudy.pdf", height = 18, width = 9)
 p1.pl.ref / p3 / fig.fitnesscurves / fig.shift_opt +
   plot_layout(heights = c(2, 2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
