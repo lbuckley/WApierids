@@ -355,9 +355,9 @@ if (loc.k==2) years=c(1961:2021)
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
 ##SUN
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
 for(yr.k in 1:length(years)){
@@ -408,7 +408,7 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.065), expand=c(0,0))+
+  scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
   scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
   scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 #D0cm, TALOC, TAREF
@@ -422,7 +422,7 @@ p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.4, 0.8),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.065), expand=c(0,0))+
+  scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
   scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
   scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
@@ -452,7 +452,7 @@ if(loc.k==2){
     xlim(-5,50)+
     theme_classic(base_size = 20) +
     theme(legend.position = "none")+
-    scale_y_continuous(limits=c(0,0.11), expand=c(0,0))+
+    scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
     scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
     scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
   
@@ -467,7 +467,7 @@ if(loc.k==2){
     xlim(-5,50)+ 
     theme_classic(base_size = 20) +
     theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-    scale_y_continuous(limits=c(0,0.11), expand=c(0,0))+
+    scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
     scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
     scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
   
@@ -529,12 +529,13 @@ locations= c("Montrose","Sacramento", "LosBanos")
 loc.k=2
 
 #years for data
-years=c(1961:1968,1971,2011:2016,2018:2021) 
+#years=c(1961:1968,1971,2011:2016,2018:2021) 
+years=c(1961:1968,1971,2001:2020, 2011:2016,2018:2021) 
 
 ##SUN
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 #combine data
 for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -543,7 +544,8 @@ for(yr.k in 1:length(years)){
   dat$period<- NA
   #vary periods
   if(years[yr.k]<1972) dat$period<- "1961-1971"
-  if(years[yr.k]>=2001 & years[yr.k]<=2011) dat$period <- "2011-2021"
+ # if(years[yr.k]>=2000 & years[yr.k]<=2010) dat$period <- "2000-2010"
+  if(years[yr.k]>=2011 & years[yr.k]<=2021) dat$period <- "2011-2021"
   
   if(yr.k==1) dat.all=dat
   if(yr.k>1) dat.all=rbind(dat, dat.all)
@@ -583,7 +585,7 @@ p1n= ggplot(dat.day.plot, aes(x=TALOC))+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))+
+  scale_y_continuous(limits=c(0,0.102), expand=c(0,0)) +
   scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
   scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 #D0cm, TALOC, TAREF
@@ -597,7 +599,7 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.09), expand=c(0,0))+
+  scale_y_continuous(limits=c(0,0.102), expand=c(0,0)) +
   scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
   scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
@@ -756,7 +758,7 @@ if(loc.k==2) {fig.shift_opt.ca= fig.shift_opt; fig.shift_opt.all.ca= fig.shift_o
 #PLOT
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig2_Colias_CO.pdf",height = 18, width = 8)
+pdf("Fig2_Colias_CO_sun.pdf",height = 18, width = 8)
 temps.co/
   co.colias/
   fig.fitnesscurves.co/
@@ -764,7 +766,7 @@ temps.co/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig3_Colias_CA.pdf",height = 18, width = 8)
+pdf("Fig3_Colias_CA_sun.pdf",height = 18, width = 8)
 temps.ca/
   ca.colias/
   fig.fitnesscurves.ca/
@@ -773,19 +775,19 @@ temps.ca/
 dev.off()
 
 #supplementary plots
-pdf("Fig_Colias_CO_supp.pdf",height = 10, width = 8)
+pdf("Fig_Colias_CO_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.co/
   fig.shift_opt.all.co +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig_Colias_CA_supp.pdf",height = 10, width = 8)
+pdf("Fig_Colias_CA_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.ca/
   fig.shift_opt.all.ca +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig5_photo.pdf",height = 10, width = 6)
+pdf("Fig5_photo_sun.pdf",height = 10, width = 6)
 temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()

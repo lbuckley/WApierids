@@ -74,7 +74,7 @@ if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 ##SUN
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
-#SUN
+#SHADE
 setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
@@ -126,7 +126,9 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20)+
-  theme(legend.position = c(0.1, 0.9))
+  theme(legend.position = c(0.1, 0.9))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 #D0cm, TALOC, TAREF
 
 #------------------
@@ -158,7 +160,9 @@ p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+ #theme(legend.position = c(0.2, 0.9))+
   xlim(5,50)+
-  scale_y_continuous(expand=c(0,0))
+  scale_y_continuous(expand=c(0,0))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
 p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
@@ -166,7 +170,9 @@ p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.15, 0.9))+
-  xlim(5,45)
+  xlim(5,45)+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
 #plot together
 p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
@@ -217,7 +223,9 @@ p1= ggplot(dat.day, aes(x=perf))+
   facet_wrap(~seas)+
   xlab("Performance")+
   ylab("Density" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))+
+  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
 
 #Count of NAs above CTmax of TPC
 tab= table( is.nan(dat.day$perf), dat.day$period)
@@ -281,7 +289,7 @@ params$perf[is.nan(params$perf)]= 0
 
 #estimate growth and development
 #RUN
-param.grid= expand.grid(shift= seq(tpc.beta[1]-10,tpc.beta[1]+10,1),
+param.grid= expand.grid(shift= seq(tpc.beta[1]-15,tpc.beta[1]+10,1),
                         breadth=c(tpc.beta[2]-0.03,tpc.beta[2],tpc.beta[2]+0.03) )
 
 perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= nrow(param.grid) )
@@ -394,11 +402,13 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal Topt (C)")+
-  guides(lty="none")
+  guides(lty="none")+ 
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("Year")+ylab("Optimal Topt (C)")
+  xlab("Year")+ylab("Optimal Topt (C)")+ 
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig5_PrapaeStudy.pdf", height = 18, width = 9)
