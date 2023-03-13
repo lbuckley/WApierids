@@ -218,8 +218,8 @@ for(i in 1:10){
 #Seattle, P. rapae,
 locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
 
-loc.k<- 6
-shade<- T
+loc.k<- 2 #2,3,4
+shade<- F
 
 height= c(0.3,0.2,0.2,0.2,0.2,0.2)[loc.k]
 
@@ -231,9 +231,9 @@ if(loc.k==5){loc <- c(-120.85, 37.06)} #Los Banos
 if(loc.k==6){loc <- c(-121.86, 38.44)} #Sacramento 
 
   if(loc.k==1) years=c(1989:2021) 
-  if(loc.k==2) years=c(1995:2000) ##2001:2021
-  if(loc.k==3) years=c(1972:2000)  #c(1961:1971, 2001:2011) 
-  if(loc.k==4) years=c(1971,2001:2017) #c(1961:1968,1970:1971,2001:2021)  #c(1961:1971, 2001:2016)
+  if(loc.k==2) years=c(1998:2021) ##2001:2021
+  if(loc.k==3) years=c(1961:2011)  #c(1961:1971, 2001:2011) 
+  if(loc.k==4) years=c(2018:2021)  #c(1971,2001:2021) #c(1961:1968,1970:1971,2001:2021) #c(1961:1968,1970:1971,2001:2021)  #c(1961:1971, 2001:2016)
   if(loc.k==5) years=c(1962:1971, 2009:2018)  #c(1961:1971, 2001:2016)
   if(loc.k==6) years= c(1970,2018)
 
@@ -263,21 +263,29 @@ if(loc.k==6){loc <- c(-121.86, 38.44)} #Sacramento
     dfinish <- paste("30/09/", yr,sep="")
     
     # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
-    if(shade==F) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10)
-    if(shade==T) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100)
+    if(shade==F) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=25, maxshade=30, REFL=0.3, RUF=0.02, IR=2)
+    if(shade==T) micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=90, maxshade=100, REFL=0.3, RUF=0.02, IR=2)
     
     #https://rdrr.io/github/mrke/NicheMapR/man/micro_era5.html
+    #https://github.com/mrke/NicheMapR/blob/master/R/micro_era5.R
     #minshade, Minimum shade level to use (can be a single value or a vector of daily values) (%)
     #maxshade, Maximum shade level to use (can be a single value or a vector of daily values) (%)
     #Usrhyt, Local height (m) at which air temperature, wind speed and humidity are to be computed for organism of interest
     # runshade = 1, Run the microclimate model twice, once for each shade level (1) or just once for the minimum shade (0)
     
+    #' @param REFL Soil solar reflectance, decimal \%
+    #' \code{IR}{ = 0, Clear-sky longwave radiation computed using Campbell and Norman (1998) eq. 10.10 (includes humidity) (0) or Swinbank formula (1) or from ERA5 data (2)}\cr\cr
+    #' \code{RUF}{ = 0.004, Roughness height (m), e.g. smooth desert is 0.0003, closely mowed grass may be 0.001, bare tilled soil 0.002-0.006, current allowed range: 0.00001 (snow) - 0.02 m.}\cr\cr
+    
+    #REFL= 0.3 #30% substrate solar reflectivity, Kingsolver 1983
+    #RUF=0.02 is surface roughness height
     #--------------
     
     #combine and save data 
     metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
     soil<-as.data.frame(micro$soil) # soil temperatures, minimum shade
     soilmoist<-as.data.frame(micro$soilmoist) # soil temperatures, minimum shade
+    #shadmet The above ground micrometeorological conditions under the maximum specified shade
     
     # append dates
     tzone<-paste("Etc/GMT+",0,sep="")
@@ -294,9 +302,153 @@ if(loc.k==6){loc <- c(-121.86, 38.44)} #Sacramento
     if(shade==F) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")
     if(shade==T) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
     
-    #write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
-    write.csv(dat, paste(locations[loc.k], yr,"_Jan.csv",sep=""))
+    write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
+   # write.csv(dat, paste(locations[loc.k], yr,"_Jan.csv",sep=""))
   } #end loop years
 
 #library(raster)
 #r= raster('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Sacramento/era5_1961.nc')
+  
+#======================
+#plot output
+  
+  #plot temperature distributions
+  locations= c("Montrose","Sacramento", "LosBanos")
+  
+ loc.k=1
+    
+    #years for data
+ if (loc.k==1) years=c(1972:2014, 2016:2021) 
+    #check 2015
+    if (loc.k==2) years=c(1961:2021) 
+    if (loc.k==3) years=c(1962:1971, 2009:2018)
+    
+    ##SUN
+    setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+    #SHADE
+    #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+    
+    #combine data
+    for(yr.k in 1:length(years)){
+      dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+      
+      
+      dat$year= years[yr.k]
+      
+      dat$period<- NA
+      #vary periods
+      #if(years[yr.k]<2001)dat$period="initial"
+      #if(years[yr.k]>=2001 & years[yr.k]<2011) dat$period="middle"
+      #if(years[yr.k]>=2011)dat$period="recent"
+      if(years[yr.k]<1972) dat$period<- "1961-1971"
+      if(years[yr.k]>=2001 & years[yr.k]<=2011) dat$period <- "2001-2011"
+      
+      if(yr.k==1) dat.all=dat
+      if(yr.k>1) dat.all=rbind(dat, dat.all)
+    }
+    
+    #keep all hours, no longer subset to sunlight
+    dat.day=dat.all #subset(dat.all, dat.all$SOLR>0)
+    
+    #Recode as Apr + May, July +Aug; 91:151, 182:243
+    dat.day$seas= NA
+    #April to May
+    dat.day$seas[dat.day$DOY %in% 91:151]= "AprMay"
+    # July to August
+    dat.day$seas[dat.day$DOY %in% 182:243]= "JulAug"
+    # #order
+    dat.day$seas= factor(dat.day$seas, levels=c("AprMay","JulAug") )
+    #drop other days
+    dat.day= dat.day[which(!is.na(dat.day$seas)),]
+    
+    #combine doy and time
+    dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
+    
+    #drop middle period
+    dat.day.plot= dat.day[!is.na(dat.day$period),]
+    #make character factor
+    dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
+    
+    #--------------------------  
+    #plot density distributions
+    p1= ggplot(dat.day.plot, aes(x=TALOC))+
+      geom_density(alpha=0.3, aes(fill=period, color=period))+
+      facet_wrap(~seas)+
+      ylab("Feeding rate (g/g/h)")+
+      xlab("Temperature (°C)" )+
+      xlim(-5,50)+
+      theme_classic(base_size = 20) +
+      theme(legend.position = "none")+
+      scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
+      scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+      scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+    #D0cm, TALOC, TAREF
+    
+    #plot reference temperatures
+    p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
+      geom_density(alpha=0.3, aes(fill=period, color=period))+
+      facet_wrap(~seas)+
+      ylab("Feeding rate (g/g/h)")+
+      xlab("Temperature at reference height (°C)" )+
+      xlim(-5,50)+ 
+      theme_classic(base_size = 20) +
+      theme(legend.position = c(0.4, 0.8),legend.background = element_rect(fill="transparent"))+
+      scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
+      scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
+      scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+    
+    #plot together
+    p1.pl.ref=p1 + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
+      theme(legend.position = c(0.4, 0.8))
+    
+    #remove label
+    p1= p1+theme(strip.text.x = element_blank())
+    
+    
+    if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
+    if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.pl.ref}
+    
+#=========================
+#check microclimate model
+    
+    #set microclim path
+    file_prefix="era5"
+   spatial_path<- paste('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/',file_prefix, sep="")
+   op<- '/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_Montrose/'
+   
+   yr= 2010
+   
+      #set dates for era5 call and NicheMapr
+      dstart <- paste("01/04/", yr,sep="")
+      dfinish <- paste("30/09/", yr,sep="")
+      
+      par(mfrow=c(1,2))
+      
+      # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
+      micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=0, maxshade=10, REFL=0.3, RUF=0.02, IR=2)
+      
+    # plotting above-ground conditions in minimum shade
+      metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
+    with(metout,{plot(TALOC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
+                      , type = "l",main=paste("air and sky temperature",sep=""), ylim = c(-5, 40))})
+    with(metout,{points(TAREF ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
+                        , type = "l",lty=2,col='blue')})
+
+    #vary parameters
+    micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, Usrhyt=height, runshade = 0, spatial = spatial_path, minshade=25, maxshade=30, REFL=0.3, RUF=0.02, IR=2)
+    
+    # plotting above-ground conditions in minimum shade
+    metout<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
+    with(metout,{plot(TALOC ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
+                      , type = "l",col='darkorange',main=paste("air and sky temperature",sep=""), ylim = c(-5, 40))})
+    with(metout,{points(TAREF ~ dates,xlab = "Date and Time", ylab = "Temperature (Â°C)"
+                        , type = "l",lty=2,col='cadetblue')})
+    
+      
+    
+  
+  
+  
+  
+  
+  

@@ -51,7 +51,7 @@ locations= c("Montrose","Sacramento", "LosBanos")
 yearsn= c(1970, 2018)
 doys= oldData$doy
   
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 dat1970= read.csv("Sacramento1970_Jan.csv")
 dat2018= read.csv("Sacramento2018_Jan.csv")
 
@@ -362,6 +362,8 @@ setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+
+
 dat$year= years[yr.k]
 
 dat$period<- NA
