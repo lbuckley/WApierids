@@ -73,9 +73,9 @@ if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 ##SUN
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
 for(yr.k in 1:length(years)){

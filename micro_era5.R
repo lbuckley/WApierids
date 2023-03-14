@@ -216,9 +216,9 @@ for(i in 1:10){
 
 #locations Corfu, P. occidentalis, Apr to Sept
 #Seattle, P. rapae,
-locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos")
+locations= c("Corfu","Seattle","Montrose","Sacramento","LosBanos","Sacramento")
 
-loc.k<- 2 #2,3,4
+loc.k<- 6 #2,3,4
 shade<- F
 
 height= c(0.3,0.2,0.2,0.2,0.2,0.2)[loc.k]
@@ -232,10 +232,10 @@ if(loc.k==6){loc <- c(-121.86, 38.44)} #Sacramento
 
   if(loc.k==1) years=c(1989:2021) 
   if(loc.k==2) years=c(1998:2021) ##2001:2021
-  if(loc.k==3) years=c(1961:2011)  #c(1961:1971, 2001:2011) 
-  if(loc.k==4) years=c(2018:2021)  #c(1971,2001:2021) #c(1961:1968,1970:1971,2001:2021) #c(1961:1968,1970:1971,2001:2021)  #c(1961:1971, 2001:2016)
+  if(loc.k==3) years=c(1972:2000)  #c(1961:1971, 2001:2011) 
+  if(loc.k==4) years=c(1969:2000)  #c(1971,2001:2021) #c(1961:1968,1970:1971,2001:2021) #c(1961:1968,1970:1971,2001:2021)  #c(1961:1971, 2001:2016)
   if(loc.k==5) years=c(1962:1971, 2009:2018)  #c(1961:1971, 2001:2016)
-  if(loc.k==6) years= c(1970,2018)
+  if(loc.k==6) years= c(1970,2018) #Nielsen analysis
 
   #set microclim path
   file_prefix="era5"
@@ -302,8 +302,8 @@ if(loc.k==6){loc <- c(-121.86, 38.44)} #Sacramento
     if(shade==F) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")
     if(shade==T) setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
     
-    write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
-   # write.csv(dat, paste(locations[loc.k], yr,"_Jan.csv",sep=""))
+    if(loc.k<6) write.csv(dat, paste(locations[loc.k], yr,".csv",sep=""))
+    if(loc.k==6) write.csv(dat, paste(locations[loc.k], yr,"_Jan.csv",sep=""))
   } #end loop years
 
 #library(raster)
