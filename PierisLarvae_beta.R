@@ -145,9 +145,9 @@ dat.day1$period= yrs[match(dat.day1$period, pers)]
 #percent temps exceeding 34.5C
 length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>34.5))/length(dat.day1$TALOC)
 length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>34.5))/length(dat.day1$TALOC)
-#percent temps exceeding 40C
-length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>40))/length(dat.day1$TALOC)
-length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>40))/length(dat.day1$TALOC)
+#percent temps exceeding 20C
+length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>20))/length(dat.day1$TALOC)
+length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>20))/length(dat.day1$TALOC)
 
 #drop middle period
 dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
@@ -258,11 +258,11 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+
   xlab("Temperature at reference height (°C)")+
   ylab("Sum of feeding rate (g/g/h)" )+
   #ylim(0,0.0015)+xlim(0,40)+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.2))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
 
 setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Prapae.pdf", height = 10, width = 6)
-p3 / p4
+pdf("Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
+p4
 dev.off()
 
 #-----------------
