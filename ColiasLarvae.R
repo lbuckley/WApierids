@@ -773,26 +773,24 @@ for(loc.k in 1:2){
   
   if(loc.k==2) dat.day= dat.day[-which(dat.day$period=="2011-2021"),]
   
+  dat.day$period= as.factor(dat.day$period)
+  dat.day= dat.day[-which(is.na(dat.day$period)),]
+  
   #estimate performance
   dat.day$perf.histTPC= TPC_beta(dat.day$TALOC, shift=tpc.hist[1], breadth=tpc.hist[2], aran=0, tolerance=tpc.hist[3], skew=tpc.hist[4])/(2.5/tpc.hist[5])
   dat.day$perf.recTPC= TPC_beta(dat.day$TALOC, shift=tpc.rec[1], breadth=tpc.rec[2], aran=0, tolerance=tpc.rec[3], skew=tpc.rec[4])/(2.5/tpc.rec[5])
   
   #plot density distributions of performance
-  p1.hist= ggplot(dat.day, aes(x=perf.histTPC))+
-    geom_density(alpha=0.5, aes(fill=period, color=period))+
-    facet_wrap(~seas)+
-    xlab("Performance")+
-    ylab("Density" )+
-    theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  dat.perf= dat.day[,c("period","seas","perf.histTPC","perf.recTPC")]
+  #to long format
+  dat.perf= gather(dat.perf, TPC, performance, perf.histTPC:perf.recTPC, factor_key=TRUE)
   
-  p1.rec= ggplot(dat.day, aes(x=perf.recTPC))+
-    geom_density(alpha=0.5, aes(fill=period, color=period))+
+  perf.dens= ggplot(dat.perf, aes(x=performance))+
+    geom_density(alpha=0.5, aes(fill=period, color=period, lty=TPC))+
     facet_wrap(~seas)+
     xlab("Performance")+
     ylab("Density" )+
-    theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))+
+    theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.8))+
     scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
     scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
   
@@ -808,10 +806,10 @@ for(loc.k in 1:2){
   #   )
   
   #performance means
-  dat.day1= na.omit(dat.day)
-  perf.mean=cbind(aggregate(dat.day1$perf.histTPC, list(dat.day1$period), FUN=mean),
-  aggregate(dat.day1$perf.recTPC, list(dat.day1$period), FUN=mean)[,2] )
-  names(perf.mean)= c("period","histTPC","recTPC")
+  dat.day1= dat.day #na.omit(dat.day)
+  perf.mean=cbind(aggregate(dat.day1$perf.histTPC, list(dat.day1$period, dat.day1$seas), FUN=mean),
+  aggregate(dat.day1$perf.recTPC, list(dat.day1$period, dat.day1$seas), FUN=mean)[,3] )
+  names(perf.mean)= c("period","season","histTPC","recTPC")
   
   #density distribution by performance
   dat.day1$Tround= round(dat.day1$TALOC)
@@ -829,36 +827,52 @@ for(loc.k in 1:2){
   dat.day2$sumperf.hist.norm= dat.day2$sumperf.hist/dat.day2$counts
   dat.day2$sumperf.rec.norm= dat.day2$sumperf.rec/dat.day2$counts
   
-  feedt.hist= ggplot(dat.day2, aes(x=temp, y=sumperf.hist.norm, color=period))+ #geom_line()+   
+  #to long format
+  names(dat.day2)[8:9]=c("historicTPC","recentTPC")
+  dat.perf= gather(dat.day2[,c(1:3,8:9)], TPC, performance, historicTPC:recentTPC, factor_key=TRUE)
+  
+  feedt.hist= ggplot(dat.perf, aes(x=temp, y=performance, color=period, lty=TPC))+ #geom_line()+   
     geom_smooth(se=FALSE)+
-    # facet_wrap(~seas)+
+    facet_wrap(~seas)+
     xlab("Temperature at reference height (°C)")+
     ylab("Sum of feeding rate (g/g/h)" )+
-    #ylim(0,0.0015)+xlim(0,40)+
-    theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
+    #ylim(0,0.0015)+
+    xlim(0,40)+
+    theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.7))
   
-  #add recent dashed
-  feedt.hist= feedt.hist + geom_smooth(linetype="dashed", aes(x=temp, y=sumperf.rec.norm, color=period), se=FALSE)
-  
-  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean}
-  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean}
+  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens}
+  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean; perf.dens.ca= perf.dens}
   
 } # end loop locations
   
-  setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-  pdf("Fig_Colias_FeedingRateByTemp.pdf", height = 6, width = 12)
-  feedfig.co + feedfig.ca
-  dev.off()
-
   #combine performance means
   perf.co$location="CO"
   perf.ca$location="CA"
   perf.tpcs= rbind(perf.co, perf.ca)
-  
-  boxplot(histTPC~period,data=perf.tpcs)
-  boxplot(recTPC~period,data=perf.tpcs)
-  
   write.csv(perf.tcs, "PerfEstTPCs.csv")
+  
+  #to long format
+  perf.mean= gather(perf.tpcs, TPC, performance, histTPC:recTPC, factor_key=TRUE)
+  perf.mean$location= factor(perf.mean$location, levels=c("CO","CA"), ordered=TRUE)
+  
+  fig.meanperf= ggplot(perf.mean, aes(x=TPC, y=performance, color=period, shape=season))+
+    facet_wrap(~location)+
+    geom_point(size=3)+
+    #scale_shape_manual(values=c(21,22))+
+    ylab("mean performance")
+
+  setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+  pdf("Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
+  feedfig.co / feedfig.ca
+  dev.off()
+  
+  pdf("Fig_Colias_FeedingRateDensity.pdf", height = 10, width = 10)
+  perf.dens.co / perf.dens.ca
+  dev.off()
+  
+  pdf("MeanPerformance.pdf", height = 6, width = 10)
+  fig.meanperf
+  dev.off()
   
 #-------------------
 
