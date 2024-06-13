@@ -73,8 +73,10 @@ if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 ##SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
@@ -260,7 +262,8 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+
   #ylim(0,0.0015)+xlim(0,40)+
   theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
+#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
 p4
 dev.off()

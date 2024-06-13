@@ -15,7 +15,9 @@ library(dplyr)
 #Empirical data
 #Nielsen and Kingsolver
 #https://onlinelibrary.wiley.com/doi/full/10.1111/ele.13515
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/')
+
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/")
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/')
 
 oldData= read.csv("Nielsen_oldData.csv")
 #cut data to matching photoperiods
@@ -50,8 +52,9 @@ DD= 1/a
 locations= c("Montrose","Sacramento", "LosBanos")
 yearsn= c(1970, 2018)
 doys= oldData$doy
-  
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 dat1970= read.csv("Sacramento1970_Jan.csv")
 dat2018= read.csv("Sacramento2018_Jan.csv")
 
@@ -129,7 +132,8 @@ temps=0:50
 #Higgins
 tpc= function(T, Fmax,To, row, sigma) Fmax*exp(-exp(row*(T-To)-6)-sigma*(T-To)^2)
 
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
 dat= read.csv("HigginsTPC.csv")
 #keep comparison
 dat= dat[c(1,3,5,6),]
@@ -160,7 +164,8 @@ fig2.butterfly= ggplot(p1.all,aes(x=temps, y=p))+geom_line(aes(color=population,
 
 #------------------------
 #plot from Higgins data
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
 rdat= read.csv("totalFT.csv")
 hdat= read.csv("FR1972.csv")
 
@@ -351,12 +356,14 @@ for(loc.k in c(1:2)){
 #years for data
 if (loc.k==1) years=c(1961:2014, 2016:2021) 
 #check 2015
-if (loc.k==2) years=c(1961:2021) 
+if (loc.k==2) years=c(1961:2016,2018:2021) 
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
 ##SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
@@ -535,9 +542,12 @@ loc.k=2
 years=c(1961:1968,1971,2001:2020, 2011:2016,2018:2021) 
 
 ##SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+
 #combine data
 for(yr.k in 1:length(years)){
   dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -861,7 +871,8 @@ for(loc.k in 1:2){
     #scale_shape_manual(values=c(21,22))+
     ylab("mean performance")
 
-  setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+  setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
+  #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
   pdf("Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
   feedfig.co / feedfig.ca
   dev.off()
@@ -878,7 +889,6 @@ for(loc.k in 1:2){
 
 #PLOT
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig2_Colias_CO_sun.pdf",height = 18, width = 8)
 temps.co/
   co.colias/
