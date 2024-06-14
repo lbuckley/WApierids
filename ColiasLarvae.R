@@ -484,7 +484,7 @@ if(loc.k==2){
   
   #plot together
   p1n.pl.ref=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
-    theme(legend.position = c(0.6, 0.8),legend.background = element_rect(fill="transparent")) 
+    theme(legend.position = c(0.6, 0.85),legend.background = element_rect(fill="transparent")) 
 }
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
@@ -623,7 +623,7 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
 
 #plot together
 temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
-  theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
+  theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill="transparent")) 
 #FIX ISSUES WITH YEARS?
 
 #--------------------
@@ -868,7 +868,7 @@ for(loc.k in 1:2){
   names(perf.yr.l)[3]<-"TPC"
   
   tpc.yr= ggplot(perf.yr.l, aes(x=year, y=value, color=TPC))+ geom_line()+   
-    #geom_smooth(se=FALSE)+
+    geom_smooth(method="lm",se=FALSE)+
     facet_wrap(~season)+
     xlab("Year")+
     ylab("Mean feeding rate (g/g/h)" )+
