@@ -107,6 +107,7 @@ od= rbind(od, cd)
 od$year= factor(od$year)
 od$AdultDOY1971= c(oldData$AdultDOY, oldData$AdultDOY[1:5])
 
+#Fig 5
 fig.co.photo= ggplot(od,aes(x=AdultDOY1971, y=Reflectance, color=year, group=year))+ geom_segment(aes(x = 60, y =0.48, xend =120, yend =0.48))+
   geom_segment(aes(x = 182, y =0.48, xend =185, yend =0.48), arrow = arrow(length = unit(0.1, "inches")), show.legend = FALSE)+
   annotate("text", x = 90, y = 0.49, label = "Mar Apr")+
@@ -370,7 +371,6 @@ setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/da
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
 
-
 dat$year= years[yr.k]
 
 dat$period<- NA
@@ -403,7 +403,7 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
 #drop middle period
-dat.day.plot= dat.day[!is.na(dat.day$period),]
+###dat.day.plot= dat.day[!is.na(dat.day$period),]
 #make character factor
 dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 
@@ -412,21 +412,23 @@ dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 p1= ggplot(dat.day.plot, aes(x=TALOC))+
   geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  ylab("Feeding rate (g/g/h)")+
+  #ylab("Feeding rate (g/g/h)")+
+  ylab("Density" )+
   xlab("Temperature (°C)" )+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
   scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
-  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  scale_color_manual(values=c("#3CBB75FF","#404788FF","black")  )+
+  scale_fill_manual(values=c("#3CBB75FF","#404788FF","black")  ) 
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
 p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   geom_density(alpha=0.3, aes(fill=period, color=period))+
   facet_wrap(~seas)+
-  ylab("Feeding rate (g/g/h)")+
+  #ylab("Feeding rate (g/g/h)")+
+  ylab("Density" )+
   xlab("Temperature at reference height (°C)" )+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
@@ -482,7 +484,7 @@ if(loc.k==2){
   
   #plot together
   p1n.pl.ref=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
-    theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent")) 
+    theme(legend.position = c(0.6, 0.8),legend.background = element_rect(fill="transparent")) 
 }
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
@@ -513,9 +515,12 @@ ca.colias= temp.ca + geom_line(data=ps.all[ps.all$Population=="CA",], aes(x=Temp
 
 #add data
 co.colias= co.colias + geom_point(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, y=mean/5, color=period),size=3)+
-  geom_errorbar(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))
+  geom_errorbar(data=c.dat[c.dat$Pop=="CO",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))+
+  ylab("Feeding rate (g/g/h)")
+
 ca.colias= ca.colias + geom_point(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, y=mean/5, color=period),size=3)+
-  geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))
+  geom_errorbar(data=c.dat[c.dat$Pop=="CA",], aes(x=Temp, ymin=mean/5-se/5, ymax=mean/5+se/5, color=period))+
+  ylab("Feeding rate (g/g/h)")
 
 #reference temperatures
 co.colias.ref= temp.co.ref + geom_line(data=ps.all[ps.all$Population=="CO",], aes(x=Temp, y=Perf/5, lty=Time),size=1.1)+
@@ -539,7 +544,7 @@ loc.k=2
 
 #years for data
 #years=c(1961:1968,1971,2011:2016,2018:2021) 
-years=c(1961:1968,1971,2001:2020, 2011:2016,2018:2021) 
+years=c(1961:1968,1971,2001:2010, 2011:2016,2018:2021) 
 
 ##SUN
 setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
@@ -564,7 +569,8 @@ for(yr.k in 1:length(years)){
 }
 
 #subset to sunlight
-dat.day= subset(dat.all, dat.all$SOLR>0)
+#dat.day= subset(dat.all, dat.all$SOLR>0)
+dat.day=dat.all
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
 dat.day$seas= NA
@@ -702,14 +708,14 @@ fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=y
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+ xlim(-5,50)+
-  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
+  xlab("Thermal optima (C)")+ylab("Feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
 fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+ xlim(-5,50)+
-  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
+  xlab("Thermal optima (C)")+ylab("Feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
   theme(strip.text.x = element_blank())
 
 #fitness at fixed shift
@@ -749,6 +755,7 @@ fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=
   xlab("Year")+ylab("Optimal thermal optima (C)")+
   guides(lty="none")+theme(legend.position = c(0.9, 0.5))+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
+  theme(legend.position = "bottom")+
   labs(colour = "season") 
 
 #all betas
@@ -781,10 +788,10 @@ for(loc.k in 1:2){
   if(loc.k==1) dat.day= dat.day.co
   if(loc.k==2) dat.day= dat.day.ca
   
-  if(loc.k==2) dat.day= dat.day[-which(dat.day$period=="2011-2021"),]
+  #if(loc.k==2) dat.day= dat.day[-which(dat.day$period=="2011-2021"),]
   
-  dat.day$period= as.factor(dat.day$period)
-  dat.day= dat.day[-which(is.na(dat.day$period)),]
+  #dat.day$period= as.factor(dat.day$period)
+  #dat.day= dat.day[-which(is.na(dat.day$period)),]
   
   #estimate performance
   dat.day$perf.histTPC= TPC_beta(dat.day$TALOC, shift=tpc.hist[1], breadth=tpc.hist[2], aran=0, tolerance=tpc.hist[3], skew=tpc.hist[4])/(2.5/tpc.hist[5])
@@ -850,8 +857,79 @@ for(loc.k in 1:2){
     xlim(0,40)+
     theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.7))
   
-  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens}
-  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean; perf.dens.ca= perf.dens}
+  #----
+  #performance over time for historic and recent TPCs
+  perf.yr=cbind(aggregate(dat.day1$perf.histTPC, list(dat.day1$year, dat.day1$seas), FUN=mean),
+                  aggregate(dat.day1$perf.recTPC, list(dat.day1$year, dat.day1$seas), FUN=mean)[,3] )
+  names(perf.yr)= c("year","season","initial","recent")
+  
+  #to long format
+  perf.yr.l= melt(perf.yr, id.vars = c("year","season"), variable.name = "tpc")
+  names(perf.yr.l)[3]<-"TPC"
+  
+  tpc.yr= ggplot(perf.yr.l, aes(x=year, y=value, color=TPC))+ geom_line()+   
+    #geom_smooth(se=FALSE)+
+    facet_wrap(~season)+
+    xlab("Year")+
+    ylab("Mean feeding rate (g/g/h)" )+
+    theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.3))+
+    scale_color_manual(values=c("#3CBB75FF","#404788FF"))+
+    #remove label
+    theme(strip.text.x = element_blank())
+  
+  #----
+  #percent of time over thermal optima
+  
+ #find Topt
+  hist.tpc<- tpc.betas[c(2,1),]
+  rec.tpc<- tpc.betas[c(4,3),]
+  
+  ps= TPC_beta(1:50,shift=hist.tpc[loc.k,1], breadth=hist.tpc[loc.k,2], aran=0, 
+               tolerance=hist.tpc[loc.k,3], skew=hist.tpc[loc.k,4])
+  Topt.hist= c(1:50)[which.max(ps)]
+  
+  ps= TPC_beta(1:50,shift=rec.tpc[loc.k,1], breadth=rec.tpc[loc.k,2], aran=0, 
+               tolerance=rec.tpc[loc.k,3], skew=rec.tpc[loc.k,4])
+  Topt.rec= c(1:50)[which.max(ps)]
+  
+  tpc.betas$Ctmax<- tpc.betas$shift + tpc.betas$tolerance
+  tpc.betas$t80<- tpc.betas$Ctmax - tpc.betas$tolerance*0.2
+ # ctmax.hist<- tpc.betas$Ctmax[c(2,1)[loc.k]]-(tpc.betas$Ctmax[c(2,1)[loc.k]]-Topt.hist)/4
+ # ctmax.rec<- tpc.betas$Ctmax[c(4,3)[loc.k]]-(tpc.betas$Ctmax[c(2,1)[loc.k]]-Topt.rec)/4
+  ctmax.hist<- tpc.betas$t80[c(2,1)[loc.k]]
+  ctmax.rec<- tpc.betas$t80[c(4,3)[loc.k]]
+  
+  #proportion above Topt
+  #dat.day1$ext.hist<- ifelse(dat.day1$TALOC>Topt.hist, 1, 0)
+  #dat.day1$ext.rec<- ifelse(dat.day1$TALOC>Topt.rec, 1, 0)
+  
+  dat.day1$ext.hist<- ifelse(dat.day1$TALOC>ctmax.hist, 1, 0)
+  dat.day1$ext.rec<- ifelse(dat.day1$TALOC>ctmax.rec, 1, 0)
+  
+  #performance over time for historic and recent TPCs
+  ext.yr=cbind(aggregate(dat.day1$ext.hist, list(dat.day1$year, dat.day1$seas), FUN=mean),
+                aggregate(dat.day1$ext.rec, list(dat.day1$year, dat.day1$seas), FUN=mean)[,3] )
+  names(ext.yr)= c("year","season","initial","recent")
+  
+  #to long format
+  ext.yr.l= melt(ext.yr, id.vars = c("year","season"), variable.name = "tpc")
+  names(ext.yr.l)[3]<-"TPC"
+  
+  ext.yr= ggplot(ext.yr.l, aes(x=year, y=value, color=TPC))+ geom_line()+   
+    geom_smooth(method="lm",se=FALSE)+
+    facet_wrap(~season)+
+    xlab("Year")+
+    ylab("Proportion extremes" )+
+    theme(legend.position = "none")+
+    theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))+
+    scale_color_manual(values=c("#3CBB75FF","#404788FF"))+
+    #remove label
+    theme(strip.text.x = element_blank())
+  
+  #----
+  #save
+  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens; feed.tpc.co= tpc.yr; ext.yr.co= ext.yr}
+  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean; perf.dens.ca= perf.dens; feed.tpc.ca= tpc.yr; ext.yr.ca= ext.yr}
   
 } # end loop locations
   
@@ -859,7 +937,7 @@ for(loc.k in 1:2){
   perf.co$location="CO"
   perf.ca$location="CA"
   perf.tpcs= rbind(perf.co, perf.ca)
-  write.csv(perf.tcs, "PerfEstTPCs.csv")
+  write.csv(perf.tpcs, "PerfEstTPCs.csv")
   
   #to long format
   perf.mean= gather(perf.tpcs, TPC, performance, histTPC:recTPC, factor_key=TRUE)
@@ -885,22 +963,31 @@ for(loc.k in 1:2){
   fig.meanperf
   dev.off()
   
+  pdf("Fig_Colias_PerfByYr.pdf", height = 10, width = 10)
+  feed.tpc.co / feed.tpc.ca |
+    ext.yr.co/ ext.yr.ca
+  dev.off()
+  
 #-------------------
 
 #PLOT
 
-pdf("Fig2_Colias_CO_sun.pdf",height = 18, width = 8)
+pdf("Fig2_Colias_CO_sun.pdf",height = 18, width = 10)
 temps.co/
   co.colias/
-  fig.fitnesscurves.co/
+  #fig.fitnesscurves.co/
+  feed.tpc.co/
+  ext.yr.co/
   fig.shift_opt.co +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig3_Colias_CA_sun.pdf",height = 18, width = 8)
+pdf("Fig3_Colias_CA_sun.pdf",height = 18, width = 10)
 temps.ca/
   ca.colias/
-  fig.fitnesscurves.ca/
+  #fig.fitnesscurves.ca/
+  feed.tpc.ca/
+  ext.yr.ca/
   fig.shift_opt.ca +
   plot_annotation(tag_levels = 'A')
 dev.off()
@@ -918,7 +1005,7 @@ fig.fit.all.ca/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig5_photo_sun.pdf",height = 10, width = 6)
+pdf("Fig5_photo_sun.pdf",height = 10, width = 8)
 temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()

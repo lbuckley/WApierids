@@ -366,13 +366,21 @@ fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=p
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
-  theme(legend.position = c(0.2, 0.5))+
+  theme(legend.position = c(0.2, 0.8))+
   xlim(5,45)
 
 fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") +
+  xlim(5,45)
+
+#over time
+fig.pyr=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=year, y=performance, color=topt, group=topt) )+geom_line()+
+  scale_color_viridis_c()+
+  theme_classic(base_size = 20)+
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
+  theme(legend.position = c(0.7, 0.8))+
   xlim(5,45)
 
 #account for temperatures exceeding tpcs
@@ -413,7 +421,8 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   xlab("Year")+ylab("Optimal Topt (C)")+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")  
+#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("Fig5_PrapaeStudy.pdf", height = 18, width = 9)
 p1.pl.ref / p3 / fig.fitnesscurves / fig.shift_opt +
   plot_layout(heights = c(2, 2, 1.5, 1.25))+
