@@ -113,11 +113,11 @@ fig.co.photo= ggplot(od,aes(x=AdultDOY1971, y=Reflectance, color=year, group=yea
   annotate("text", x = 90, y = 0.49, label = "Mar Apr")+
   annotate("text", x = 175, y = 0.49, label = "Jul Aug")
 
-fig.co.photo= fig.co.photo+geom_line()+geom_point()+
+fig.co.photo= fig.co.photo+geom_line(linewidth=1)+geom_point()+
   geom_errorbar(aes(x=AdultDOY1971, ymin=Reflectance-RefSE, ymax=Reflectance+RefSE) )+
   theme_classic(base_size = 20)+
   theme(legend.position = c(0.7, 0.4),legend.background = element_rect(fill="transparent"))+
-  scale_color_manual(values=c("#1B9E77", "#7570B3"))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF"))+
   xlab("Day of Year") +ylab("Reflectance (at 650 nm)")
 
 #dates
@@ -288,8 +288,10 @@ tpc.beta= coef(fits)
 tpc.beta$pop= pops[loc.k]
 tpc.beta$maxp= max(d$rate)
 
-if(loc.k==1) tpc.betas= tpc.beta
-if(loc.k>1) tpc.betas= rbind(tpc.betas, tpc.beta)
+se<- coefs[,2]
+
+if(loc.k==1) {tpc.betas= tpc.beta; tpc.se= se}
+if(loc.k>1) {tpc.betas= rbind(tpc.betas, tpc.beta); tpc.se= rbind(tpc.se, se)}
 
 } #end location loop
 
@@ -340,7 +342,8 @@ ps.all$Time= "historic"
 ps.all$Time[grep("recent", ps.all$Pop)]="recent"
 
 #plot
-ggplot(ps.all,aes(x=Temp, y=Perf, color=Pop))+geom_line()
+tpcd$Temp<- as.numeric(tpcd$Temp)
+tpc.plot<- ggplot(ps.all,aes(x=Temp, y=Perf, color=Pop))+geom_line()
 
 #==============================================================
 #Colias feeding
@@ -403,7 +406,7 @@ dat.day= dat.day[which(!is.na(dat.day$seas)),]
 dat.day$d.hr= dat.day$DOY + dat.day$TIME/60
 
 #drop middle period
-###dat.day.plot= dat.day[!is.na(dat.day$period),]
+dat.day.plot= dat.day[!is.na(dat.day$period),]
 #make character factor
 dat.day.plot$period= as.factor(as.character(dat.day.plot$period))
 
@@ -418,9 +421,9 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
-  scale_color_manual(values=c("#3CBB75FF","#404788FF","black")  )+
-  scale_fill_manual(values=c("#3CBB75FF","#404788FF","black")  ) 
+  scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF","black")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF","black")  ) 
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -433,9 +436,9 @@ p1.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.4, 0.8),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
-  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 #plot together
 p1.pl.ref=p1 + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
@@ -463,9 +466,9 @@ if(loc.k==2){
     xlim(-5,50)+
     theme_classic(base_size = 20) +
     theme(legend.position = "none")+
-    scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+    scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
+    scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+    scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
   
   #D0cm, TALOC, TAREF
   
@@ -478,9 +481,9 @@ if(loc.k==2){
     xlim(-5,50)+ 
     theme_classic(base_size = 20) +
     theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-    scale_y_continuous(limits=c(0,0.102), expand=c(0,0))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+    scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
+    scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+    scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
   
   #plot together
   p1n.pl.ref=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
@@ -603,9 +606,9 @@ p1n= ggplot(dat.day.plot, aes(x=TALOC))+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.102), expand=c(0,0)) +
-  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  scale_y_continuous(limits=c(0,0.075), expand=c(0,0)) +
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 #D0cm, TALOC, TAREF
 
 #plot reference temperatures
@@ -617,9 +620,9 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.102), expand=c(0,0)) +
-  scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-  scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
+  scale_y_continuous(limits=c(0,0.075), expand=c(0,0)) +
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 #plot together
 temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
@@ -704,18 +707,19 @@ perfs.l$breadth= factor(perfs.l$breadth)
 perfs.l$performance= perfs.l$performance/(2.5/tpc.beta[5])
 
 #combine shift, breadth
-fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
+fig.fitnesscurves=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth),linewidth=1)+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+ xlim(-5,50)+
   xlab("Thermal optima (C)")+ylab("Feeding rate (g/g/h)") #+theme(legend.position = c(0.8, 0.3))
 
 #fitness at fixed breadth
-fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line()+
+fig.fit.fb=ggplot(perfs.l[perfs.l$breadth==0.15,], aes(x=topt, y=performance, color=year, group=year) )+geom_line(linewidth=1)+
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+ xlim(-5,50)+
-  xlab("Thermal optima (C)")+ylab("Feeding rate (g/g/h)")+theme(legend.position = c(0.6, 0.8))+
+  xlab("Thermal optima (C)")+ylab("Feeding rate (g/g/h)")+
+  theme(legend.position = "right")+ #theme(legend.position = c(0.6, 0.8))+
   theme(strip.text.x = element_blank())
 
 #fitness at fixed shift
@@ -723,7 +727,8 @@ fig.fit.fs=ggplot(perfs.l[round(perfs.l$shift,3)== 3.652,], aes(x=breadth, y=per
   facet_wrap(~seas) +
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+ xlim(-5,50)+
-  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+theme(legend.position = c(0.8, 0.3))
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)")+
+  theme(legend.position = "right") #theme(legend.position = c(0.8, 0.3))
 
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
@@ -750,16 +755,17 @@ perfs.b.l$seas_br= paste(perfs.b.l$seas, perfs.b.l$breadths,sep="_")
 perfs.b.l$breadth= factor(perfs.b.l$breadths)
 
 #beta= 0.15
-fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
+fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line(linewidth=1)+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal thermal optima (C)")+
-  guides(lty="none")+theme(legend.position = c(0.9, 0.5))+ 
+  guides(lty="none")+
+  theme(legend.position = "right")+ #theme(legend.position = c(0.2, 0.9))+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
-  theme(legend.position = "bottom")+
+ # theme(legend.position = "bottom")+
   labs(colour = "season") 
 
 #all betas
-fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line()+
+fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group= seas_br, lty=breadth))+geom_line(linewidth=1)+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal thermal optima (C)")+
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
@@ -803,24 +809,14 @@ for(loc.k in 1:2){
   dat.perf= gather(dat.perf, TPC, performance, perf.histTPC:perf.recTPC, factor_key=TRUE)
   
   perf.dens= ggplot(dat.perf, aes(x=performance))+
-    geom_density(alpha=0.5, aes(fill=period, color=period, lty=TPC))+
+    geom_density(alpha=0.5, aes(fill=period, color=period, lty=TPC, linewidth=1))+
     facet_wrap(~seas)+
     xlab("Performance")+
     ylab("Density" )+
     theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.8))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF")  )+
-    scale_fill_manual(values=c("#3CBB75FF","#404788FF")  ) 
-  
-  # #Count of NAs above CTmax of TPC
-  # tab.hist= table( is.nan(dat.day$perf.hist), dat.day$period)
-  # tab.rec= table( is.nan(dat.day$perf.rec), dat.day$period)
-  # 
-  # prop.CTmax= c( 
-  #   tab.hist["TRUE","middle"]/(tab.hist["FALSE","middle"]+tab.hist["TRUE","middle"]),
-  #   tab.hist["TRUE","recent"]/(tab.hist["FALSE","recent"]+tab.hist["TRUE","recent"]),
-  #   tab.rec["TRUE","middle"]/(tab.rec["FALSE","middle"]+tab.rec["TRUE","middle"]),
-  #   tab.rec["TRUE","recent"]/(tab.rec["FALSE","recent"]+tab.rec["TRUE","recent"])
-  #   )
+    ylim(0,0.75)+
+    scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+    scale_fill_manual(values=c("#7AD151FF","#440154FF")  )  
   
   #performance means
   dat.day1= dat.day #na.omit(dat.day)
@@ -855,6 +851,7 @@ for(loc.k in 1:2){
     ylab("Sum of feeding rate (g/g/h)" )+
     #ylim(0,0.0015)+
     xlim(0,40)+
+    ylim(0,0.75)
     theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.7))
   
   #----
@@ -867,15 +864,15 @@ for(loc.k in 1:2){
   perf.yr.l= melt(perf.yr, id.vars = c("year","season"), variable.name = "tpc")
   names(perf.yr.l)[3]<-"TPC"
   
-  tpc.yr= ggplot(perf.yr.l, aes(x=year, y=value, color=TPC))+ geom_line()+   
+  tpc.yr= ggplot(perf.yr.l, aes(x=year, y=value, color=TPC))+ geom_line(linewidth=1)+   
     geom_smooth(method="lm",se=FALSE)+
     facet_wrap(~season)+
     xlab("Year")+
     ylab("Mean feeding rate (g/g/h)" )+
-    theme_classic(base_size = 20)+theme(legend.position = c(0.7, 0.3))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF"))+
+    theme_classic(base_size = 20)+theme(legend.position ="right")+ #c(0.7, 0.3)
+    scale_color_manual(values=c("#7AD151FF","#440154FF"))
     #remove label
-    theme(strip.text.x = element_blank())
+    #theme(strip.text.x = element_blank())
   
   #----
   #percent of time over thermal optima
@@ -911,28 +908,32 @@ for(loc.k in 1:2){
                 aggregate(dat.day1$ext.rec, list(dat.day1$year, dat.day1$seas), FUN=mean)[,3] )
   names(ext.yr)= c("year","season","initial","recent")
   
+  #proportion exceedences
+  ext.yr[ext.yr$year %in% c(1972, 2012),]
+  
   #to long format
   ext.yr.l= melt(ext.yr, id.vars = c("year","season"), variable.name = "tpc")
   names(ext.yr.l)[3]<-"TPC"
   
-  ext.yr= ggplot(ext.yr.l, aes(x=year, y=value, color=TPC))+ geom_line()+   
+  ext.yr.plot= ggplot(ext.yr.l, aes(x=year, y=value, color=TPC))+ geom_line(linewidth=1)+   
     geom_smooth(method="lm",se=FALSE)+
     facet_wrap(~season)+
     xlab("Year")+
     ylab("Proportion extremes" )+
     theme(legend.position = "none")+
-    theme_classic(base_size = 20)+theme(legend.position = c(0.2, 0.8))+
-    scale_color_manual(values=c("#3CBB75FF","#404788FF"))+
+    theme_classic(base_size = 20)+theme(legend.position = "right")+ #c(0.2, 0.8)
+    scale_color_manual(values=c("#7AD151FF","#440154FF"))+
     #remove label
     theme(strip.text.x = element_blank())
   
   #----
   #save
-  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens; feed.tpc.co= tpc.yr; ext.yr.co= ext.yr}
-  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean; perf.dens.ca= perf.dens; feed.tpc.ca= tpc.yr; ext.yr.ca= ext.yr}
+  if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens; feed.tpc.co= tpc.yr; ext.yr.co= ext.yr.plot}
+  if(loc.k==2) {feedfig.ca= feedt.hist; perf.ca=perf.mean; perf.dens.ca= perf.dens; feed.tpc.ca= tpc.yr; ext.yr.ca= ext.yr.plot}
   
 } # end loop locations
   
+
   #combine performance means
   perf.co$location="CO"
   perf.ca$location="CA"
@@ -972,23 +973,34 @@ for(loc.k in 1:2){
 
 #PLOT
 
-pdf("Fig2_Colias_CO_sun.pdf",height = 18, width = 10)
+  design <- c("
+    11333
+    11333
+    11444
+    22444
+    22555
+    22555
+  ")  
+  
+pdf("Fig2_Colias_CO_sun.pdf",height = 12, width = 20)
 temps.co/
   co.colias/
   #fig.fitnesscurves.co/
   feed.tpc.co/
   ext.yr.co/
   fig.shift_opt.co +
+  plot_layout(design = design)+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig3_Colias_CA_sun.pdf",height = 18, width = 10)
+pdf("Fig3_Colias_CA_sun.pdf",height = 12, width = 20)
 temps.ca/
   ca.colias/
   #fig.fitnesscurves.ca/
   feed.tpc.ca/
   ext.yr.ca/
   fig.shift_opt.ca +
+  plot_layout(design = design)+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
@@ -1010,4 +1022,26 @@ temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
+#----
+#save TPC parameters
+tpc.betas$pop<- as.character(tpc.betas$pop)
+
+#add Pieris
+tpc.pr<- tpc.betas[1,]
+tpc.pr[]<- NA
+tpc.pr[1:4]<- c(-3.4132807, 0.1500000,  44.9612415, 0.7321506)
+tpc.pr$pop<- "WA_historic"
+tpc.pr$Ctmax<- tpc.pr$shift + tpc.pr$tolerance
+tpc.betas.all<- rbind(tpc.betas, tpc.pr)
+
+tpc.betas.all$Topt<-NA
+tempv<- seq(from=1, to=50, by=0.1)
+
+for(loc.k in 1:5){
+ps= TPC_beta(tempv,shift=tpc.betas.all[loc.k,1], breadth=tpc.betas.all[loc.k,2], aran=0, 
+             tolerance=tpc.betas.all[loc.k,3], skew=tpc.betas.all[loc.k,4])
+tpc.betas.all$Topt[loc.k]<- tempv[which.max(ps)]
+}
+
+write.csv(tpc.betas.all, "tpcbetas.csv")
 
