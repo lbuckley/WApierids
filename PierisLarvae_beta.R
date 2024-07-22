@@ -478,3 +478,41 @@ ggplot(pr, aes(x=Topt, y=Butt..Wt, color=UniID, group=UniID))+geom_point()
 ggplot(pr, aes(x=Topt, y=Fecundity, color=UniID, group=UniID))+geom_point()
 
 #============================
+#PLOT
+
+tpc1<- TPC_beta(T_b=1:50, shift=0, breadth=0.15, aran=0, tolerance=30, skew=0.70)
+
+tpc2<- TPC_beta(T_b=1:50, shift=5, breadth=0.15, aran=0, tolerance=30, skew=0.70)
+
+tpc3<- TPC_beta(T_b=1:50, shift=0, breadth=0.25, aran=0, tolerance=30, skew=0.70)
+
+tpc4<- TPC_beta(T_b=1:50, shift=0, breadth=0.15, aran=0, tolerance=40, skew=0.70)
+
+names(tpc1)[2]<- "value"
+names(tpc2)[2]<- "value"
+names(tpc3)[2]<- "value"
+names(tpc4)[2]<- "value"
+
+tpc1<- as.data.frame(cbind(1:50, tpc1))
+tpc1$parameters<- "Tmin= 0, breadth=0.15, b=30"
+tpc2<- as.data.frame(cbind(1:50, tpc2))
+tpc2$parameters<- "Tmin= 5, breadth=0.15, b=30"
+tpc3<- as.data.frame(cbind(1:50, tpc3))
+tpc3$parameters<- "Tmin= 0, breadth=0.25, b=30"
+tpc4<- as.data.frame(cbind(1:50, tpc4))
+tpc4$parameters<- "Tmin= 0, breadth=0.15, b=40"
+tpcs<- rbind(tpc1, tpc2, tpc3, tpc4)
+
+names(tpcs)[1]<- "temp"
+
+tpc.param<- ggplot(tpcs, aes(x=temp, y=value, color=parameters))+
+  geom_line(lwd=1.5)+
+  theme_classic(base_size=20)+ scale_color_viridis_d()+
+  xlab("Body temperature (C)")+ylab("Performance")+
+  theme(legend.position = "right") #+guides(fill=guide_legend(nrow=2,byrow=TRUE))
+
+setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("FigS_TPC.pdf", height = 6, width = 10)
+tpc.param
+dev.off()
+
