@@ -72,8 +72,13 @@ loc.k=2
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
-#SUN
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+##SUN
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
+#SHADE
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
+
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
@@ -95,8 +100,8 @@ if(yr.k==1) dat.all=dat
 if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
-#subset to sunlight
-dat.day= subset(dat.all, dat.all$SOLR>0)
+#subset to sunlight, keep 24h
+dat.day= dat.all #subset(dat.all, dat.all$SOLR>0)
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
 dat.day$seas= NA
@@ -123,7 +128,9 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   ylab("Growth rate (g/g/h)")+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20)+
-  theme(legend.position = c(0.1, 0.9))
+  theme(legend.position = c(0.1, 0.95))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 #D0cm, TALOC, TAREF
 
 #------------------
@@ -140,9 +147,9 @@ dat.day1$period= yrs[match(dat.day1$period, pers)]
 #percent temps exceeding 34.5C
 length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>34.5))/length(dat.day1$TALOC)
 length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>34.5))/length(dat.day1$TALOC)
-#percent temps exceeding 40C
-length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>40))/length(dat.day1$TALOC)
-length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>40))/length(dat.day1$TALOC)
+#percent temps exceeding 20C
+length(which(dat.day1$TALOC[dat.day1$period=="1998-2005"]>20))/length(dat.day1$TALOC)
+length(which(dat.day1$TALOC[dat.day1$period=="2014-2021"]>20))/length(dat.day1$TALOC)
 
 #drop middle period
 dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
@@ -150,32 +157,37 @@ dat.day1.plot= dat.day1[-which(dat.day1$period=="2006-2013"),]
 #plot density distributions
 p1= ggplot(dat.day1.plot, aes(x=TALOC))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+
   xlab("Temperature (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+ #theme(legend.position = c(0.2, 0.9))+
   xlim(5,50)+
-  scale_y_continuous(expand=c(0,0))
+  scale_y_continuous(expand=c(0,0))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 p1.ref= ggplot(dat.day1.plot, aes(x=TAREF))+
   geom_density(alpha=0.4, aes(fill=period, color=period))+
-  ylab("Feeding rate (g/g/h)")+
+  ylab("Density")+
   xlab("Temperature at plant height (°C)" )+
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.15, 0.9))+
-  xlim(5,45)
+  xlim(5,45)+
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 #plot together
 p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=period))+
-  theme(legend.position = c(0.7, 0.9))
+  theme(legend.position = c(0.7, 0.9))+
+  ylim(0,0.095)
 
-## get 1999 (study) data
-#plot just during study
-ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
-  geom_density(alpha=0.4, aes(fill=period, color=period))+
-  ylab("Feeding rate (g/g/h)")+
-  xlab("Temperature at plant height (°C)" )+
-  theme_classic(base_size = 20) #+theme(legend.position = c(0.2, 0.8))
+# ## get 1999 (study) data
+# #plot just during study
+# ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
+#   geom_density(alpha=0.4, aes(fill=period, color=period))+
+#   ylab("Feeding rate (g/g/h)")+
+#   xlab("Temperature at plant height (°C)" )+
+#   theme_classic(base_size = 20) #+theme(legend.position = c(0.2, 0.8))
 
 #===============================
 #P. rapae larvae
@@ -190,7 +202,8 @@ p2= p1 + geom_line(data=p.dat, aes(x = Tb, y = performance) )
 #i + geom_segment(aes(x = 5, y = 30, xend = 3.5, yend = 25),
 #                 arrow = arrow(length = unit(0.5, "cm")))
 p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
-                      arrow = arrow(length = unit(0.3, "cm")), lwd=1)
+                      arrow = arrow(length = unit(0.3, "cm")), lwd=1)+
+  ylim(0,0.095)
 
 #add points 
 p3= p3 + geom_point(data=d, aes(x = temp, y = rate))
@@ -214,13 +227,15 @@ p1= ggplot(dat.day, aes(x=perf))+
   facet_wrap(~seas)+
   xlab("Performance")+
   ylab("Density" )+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.9))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.75, 0.95))+
+  scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
+  scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 #Count of NAs above CTmax of TPC
-tab= table( is.nan(dat.day$perf), dat.day$period)
-prop.CTmax= c( #tab["TRUE","initial"]/(tab["FALSE","initial"]+tab["TRUE","initial"]),
-               tab["TRUE","middle"]/(tab["FALSE","middle"]+tab["TRUE","middle"]),
-               tab["TRUE","recent"]/(tab["FALSE","recent"]+tab["TRUE","recent"]))
+#tab= table( is.nan(dat.day$perf), dat.day$period)
+#prop.CTmax= c( #tab["TRUE","initial"]/(tab["FALSE","initial"]+tab["TRUE","initial"]),
+#               tab["TRUE","middle"]/(tab["FALSE","middle"]+tab["TRUE","middle"]),
+#               tab["TRUE","recent"]/(tab["FALSE","recent"]+tab["TRUE","recent"]))
 
 #performance means
 dat.day1= na.omit(dat.day)
@@ -247,11 +262,12 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+
   xlab("Temperature at reference height (°C)")+
   ylab("Sum of feeding rate (g/g/h)" )+
   #ylim(0,0.0015)+xlim(0,40)+
-  theme_classic(base_size = 20)+theme(legend.position = c(0.6, 0.2))
+  theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Prapae.pdf", height = 10, width = 6)
-p3 / p4
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
+#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
+p4
 dev.off()
 
 #-----------------
@@ -278,7 +294,7 @@ params$perf[is.nan(params$perf)]= 0
 
 #estimate growth and development
 #RUN
-param.grid= expand.grid(shift= seq(tpc.beta[1]-10,tpc.beta[1]+10,1),
+param.grid= expand.grid(shift= seq(tpc.beta[1]-15,tpc.beta[1]+10,1),
                         breadth=c(tpc.beta[2]-0.03,tpc.beta[2],tpc.beta[2]+0.03) )
 
 perf.mat= matrix(NA, nrow= nrow(dat.day), ncol= nrow(param.grid) )
@@ -352,13 +368,21 @@ fig.fitnesscurves=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=topt, y=p
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
-  theme(legend.position = c(0.2, 0.5))+
+  theme(legend.position = c(0.2, 0.8))+
   xlim(5,45)
 
 fig.fitnesscurves.all=ggplot(perfs.l, aes(x=topt, y=performance, color=year, group=yrbr) )+geom_line(aes(lty=breadth))+
   scale_color_viridis_c()+
   theme_classic(base_size = 20)+
   xlab("thermal optima (C)")+ylab("feeding rate (g/g/h)") +
+  xlim(5,45)
+
+#over time
+fig.pyr=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=year, y=performance, color=topt, group=topt) )+geom_line()+
+  scale_color_viridis_c()+
+  theme_classic(base_size = 20)+
+  xlab("Thermal optima (C)")+ylab("Mean feeding rate (g/g/h)") +
+  theme(legend.position = c(0.7, 0.8))+
   xlim(5,45)
 
 #account for temperatures exceeding tpcs
@@ -391,16 +415,19 @@ perfs.b.l$breadth= factor(perfs.b.l$breadths)
 fig.shift_opt= ggplot(perfs.b.l[which(perfs.b.l$breadth==0.15),], aes(x=year, y=opt_shift, group= seas_br))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
   xlab("Year")+ylab("Optimal Topt (C)")+
-  guides(lty="none")
+  guides(lty="none")+ 
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
 fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lty=breadth ))+geom_line()+
   theme_classic(base_size = 20)+geom_smooth(method="lm",se=FALSE)+
-  xlab("Year")+ylab("Optimal Topt (C)")
+  xlab("Year")+ylab("Optimal Topt (C)")+ 
+  scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_PrapaeStudy.pdf", height = 18, width = 9)
-p1.pl.ref / p3 / fig.fitnesscurves / fig.shift_opt +
-  plot_layout(heights = c(2, 2, 1.5, 1.25))+
+setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")  
+#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("Fig5_PrapaeStudy.pdf", height = 12, width = 12)
+p1.pl.ref / p3 | fig.fitnesscurves / fig.shift_opt +
+  #plot_layout(heights = c(2, 2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
