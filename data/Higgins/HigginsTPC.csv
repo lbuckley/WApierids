@@ -1,0 +1,7 @@
+﻿species,year,population,Fmax,Topt,row,sigma
+eutytheme,2011,"Sacramento Valley, CA",0.13,27.8,0.54,0.002
+eutytheme,2011,"Chapel Hill, NC",0.17,32.5,1.87,0.003
+eriphyle,2011,"Montrose Valley, CO",0.19,28.8,2.14,0.007
+eriphyle,2011,"Gunnison, CO",0.19,35,0.67,0.003
+eutytheme,1972,"Sacramento Valley, CA",0.27,28.6,2.06,0.011
+eriphyle,1972,"Montrose Valley, CO",0.2,25.3,1.84,0.015
