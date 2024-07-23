@@ -342,7 +342,7 @@ ps.all$Time= "historic"
 ps.all$Time[grep("recent", ps.all$Pop)]="recent"
 
 #plot
-tpcd$Temp<- as.numeric(tpcd$Temp)
+ps.all$Temp<- as.numeric(ps.all$Temp)
 tpc.plot<- ggplot(ps.all,aes(x=Temp, y=Perf, color=Pop))+geom_line()
 
 #==============================================================
@@ -558,7 +558,7 @@ years=c(1961:1968,1971,2001:2010, 2011:2016,2018:2021)
 
 #combine data
 for(yr.k in 1:length(years)){
-  dat= read.csv("./data/era5_micro_shade/",paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat= read.csv(paste("./data/era5_micro_shade/",locations[loc.k],years[yr.k],".csv",sep="") )
   dat$year= years[yr.k]
   
   dat$period<- NA
@@ -933,7 +933,6 @@ for(loc.k in 1:2){
   
 } # end loop locations
   
-
   #combine performance means
   perf.co$location="CO"
   perf.ca$location="CA"

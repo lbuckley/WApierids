@@ -81,7 +81,7 @@ if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 #combine data
 for(yr.k in 1:length(years)){
-dat= read.csv("./data/era5_micro_sun/",paste(locations[loc.k],years[yr.k],".csv",sep="") )
+dat= read.csv(paste("./data/era5_micro_sun/",locations[loc.k],years[yr.k],".csv",sep="") )
 dat$year= years[yr.k]
 
 #vary periods
@@ -452,9 +452,9 @@ pr= read.csv("./data/KingsolverPrapae/PrapaeUW.Seln2.1999.Combineddata.OPUS2021.
 #plot TPCs
 pr1= pr[,c("Mom","UniID", "Mi", "RGR11", "RGR17", "RGR23", "RGR29", "RGR35")]
 pr1= melt(pr1, id.vars=c("Mom","UniID", "Mi"), variable.name="temp", value.name="rgr")           
-pr1$temperature= gsub('RGR', '', pr1$variable)
+pr1$temperature= gsub('RGR', '', pr1$temp)
 
-ggplot(pr1, aes(x=temperature, y=value, color=UniID, group=UniID))+geom_line()+
+ggplot(pr1, aes(x=temperature, y=rgr, color=UniID, group=UniID))+geom_line()+
   facet_wrap(~Mom)
 
 #fit TPC
@@ -479,8 +479,8 @@ tpc.p= matrix(NA, nrow=length(ids), ncol=3)
 
 for(id.k in 1:length(ids)){
 
-#gr= pr1[pr1$Mom==ids[id.k],c("temperature","value")]
-gr= pr1[pr1$UniID==ids[id.k],c("temperature","value")]
+#gr= pr1[pr1$Mom==ids[id.k],c("temperature","rgr")]
+gr= pr1[pr1$UniID==ids[id.k],c("temperature","rgr")]
 colnames(gr)=c("temp","rate")
 gr$temp= as.numeric(gr$temp)
 gr= na.omit(gr)
@@ -505,7 +505,7 @@ ggplot(pr, aes(x=Topt, y=Butt..Wt, color=UniID, group=UniID))+geom_point()
 ggplot(pr, aes(x=Topt, y=Fecundity, color=UniID, group=UniID))+geom_point()
 
 #============================
-#PLOT
+#PLOT PARAMETER COMBINATIONS
 
 tpc1<- TPC_beta(T_b=1:50, shift=0, breadth=0.15, aran=0, tolerance=30, skew=0.70)
 
@@ -528,6 +528,12 @@ tpc3<- as.data.frame(cbind(1:50, tpc3))
 tpc3$parameters<- "Tmin= 0, breadth=0.25, b=30"
 tpc4<- as.data.frame(cbind(1:50, tpc4))
 tpc4$parameters<- "Tmin= 0, breadth=0.15, b=40"
+
+names(tpc1)[2]<- "value"
+names(tpc2)[2]<- "value"
+names(tpc3)[2]<- "value"
+names(tpc4)[2]<- "value"
+
 tpcs<- rbind(tpc1, tpc2, tpc3, tpc4)
 
 names(tpcs)[1]<- "temp"
