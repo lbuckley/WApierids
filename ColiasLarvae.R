@@ -16,14 +16,14 @@ library(dplyr)
 #Nielsen and Kingsolver
 #https://onlinelibrary.wiley.com/doi/full/10.1111/ele.13515
 
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/")
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/')
 
-oldData= read.csv("Nielsen_oldData.csv")
+oldData= read.csv("./data/NielsenColias/Nielsen_oldData.csv")
 #cut data to matching photoperiods
 oldData= oldData[which(oldData$Photoperiod %in% 10:16),]
 
-contempSummary= read.csv("Nielsen_contempSummary.csv")
+contempSummary= read.csv("./data/NielsenColias/Nielsen_contempSummary.csv")
 
 #convert photoperiod to days of year
 daylengths= daylength(lat=37.983, doy=1:173)
@@ -38,7 +38,7 @@ contempSummary$doy= sapply(a, function(a, b) {which.min(abs(a-b))}, b)
 
 #Use development data to account for lag between pupae and adults
 #load development data
-dt=  read.csv("DevelopmentTime_Table2_AllenSmith.csv")
+dt=  read.csv("./data/NielsenColias/DevelopmentTime_Table2_AllenSmith.csv")
 
 #use temperature estimates to estimate pupation time
 plot(dt$Temperature, 1/dt$DT_pupa)
@@ -53,10 +53,10 @@ locations= c("Montrose","Sacramento", "LosBanos")
 yearsn= c(1970, 2018)
 doys= oldData$doy
 
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
-dat1970= read.csv("Sacramento1970_Jan.csv")
-dat2018= read.csv("Sacramento2018_Jan.csv")
+dat1970= read.csv("./data/era5_micro_sun/Sacramento1970_Jan.csv")
+dat2018= read.csv("./data/era5_micro_sun/Sacramento2018_Jan.csv")
 
 dat1970$dd= dat1970$TAREF -To
 dat2018$dd= dat2018$TAREF -To
@@ -133,9 +133,9 @@ temps=0:50
 #Higgins
 tpc= function(T, Fmax,To, row, sigma) Fmax*exp(-exp(row*(T-To)-6)-sigma*(T-To)^2)
 
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
-dat= read.csv("HigginsTPC.csv")
+dat= read.csv("./data/Higgins/HigginsTPC.csv")
 #keep comparison
 dat= dat[c(1,3,5,6),]
 
@@ -165,10 +165,10 @@ fig2.butterfly= ggplot(p1.all,aes(x=temps, y=p))+geom_line(aes(color=population,
 
 #------------------------
 #plot from Higgins data
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
-rdat= read.csv("totalFT.csv")
-hdat= read.csv("FR1972.csv")
+rdat= read.csv("./data/Higgins/totalFT.csv")
+hdat= read.csv("./data/Higgins/FR1972.csv")
 
 se <- function(x) sqrt(var(x)/length(x))
 
@@ -364,7 +364,7 @@ if (loc.k==2) years=c(1961:2016,2018:2021)
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
 ##SUN
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
 #setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
@@ -372,7 +372,7 @@ setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/da
 
 #combine data
 for(yr.k in 1:length(years)){
-dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+dat= read.csv(paste("./data/era5_micro_sun/",locations[loc.k],years[yr.k],".csv",sep="") )
 
 dat$year= years[yr.k]
 
@@ -550,7 +550,7 @@ loc.k=2
 years=c(1961:1968,1971,2001:2010, 2011:2016,2018:2021) 
 
 ##SUN
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
 #setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
@@ -558,7 +558,7 @@ setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/da
 
 #combine data
 for(yr.k in 1:length(years)){
-  dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+  dat= read.csv("./data/era5_micro_shade/",paste(locations[loc.k],years[yr.k],".csv",sep="") )
   dat$year= years[yr.k]
   
   dat$period<- NA
@@ -938,7 +938,7 @@ for(loc.k in 1:2){
   perf.co$location="CO"
   perf.ca$location="CA"
   perf.tpcs= rbind(perf.co, perf.ca)
-  write.csv(perf.tpcs, "PerfEstTPCs.csv")
+  #write.csv(perf.tpcs, "PerfEstTPCs.csv")
   
   #to long format
   perf.mean= gather(perf.tpcs, TPC, performance, histTPC:recTPC, factor_key=TRUE)
@@ -950,21 +950,21 @@ for(loc.k in 1:2){
     #scale_shape_manual(values=c(21,22))+
     ylab("mean performance")
 
-  setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
+  #setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
   #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-  pdf("Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
+  pdf("./figures/Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
   feedfig.co / feedfig.ca
   dev.off()
   
-  pdf("Fig_Colias_FeedingRateDensity.pdf", height = 10, width = 10)
+  pdf("./figures/Fig_Colias_FeedingRateDensity.pdf", height = 10, width = 10)
   perf.dens.co / perf.dens.ca
   dev.off()
   
-  pdf("MeanPerformance.pdf", height = 6, width = 10)
+  pdf("./figures/MeanPerformance.pdf", height = 6, width = 10)
   fig.meanperf
   dev.off()
   
-  pdf("Fig_Colias_PerfByYr.pdf", height = 10, width = 10)
+  pdf("./figures/Fig_Colias_PerfByYr.pdf", height = 10, width = 10)
   feed.tpc.co / feed.tpc.ca |
     ext.yr.co/ ext.yr.ca
   dev.off()
@@ -982,7 +982,7 @@ for(loc.k in 1:2){
     22555
   ")  
   
-pdf("Fig2_Colias_CO_sun.pdf",height = 12, width = 20)
+pdf("./figures/Fig2_Colias_CO_sun.pdf",height = 12, width = 20)
 temps.co/
   co.colias/
   #fig.fitnesscurves.co/
@@ -993,7 +993,7 @@ temps.co/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig3_Colias_CA_sun.pdf",height = 12, width = 20)
+pdf("./figures/Fig3_Colias_CA_sun.pdf",height = 12, width = 20)
 temps.ca/
   ca.colias/
   #fig.fitnesscurves.ca/
@@ -1005,19 +1005,19 @@ temps.ca/
 dev.off()
 
 #supplementary plots
-pdf("Fig_Colias_CO_supp_sun.pdf",height = 10, width = 8)
+pdf("./figures/Fig_Colias_CO_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.co/
   fig.shift_opt.all.co +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig_Colias_CA_supp_sun.pdf",height = 10, width = 8)
+pdf("./figures/Fig_Colias_CA_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.ca/
   fig.shift_opt.all.ca +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig5_photo_sun.pdf",height = 10, width = 8)
+pdf("./figures/Fig5_photo_sun.pdf",height = 10, width = 8)
 temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()
@@ -1043,5 +1043,5 @@ ps= TPC_beta(tempv,shift=tpc.betas.all[loc.k,1], breadth=tpc.betas.all[loc.k,2],
 tpc.betas.all$Topt[loc.k]<- tempv[which.max(ps)]
 }
 
-write.csv(tpc.betas.all, "tpcbetas.csv")
+#write.csv(tpc.betas.all, "tpcbetas.csv")
 

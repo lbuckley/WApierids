@@ -73,7 +73,7 @@ if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
 
 ##SUN
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
 #setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 #SHADE
 #setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
@@ -81,7 +81,7 @@ setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/da
 
 #combine data
 for(yr.k in 1:length(years)){
-dat= read.csv(paste(locations[loc.k],years[yr.k],".csv",sep="") )
+dat= read.csv("./data/era5_micro_sun/",paste(locations[loc.k],years[yr.k],".csv",sep="") )
 dat$year= years[yr.k]
 
 #vary periods
@@ -264,9 +264,9 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+
   #ylim(0,0.0015)+xlim(0,40)+
   theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
 
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
 #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
+pdf("./figures/Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
 p4
 dev.off()
 
@@ -423,15 +423,15 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   xlab("Year")+ylab("Optimal Topt (C)")+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
-setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")  
+#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")  
 #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("Fig5_PrapaeStudy.pdf", height = 12, width = 12)
+pdf("./figures/Fig5_PrapaeStudy.pdf", height = 12, width = 12)
 p1.pl.ref / p3 | fig.fitnesscurves / fig.shift_opt +
   #plot_layout(heights = c(2, 2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("Fig_PrapaeStudy_supp.pdf", height = 10, width = 8)
+pdf("./figures/Fig_PrapaeStudy_supp.pdf", height = 10, width = 8)
 fig.fitnesscurves.all / fig.shift_opt.all +
   plot_layout(heights = c(1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
@@ -446,8 +446,8 @@ dev.off()
 #Relate to selection estimates: determine Topt and plot against fitness components, only pupal mass was significant?
 
 #compare to empirical data
-setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/')
-pr= read.csv("PrapaeUW.Seln2.1999.Combineddata.OPUS2021.csv")
+#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/')
+pr= read.csv("./data/KingsolverPrapae/PrapaeUW.Seln2.1999.Combineddata.OPUS2021.csv")
 
 #plot TPCs
 pr1= pr[,c("Mom","UniID", "Mi", "RGR11", "RGR17", "RGR23", "RGR29", "RGR35")]
@@ -538,8 +538,8 @@ tpc.param<- ggplot(tpcs, aes(x=temp, y=value, color=parameters))+
   xlab("Body temperature (C)")+ylab("Performance")+
   theme(legend.position = "right") #+guides(fill=guide_legend(nrow=2,byrow=TRUE))
 
-setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("FigS_TPC.pdf", height = 6, width = 10)
+#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
+pdf("./figures/FigS_TPC.pdf", height = 6, width = 10)
 tpc.param
 dev.off()
 
