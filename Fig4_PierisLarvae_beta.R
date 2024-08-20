@@ -1,9 +1,11 @@
-library(ggplot2)
-library(reshape2)
-library(reshape)
-library(viridisLite)
-library(patchwork)
-library(TrenchR)
+#R version 4.1.0 (2021-05-18)
+
+library(ggplot2) #ggplot2_3.4.4
+library(reshape2) #reshape2_1.4.4
+library(reshape) #reshape_0.8.8
+library(viridisLite) #viridisLite_0.4.0
+library(patchwork) #patchwork_1.2.0
+library(TrenchR) #TrenchR_1.1.1
 
 #P. rapae larval TPC
 
@@ -71,13 +73,6 @@ loc.k=2
 #years for data
 if(loc.k==1) years=c(1989:2021) #1989:1993, 2017:2021
 if(loc.k==2) years=c(1998:2021) #2001:2005, 2017:2021
-
-##SUN
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
-#SHADE
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
 for(yr.k in 1:length(years)){
@@ -181,14 +176,6 @@ p1.pl.ref=p1 + geom_density(alpha=0.4, linetype="dashed", aes(x=TAREF, color=per
   theme(legend.position = c(0.7, 0.9))+
   ylim(0,0.095)
 
-# ## get 1999 (study) data
-# #plot just during study
-# ggplot(dat.day1[dat.day1$year==1999,], aes(x=TALOC))+
-#   geom_density(alpha=0.4, aes(fill=period, color=period))+
-#   ylab("Feeding rate (g/g/h)")+
-#   xlab("Temperature at plant height (°C)" )+
-#   theme_classic(base_size = 20) #+theme(legend.position = c(0.2, 0.8))
-
 #===============================
 #P. rapae larvae
 #plot TPC
@@ -199,8 +186,6 @@ p.dat$performance[is.nan(p.dat$performance)]=0
 p2= p1 + geom_line(data=p.dat, aes(x = Tb, y = performance) )
 
 # add selection arrows
-#i + geom_segment(aes(x = 5, y = 30, xend = 3.5, yend = 25),
-#                 arrow = arrow(length = unit(0.5, "cm")))
 p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm.sg/20),
                       arrow = arrow(length = unit(0.3, "cm")), lwd=1)+
   ylim(0,0.095)
@@ -264,8 +249,6 @@ p4= ggplot(dat.day2, aes(x=temp, y=sumperf.norm, color=period))+ #geom_line()+
   #ylim(0,0.0015)+xlim(0,40)+
   theme_classic(base_size = 20)+theme(legend.position = c(0.4, 0.2))
 
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
-#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
 pdf("./figures/Fig_Prapae_FeedingRateByTemp.pdf", height = 6, width = 6)
 p4
 dev.off()
@@ -320,31 +303,9 @@ for(topt.k in 1:nrow(param.grid)){
 perfs= cbind(dat.day[,c("year","period","seas")], perf.mat)
 
 #aggregate
-#perfs1= aggregate(perfs[,4:24], list(perfs$year,perfs$period,perfs$seas), FUN=mean)
-#names(perfs1)=c("year","period","seas", seq(topt.low, topt.high, 1))
-
 #not seasons, just study period
 perfs1= aggregate(perfs[,4:ncol(perfs)], list(perfs$year,perfs$period), FUN=mean)
 names(perfs1)=c("year","period",1:nrow(param.grid))
-
-# #make column for slopes
-# perfs1$B= NA
-# 
-# for(row.k in 1: nrow(perfs1)){
-#   #put into format for regression
-#   perfs2= as.data.frame(cbind(topt.low:topt.high, t(perfs1[row.k,4:ncol(perfs1)]) ))
-#   colnames(perfs2)=c("topt","perf")
-#   
-#   #plot(perfs2$topt, perfs2$perf)
-#   #mod1= lm(perf~topt , data=perfs2)
-#   mod1= lm(perf~topt +I(topt^2) , data=perfs2)
-#   perfs1$B[row.k]= coefficients(mod1)[2]
-#   perfs1$curve[row.k]= coefficients(mod1)[3]
-# } 
-
-#plot fitness curves through time
-#perfs.l= melt(perfs1[,1:24], id.vars = c("year","period","seas"))
-#names(perfs.l)[4:5]=c("temperature","performance")
 
 #plot fitness curves through time
 perfs.l= melt(perfs1[,1:(ncol(perfs)-1)], id.vars = c("year","period"))
@@ -385,9 +346,6 @@ fig.pyr=ggplot(perfs.l[which(perfs.l$breadth==0.15),], aes(x=year, y=performance
   theme(legend.position = c(0.7, 0.8))+
   xlim(5,45)
 
-#account for temperatures exceeding tpcs
-
-#find thermal optima through years 
 #find thermal optima through years  
 breadths= sort(unique(param.grid$breadth))
 
@@ -423,9 +381,7 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   xlab("Year")+ylab("Optimal Topt (C)")+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")  
-#setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-pdf("./figures/Fig5_PrapaeStudy.pdf", height = 12, width = 12)
+pdf("./figures/Fig4_PrapaeStudy.pdf", height = 12, width = 12)
 p1.pl.ref / p3 | fig.fitnesscurves / fig.shift_opt +
   #plot_layout(heights = c(2, 2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
@@ -446,7 +402,6 @@ dev.off()
 #Relate to selection estimates: determine Topt and plot against fitness components, only pupal mass was significant?
 
 #compare to empirical data
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/Proposals/NSF_ORCC/historical/')
 pr= read.csv("./data/KingsolverPrapae/PrapaeUW.Seln2.1999.Combineddata.OPUS2021.csv")
 
 #plot TPCs

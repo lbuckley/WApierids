@@ -1,13 +1,15 @@
-library(ggplot2)
-library(reshape2)
-library(reshape)
-library(viridisLite)
-library(patchwork)
-library(TrenchR)
-library(tidyverse)
-library(rTPC)
-library(nls.multstart)
-library(dplyr)
+#R version 4.1.0 (2021-05-18)
+
+library(ggplot2) #ggplot2_3.4.4
+library(reshape2) #reshape2_1.4.4
+library(reshape) #reshape_0.8.8
+library(viridisLite) #viridisLite_0.4.0
+library(patchwork) #patchwork_1.2.0
+library(TrenchR) #TrenchR_1.1.1
+library(tidyverse) #tidyverse_1.3.2
+library(rTPC) #rTPC_1.0.2
+library(nls.multstart) #nls.multstart_1.2.0
+library(dplyr) #dplyr_1.1.2
 
 #Montrose Valley, CO: 1961-1971; 2001-2011;N 38.62, W 108.02, 1633m
 #Sacramento Valley, CA: 1961-1971; 2001-2011; N 38.44, W121.86, 19m
@@ -15,9 +17,6 @@ library(dplyr)
 #Empirical data
 #Nielsen and Kingsolver
 #https://onlinelibrary.wiley.com/doi/full/10.1111/ele.13515
-
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/NielsenColias/')
 
 oldData= read.csv("./data/NielsenColias/Nielsen_oldData.csv")
 #cut data to matching photoperiods
@@ -53,8 +52,6 @@ locations= c("Montrose","Sacramento", "LosBanos")
 yearsn= c(1970, 2018)
 doys= oldData$doy
 
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
 dat1970= read.csv("./data/era5_micro_sun/Sacramento1970_Jan.csv")
 dat2018= read.csv("./data/era5_micro_sun/Sacramento2018_Jan.csv")
 
@@ -133,8 +130,6 @@ temps=0:50
 #Higgins
 tpc= function(T, Fmax,To, row, sigma) Fmax*exp(-exp(row*(T-To)-6)-sigma*(T-To)^2)
 
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
 dat= read.csv("./data/Higgins/HigginsTPC.csv")
 #keep comparison
 dat= dat[c(1,3,5,6),]
@@ -165,8 +160,6 @@ fig2.butterfly= ggplot(p1.all,aes(x=temps, y=p))+geom_line(aes(color=population,
 
 #------------------------
 #plot from Higgins data
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/Higgins/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/Higgins/')
 rdat= read.csv("./data/Higgins/totalFT.csv")
 hdat= read.csv("./data/Higgins/FR1972.csv")
 
@@ -363,13 +356,6 @@ if (loc.k==1) years=c(1961:2014, 2016:2021)
 if (loc.k==2) years=c(1961:2016,2018:2021) 
 if (loc.k==3) years=c(1962:1971, 2009:2018)
 
-##SUN
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
-#SHADE
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
-
 #combine data
 for(yr.k in 1:length(years)){
 dat= read.csv(paste("./data/era5_micro_sun/",locations[loc.k],years[yr.k],".csv",sep="") )
@@ -377,10 +363,7 @@ dat= read.csv(paste("./data/era5_micro_sun/",locations[loc.k],years[yr.k],".csv"
 dat$year= years[yr.k]
 
 dat$period<- NA
-#vary periods
-  #if(years[yr.k]<2001)dat$period="initial"
-  #if(years[yr.k]>=2001 & years[yr.k]<2011) dat$period="middle"
-  #if(years[yr.k]>=2011)dat$period="recent"
+
   if(years[yr.k]<1972) dat$period<- "1961-1971"
   if(years[yr.k]>=2001 & years[yr.k]<=2011) dat$period <- "2001-2011"
 
@@ -389,7 +372,7 @@ if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
 #keep all hours, no longer subset to sunlight
-dat.day=dat.all #subset(dat.all, dat.all$SOLR>0)
+dat.day=dat.all 
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
 dat.day$seas= NA
@@ -498,11 +481,6 @@ if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1
 #plot with TPCs
 p1.all$TALOC= p1.all$temps
 
-##FE paper fits
-#co.colias= temp.co + geom_line(data=p1.all[p1.all$population=="CO",], aes(x=temps, y=p/5, lty=year),size=1.1)
-##divide by 5 to line up, use shade temps? 
-#ca.colias= temp.ca + geom_line(data=p1.all[p1.all$population=="CA",], aes(x=temps, y=p/5, lty=year),size=1.1)
-
 #change names
 ps.all$period= ps.all$Time
 ps.all$period[ps.all$period=="historic"]= "1961-1971"
@@ -546,15 +524,7 @@ locations= c("Montrose","Sacramento", "LosBanos")
 loc.k=2
 
 #years for data
-#years=c(1961:1968,1971,2011:2016,2018:2021) 
 years=c(1961:1968,1971,2001:2010, 2011:2016,2018:2021) 
-
-##SUN
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/")  
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_sun/')
-#SHADE
-#setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/")
-#setwd('/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/data/era5_micro_shade/')
 
 #combine data
 for(yr.k in 1:length(years)){
@@ -571,8 +541,7 @@ for(yr.k in 1:length(years)){
   if(yr.k>1) dat.all=rbind(dat, dat.all)
 }
 
-#subset to sunlight
-#dat.day= subset(dat.all, dat.all$SOLR>0)
+#keep all data, no longer subset to sunlight
 dat.day=dat.all
 
 #Recode as Apr + May, July +Aug; 91:151, 182:243
@@ -627,23 +596,8 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
 #plot together
 temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
   theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill="transparent")) 
-#FIX ISSUES WITH YEARS?
 
 #--------------------
-#Global hourly 
-#https://www.ncei.noaa.gov/maps/hourly/
-# grand junction: 72476023066
-# travis field: 74516023202
-
-#compare to GHCN station data
-#Winters, CA: GHCND:USC00049742
-#Montrose 2, CO: GHCND:USC00055722
-
-#library(rnoaa)
-#wint<- ghcnd(stationid = "USC00049742")
-#wint= filter(wint, element %in% c("TMIN","TMAX"), year %in% c(1961:1971, 2001:2021) )
-
-#-------------------
 # Selection analysis
 
 #a= height; b= mode; c= breadth; d= inverse breadth?; e= breadth
@@ -794,11 +748,6 @@ for(loc.k in 1:2){
   if(loc.k==1) dat.day= dat.day.co
   if(loc.k==2) dat.day= dat.day.ca
   
-  #if(loc.k==2) dat.day= dat.day[-which(dat.day$period=="2011-2021"),]
-  
-  #dat.day$period= as.factor(dat.day$period)
-  #dat.day= dat.day[-which(is.na(dat.day$period)),]
-  
   #estimate performance
   dat.day$perf.histTPC= TPC_beta(dat.day$TALOC, shift=tpc.hist[1], breadth=tpc.hist[2], aran=0, tolerance=tpc.hist[3], skew=tpc.hist[4])/(2.5/tpc.hist[5])
   dat.day$perf.recTPC= TPC_beta(dat.day$TALOC, shift=tpc.rec[1], breadth=tpc.rec[2], aran=0, tolerance=tpc.rec[3], skew=tpc.rec[4])/(2.5/tpc.rec[5])
@@ -937,7 +886,6 @@ for(loc.k in 1:2){
   perf.co$location="CO"
   perf.ca$location="CA"
   perf.tpcs= rbind(perf.co, perf.ca)
-  #write.csv(perf.tpcs, "PerfEstTPCs.csv")
   
   #to long format
   perf.mean= gather(perf.tpcs, TPC, performance, histTPC:recTPC, factor_key=TRUE)
@@ -949,9 +897,7 @@ for(loc.k in 1:2){
     #scale_shape_manual(values=c(21,22))+
     ylab("mean performance")
 
-  #setwd("/Users/laurenbuckley/Google Drive/My drive/Buckley/Work/PlastEvolAmNat/figures/")
-  #setwd("/Volumes/GoogleDrive/My Drive/Buckley/Work/PlastEvolAmNat/figures/")
-  pdf("./figures/Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
+ pdf("./figures/Fig_Colias_FeedingRateByTemp.pdf", height = 10, width = 10)
   feedfig.co / feedfig.ca
   dev.off()
   
@@ -1042,5 +988,4 @@ ps= TPC_beta(tempv,shift=tpc.betas.all[loc.k,1], breadth=tpc.betas.all[loc.k,2],
 tpc.betas.all$Topt[loc.k]<- tempv[which.max(ps)]
 }
 
-#write.csv(tpc.betas.all, "tpcbetas.csv")
 
