@@ -127,7 +127,8 @@ fig.co.photo= fig.co.photo+geom_line(linewidth=1)+geom_point()+
 temps=0:50
 
 #Colias butterfly larval feeding
-#Higgins
+#Data from Higgins JK, MacLean HJ, Buckley LB, Kingsolver JG. Geographic differences and microevolutionary changes in thermal sensitivity of butterfly larvae in response to climate. Functional Ecology. 2014 Aug 1:982-9. https://www.jstor.org/stable/24033587
+
 tpc= function(T, Fmax,To, row, sigma) Fmax*exp(-exp(row*(T-To)-6)-sigma*(T-To)^2)
 
 dat= read.csv("./data/Higgins/HigginsTPC.csv")
