@@ -115,7 +115,7 @@ fig.co.photo= fig.co.photo+geom_line(linewidth=1)+geom_point()+
   theme_classic(base_size = 20)+
   theme(legend.position = c(0.7, 0.4),legend.background = element_rect(fill="transparent"))+
   scale_color_manual(values=c("#7AD151FF","#440154FF"))+
-  xlab("Day of Year") +ylab("Reflectance (at 650 nm)")
+  xlab("Estimated day of adult eclosion") +ylab("Reflectance (at 650 nm)")
 
 #dates
 # c(0,50,100,150)
@@ -404,7 +404,7 @@ p1= ggplot(dat.day.plot, aes(x=TALOC))+
   xlab("Temperature (°C)" )+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
-  theme(legend.position = "none")+
+  theme(legend.position = c(0.4, 0.8),legend.background = element_rect(fill="transparent"))+
   scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
   scale_color_manual(values=c("#7AD151FF","#440154FF","black")  )+
   scale_fill_manual(values=c("#7AD151FF","#440154FF","black")  ) 
@@ -429,7 +429,7 @@ p1.pl.ref=p1 + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=per
   theme(legend.position = c(0.4, 0.8))
 
 #remove label
-p1= p1+theme(strip.text.x = element_blank())
+#p1= p1+theme(strip.text.x = element_blank())
 
 # plot for Nielsen study
 if(loc.k==2){
@@ -449,10 +449,13 @@ if(loc.k==2){
     xlab("Temperature (°C)" )+
     xlim(-5,50)+
     theme_classic(base_size = 20) +
-    theme(legend.position = "none")+
+    theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
     scale_y_continuous(limits=c(0,0.075), expand=c(0,0))+
     scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
     scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
+  
+  #Add legend
+  p1n= p1n+ theme(legend.position = c(0.6, 0.85),legend.background = element_rect(fill="transparent")) 
   
   #D0cm, TALOC, TAREF
   
@@ -475,7 +478,7 @@ if(loc.k==2){
 }
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
-if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.pl.ref}
+if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.pl.ref; temp.nielsen_noref=p1n}
 
 } # end location loop
 
@@ -576,7 +579,7 @@ p1n= ggplot(dat.day.plot, aes(x=TALOC))+
   xlim(-5,50)+
   theme_classic(base_size = 20) +
   theme(legend.position = "none")+
-  scale_y_continuous(limits=c(0,0.075), expand=c(0,0)) +
+  scale_y_continuous(limits=c(0,0.085), expand=c(0,0)) +
   scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
   scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 #D0cm, TALOC, TAREF
@@ -590,12 +593,15 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   xlim(-5,50)+ 
   theme_classic(base_size = 20) +
   theme(legend.position = c(0.6, 0.7),legend.background = element_rect(fill="transparent"))+
-  scale_y_continuous(limits=c(0,0.075), expand=c(0,0)) +
+  scale_y_continuous(limits=c(0,0.085), expand=c(0,0)) +
   scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
   scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
 
 #plot together
 temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
+  theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill="transparent")) 
+
+temp.nielsen_noref=p1n + 
   theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill="transparent")) 
 
 #--------------------
@@ -916,55 +922,67 @@ for(loc.k in 1:2){
   dev.off()
   
 #-------------------
-
-#PLOT
+#Plot move microclimate to supplement
 
   design <- c("
-    11333
-    11333
-    11444
-    22444
-    22555
-    22555
-  ")  
+    111113333
+    111113333
+    111113333
+    111113333
+    222224444
+    222224444
+    222224444
+  ")    
   
-pdf("./figures/Fig2_Colias_CO_sun.pdf",height = 12, width = 20)
-temps.co/
-  co.colias/
-  #fig.fitnesscurves.co/
-  feed.tpc.co/
-  ext.yr.co/
-  fig.shift_opt.co +
-  plot_layout(design = design)+
-  plot_annotation(tag_levels = 'A')
-dev.off()
+  #Fig 2
+  pdf("./figures/Fig2_photo_sun.pdf",height = 10, width = 8)
+  temp.nielsen_noref/ fig.co.photo +
+    plot_annotation(tag_levels = 'A')
+  dev.off()
+  
+  #Fig 3  
+  pdf("./figures/Fig2_Colias_CO_sun_4.pdf",height = 12, width = 24)
+    co.colias/
+      fig.shift_opt.co/
+    feed.tpc.co/
+    ext.yr.co +
+    plot_layout(design = design)+
+    plot_annotation(tag_levels = 'A')
+  dev.off()  
+  
+  #Fig 4
+  pdf("./figures/Fig3_Colias_CA_sun_4.pdf",height = 12, width = 20)
+    ca.colias/
+    fig.shift_opt.ca/
+    feed.tpc.ca/
+    ext.yr.ca +
+    plot_layout(design = design)+
+    plot_annotation(tag_levels = 'A')
+  dev.off()
+  
+  st<- temp.nielsen/
+    temps.co|
+    temps.ca/
+    p1.pl.ref
+  
+  #Fig S1. Supplementary Fig with plant height and reference height
+  pdf("./figures/FigSX_Temps.pdf",height = 12, width = 12)
+   st+
+    plot_annotation(tag_levels = 'A')
+  dev.off()
+  #Need to run Fig 4_ for WA fig
 
-pdf("./figures/Fig3_Colias_CA_sun.pdf",height = 12, width = 20)
-temps.ca/
-  ca.colias/
-  #fig.fitnesscurves.ca/
-  feed.tpc.ca/
-  ext.yr.ca/
-  fig.shift_opt.ca +
-  plot_layout(design = design)+
-  plot_annotation(tag_levels = 'A')
-dev.off()
-
+  #--------------------  
 #supplementary plots
-pdf("./figures/Fig_Colias_CO_supp_sun.pdf",height = 10, width = 8)
+pdf("./figures/FigS3__Colias_CO_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.co/
   fig.shift_opt.all.co +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
-pdf("./figures/Fig_Colias_CA_supp_sun.pdf",height = 10, width = 8)
+pdf("./figures/FigS4_Colias_CA_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.ca/
   fig.shift_opt.all.ca +
-  plot_annotation(tag_levels = 'A')
-dev.off()
-
-pdf("./figures/Fig5_photo_sun.pdf",height = 10, width = 8)
-temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()
 

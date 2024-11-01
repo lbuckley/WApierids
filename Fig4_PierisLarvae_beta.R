@@ -191,7 +191,8 @@ p3= p2 + geom_segment(data=sg, aes(x = temps, y = ys, xend = temps, yend = ys+pm
   ylim(0,0.095)
 
 #add points 
-p3= p3 + geom_point(data=d, aes(x = temp, y = rate))
+p3= p3 + geom_point(data=d, aes(x = temp, y = rate))+
+  theme(legend.position = c(0.7, 0.98))
 
 #analogous plot for reference height
 p3.ref= p1.ref + geom_line(data=p.dat, aes(x = Tb, y = performance) )+ 
@@ -381,9 +382,10 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   xlab("Year")+ylab("Optimal Topt (C)")+ 
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
-pdf("./figures/Fig4_PrapaeStudy.pdf", height = 12, width = 12)
-p1.pl.ref / p3 | fig.fitnesscurves / fig.shift_opt +
-  #plot_layout(heights = c(2, 2, 1.5, 1.25))+
+#Figure 5
+pdf("./figures/Fig5_PrapaeStudy.pdf", height = 12, width = 8)
+p3 / fig.fitnesscurves / fig.shift_opt +
+  plot_layout(heights = c(2, 1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
 dev.off()
 
@@ -392,6 +394,8 @@ fig.fitnesscurves.all / fig.shift_opt.all +
   plot_layout(heights = c(1.5, 1.25))+
   plot_annotation(tag_levels = 'A')
 dev.off()
+
+temps.wa<- p1.pl.ref
 
 #----------------------------
 ##P. rapae 1999 selection data
