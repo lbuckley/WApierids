@@ -397,6 +397,9 @@ dev.off()
 
 temps.wa<- p1.pl.ref
 
+#optima
+summary(lm(opt_shift~year, data=perfs.b.l[which(perfs.b.l$breadth==0.15),]))
+
 #----------------------------
 ##P. rapae 1999 selection data
 # rgr at each temperature

@@ -732,6 +732,14 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, color=seas, group=
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))+
   labs(colour = "season") 
 
+#-----------
+#quantify slopes
+
+#optima
+seasons<- unique(perfs.b.l$seas)
+summary(lm(opt_shift~year, data=perfs.b.l[which(perfs.b.l$breadth==0.15 & perfs.b.l$seas==seasons[1]),]))
+summary(lm(opt_shift~year, data=perfs.b.l[which(perfs.b.l$breadth==0.15 & perfs.b.l$seas==seasons[2]),]))
+
 if(loc.k==1) {fig.fitnesscurves.co= fig.fit.fb; fig.fit.all.co= fig.fitnesscurves}
 if(loc.k==2) {fig.fitnesscurves.ca= fig.fit.fb; fig.fit.all.ca= fig.fitnesscurves}
 
@@ -881,6 +889,24 @@ for(loc.k in 1:2){
     scale_color_manual(values=c("#7AD151FF","#440154FF"))+
     #remove label
     theme(strip.text.x = element_blank())
+  
+  #analyze slopes
+  seasons<- unique(perf.yr.l$season)
+  summary(lm(value~TPC+year, data=perf.yr.l[which(perf.yr.l$seas==seasons[1]),]))
+  summary(lm(value~TPC+year, data=perf.yr.l[which(perf.yr.l$seas==seasons[2]),]))
+  
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="initial" & perf.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="initial" & perf.yr.l$seas==seasons[2]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="recent" & perf.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="recent" & perf.yr.l$seas==seasons[2]),]))
+  
+  seasons<- unique(ext.yr.l$season)
+  summary(lm(value~TPC+year, data=ext.yr.l[which(ext.yr.l$seas==seasons[1]),]))
+  summary(lm(value~TPC+year, data=ext.yr.l[which(ext.yr.l$seas==seasons[2]),]))
+  #summary(lm(value~year, data=ext.yr.l[which(ext.yr.l$TPC=="initial" & ext.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=ext.yr.l[which(ext.yr.l$TPC=="initial" & ext.yr.l$seas==seasons[2]),]))
+  #summary(lm(value~year, data=ext.yr.l[which(ext.yr.l$TPC=="recent" & ext.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=ext.yr.l[which(ext.yr.l$TPC=="recent" & ext.yr.l$seas==seasons[2]),]))
   
   #----
   #save
