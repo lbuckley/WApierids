@@ -963,6 +963,7 @@ fig.fit.all.ca/
   plot_annotation(tag_levels = 'A')
 dev.off()
 
+#-----
 pdf("./figures/Fig5_photo_sun.pdf",height = 10, width = 8)
 temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
