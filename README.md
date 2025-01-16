@@ -179,6 +179,8 @@ D0cm ... - soil temperature (°C) at each of the 10 specified depths
 
 2. Figs4_PierisLarvae_beta.R: code for producing figure 4 and associated supplementary figures
 
+Previous code used during development is in the archive_code folder
+
 # SOFTWARE VERSIONS
 R version 4.1.0 (2021-05-18)
 
