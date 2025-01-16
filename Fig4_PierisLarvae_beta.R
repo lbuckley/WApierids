@@ -383,10 +383,10 @@ fig.shift_opt.all= ggplot(perfs.b.l, aes(x=year, y=opt_shift, group= seas_br, lt
   scale_color_manual(values=c("#39568CFF", "#DCE319FF"))
 
 #Figure 5
-pdf("./figures/Fig5_PrapaeStudy.pdf", height = 12, width = 8)
+pdf("./figures/Fig5_PrapaeStudy.pdf", height = 12, width = 8, useDingbats=FALSE)
 p3 / fig.fitnesscurves / fig.shift_opt +
   plot_layout(heights = c(2, 1.5, 1.25))+
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'A')+ theme(text = element_text(family = "sans"))
 dev.off()
 
 pdf("./figures/Fig_PrapaeStudy_supp.pdf", height = 10, width = 8)
@@ -414,9 +414,9 @@ pr= read.csv("./data/KingsolverPrapae/PrapaeUW.Seln2.1999.Combineddata.OPUS2021.
 #plot TPCs
 pr1= pr[,c("Mom","UniID", "Mi", "RGR11", "RGR17", "RGR23", "RGR29", "RGR35")]
 pr1= melt(pr1, id.vars=c("Mom","UniID", "Mi"), variable.name="temp", value.name="rgr")           
-pr1$temperature= gsub('RGR', '', pr1$temp)
+pr1$temperature= gsub('RGR', '', pr1$variable)
 
-ggplot(pr1, aes(x=temperature, y=rgr, color=UniID, group=UniID))+geom_line()+
+ggplot(pr1, aes(x=temperature, y=value, color=UniID, group=UniID))+geom_line()+
   facet_wrap(~Mom)
 
 #fit TPC
@@ -436,6 +436,7 @@ fitG =
 ids= unique(pr1$UniID)
 #by mom
 #ids= unique(pr1$Mom)
+pr1$rgr<- pr1$value
 
 tpc.p= matrix(NA, nrow=length(ids), ncol=3)
 

@@ -961,29 +961,29 @@ for(loc.k in 1:2){
   ")    
   
   #Fig 2
-  pdf("./figures/Fig2_photo_sun.pdf",height = 10, width = 8)
+  pdf("./figures/Fig2_photo_sun.pdf",height = 10, width = 8, useDingbats=FALSE)
   temp.nielsen_noref/ fig.co.photo +
-    plot_annotation(tag_levels = 'A')
+    plot_annotation(tag_levels = 'A')+ theme(text = element_text(family = "sans"))
   dev.off()
   
   #Fig 3  
-  pdf("./figures/Fig2_Colias_CO_sun_4.pdf",height = 12, width = 24)
+  pdf("./figures/Fig3_Colias_CO_sun_4.pdf",height = 12, width = 24, useDingbats=FALSE)
     co.colias/
       fig.shift_opt.co/
     feed.tpc.co/
     ext.yr.co +
     plot_layout(design = design)+
-    plot_annotation(tag_levels = 'A')
+    plot_annotation(tag_levels = 'A')+ theme(text = element_text(family = "sans"))
   dev.off()  
   
   #Fig 4
-  pdf("./figures/Fig3_Colias_CA_sun_4.pdf",height = 12, width = 20)
+  pdf("./figures/Fig4_Colias_CA_sun_4.pdf",height = 12, width = 20, useDingbats=FALSE)
     ca.colias/
     fig.shift_opt.ca/
     feed.tpc.ca/
     ext.yr.ca +
     plot_layout(design = design)+
-    plot_annotation(tag_levels = 'A')
+    plot_annotation(tag_levels = 'A')+ theme(text = element_text(family = "sans"))
   dev.off()
   
   st<- temp.nielsen/
