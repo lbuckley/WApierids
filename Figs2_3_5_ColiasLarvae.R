@@ -475,7 +475,7 @@ if(loc.k==2){
 }
 
 if(loc.k==1) {temp.co= p1; temp.co.ref= p1.ref; dat.day.co=dat.day; temps.co= p1.pl.ref}
-if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.pl.ref}
+if(loc.k==2) {temp.ca= p1; temp.ca.ref= p1.ref; dat.day.ca=dat.day; temps.ca= p1.pl.ref; temp.nielsen=p1n.ref}
 
 } # end location loop
 
@@ -593,10 +593,6 @@ p1n.ref= ggplot(dat.day.plot, aes(x=TAREF))+
   scale_y_continuous(limits=c(0,0.075), expand=c(0,0)) +
   scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
   scale_fill_manual(values=c("#7AD151FF","#440154FF")  ) 
-
-#plot together
-temp.nielsen=p1n + geom_density(alpha=0.3, linetype="dashed", aes(x=TAREF, color=period))+
-  theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill="transparent")) 
 
 #--------------------
 # Selection analysis
@@ -734,6 +730,13 @@ if(loc.k==2) {fig.shift_opt.ca= fig.shift_opt; fig.shift_opt.all.ca= fig.shift_o
 
 } # end loop locations
 
+#-----------
+#quantify slopes
+#optima
+seasons<- unique(perfs.b.l$seas)
+summary(lm(opt_shift~year, data=perfs.b.l[which(perfs.b.l$breadth==0.15 & perfs.b.l$seas==seasons[1]),]))
+summary(lm(opt_shift~year, data=perfs.b.l[which(perfs.b.l$breadth==0.15 & perfs.b.l$seas==seasons[2]),]))
+
 #-------------------
 #Feeding rate distributions and sums through time
 
@@ -765,8 +768,8 @@ for(loc.k in 1:2){
     ylab("Density" )+
     theme_classic(base_size = 20)+theme(legend.position = c(0.5, 0.8))+
     ylim(0,0.75)+
-    scale_color_manual(values=c("#7AD151FF","#440154FF")  )+
-    scale_fill_manual(values=c("#7AD151FF","#440154FF")  )  
+    scale_color_manual(values=c("#7AD151FF","#440154FF","black")  )+
+    scale_fill_manual(values=c("#7AD151FF","#440154FF","black")  )  
   
   #performance means
   dat.day1= dat.day #na.omit(dat.day)
@@ -876,6 +879,21 @@ for(loc.k in 1:2){
     #remove label
     theme(strip.text.x = element_blank())
   
+  #---
+  #analyze slopes
+  seasons<- unique(perf.yr.l$season)
+  summary(lm(value~TPC+year, data=perf.yr.l[which(perf.yr.l$seas==seasons[1]),]))
+  summary(lm(value~TPC+year, data=perf.yr.l[which(perf.yr.l$seas==seasons[2]),]))
+  
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="initial" & perf.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="initial" & perf.yr.l$seas==seasons[2]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="recent" & perf.yr.l$seas==seasons[1]),]))
+  #summary(lm(value~year, data=perf.yr.l[which(perf.yr.l$TPC=="recent" & perf.yr.l$seas==seasons[2]),]))
+  
+  seasons<- unique(ext.yr.l$season)
+  summary(lm(value~TPC+year, data=ext.yr.l[which(ext.yr.l$seas==seasons[1]),]))
+  summary(lm(value~TPC+year, data=ext.yr.l[which(ext.yr.l$seas==seasons[2]),]))
+  
   #----
   #save
   if(loc.k==1) {feedfig.co= feedt.hist; perf.co=perf.mean; perf.dens.co= perf.dens; feed.tpc.co= tpc.yr; ext.yr.co= ext.yr.plot}
@@ -930,7 +948,7 @@ for(loc.k in 1:2){
   
   #Fig 2
   pdf("./figures/Fig2_photo_sun.pdf",height = 10, width = 8, useDingbats=FALSE)
-  temp.nielsen_noref/ fig.co.photo +
+  temp.nielsen/ fig.co.photo +
     plot_annotation(tag_levels = 'A')+ theme(text = element_text(family = "sans"))
   dev.off()
   
@@ -976,12 +994,6 @@ dev.off()
 pdf("./figures/Fig_Colias_CA_supp_sun.pdf",height = 10, width = 8)
 fig.fit.all.ca/
   fig.shift_opt.all.ca +
-  plot_annotation(tag_levels = 'A')
-dev.off()
-
-#-----
-pdf("./figures/Fig5_photo_sun.pdf",height = 10, width = 8)
-temp.nielsen/ fig.co.photo +
   plot_annotation(tag_levels = 'A')
 dev.off()
 
